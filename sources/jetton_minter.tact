@@ -13,7 +13,7 @@ struct JettonMasterState {
     jettonWalletCode: Cell;
 }
 
-contract JettonMinter with OwnableTransferable, Deployable {
+contract JettonMinter with OwnableTransferable {
     totalSupply: Int as coins;
     mintable: Bool;
     owner: Address;
