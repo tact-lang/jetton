@@ -101,6 +101,9 @@ contract JettonMinter with OwnableTransferable {
         });
     }
 
+    bounced(msg: bounced<TokenTransferInternal>){
+        self.totalSupply -= msg.amount;
+    }
     inline fun takeWalletBody(targetJettonWallet: Address, includedAddress: Address?, query_id: Int): Cell {
         let body: Builder = beginCell()
         .storeUint(0xd1735400, 32)

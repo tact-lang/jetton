@@ -135,7 +135,7 @@ contract JettonWallet with Ownable {
     }
 
     bounced(msg: bounced<TokenTransferInternal>){
-        self.balance += self.balance + msg.amount;
+        self.balance += msg.amount;
     }
 
     bounced(msg: bounced<TokenBurnNotification>){
