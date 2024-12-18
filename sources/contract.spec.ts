@@ -4,8 +4,8 @@ import {
     SandboxContract,
     TreasuryContract,
     internal,
-    printTransactionFees,
-} from '@ton/sandbox';
+    printTransactionFees, BlockchainTransaction
+} from "@ton/sandbox";
 
 
 import {
@@ -20,6 +20,7 @@ import { JettonWallet, TokenTransfer } from "./output/Jetton_JettonWallet";
 
 import "@ton/test-utils";
 import { randomAddress } from './utils/utils';
+import { fromNano } from "@ton/ton";
 
 function jettonContentToCell(content: {type: 0|1, uri:string}) {
     return beginCell()
@@ -529,47 +530,6 @@ describe("JettonMinter", () => {
 
         expect(await deployerJettonWallet.getJettonBalance()).toEqual(initialJettonBalance);
     });
-    it.only('find minimal fee for transfer to new wallet', async () => {
-        //REMEMBER to remove gas checks in jettons!!!
-        const mintResult = await jettonMinter.sendMint(deployer.getSender(), deployer.address, toNano(100000), toNano('0.05'), toNano('1'));
-        const deployerJettonWallet = await userWallet(deployer.address);
-        expect(mintResult.transactions).toHaveTransaction({
-            from: jettonMinter.address,
-            to: deployerJettonWallet.address,
-            success: true,
-            endStatus: 'active'
-        })
-        const someAddress = Address.parse("EQD__________________________________________0vo");
-        const someJettonWallet = await userWallet(someAddress);
-        let L = 1n;
-        let R = toNano(1);
-        while (R - L > 1) {
-            let M = (L + R) / 2n;
-            const sendResult = await deployerJettonWallet.sendTransfer(deployer.getSender(), M, 1, someAddress, deployer.address, null, 0, null);
-            try {
-                expect(sendResult.transactions).not.toHaveTransaction({
-                    success: false,
-                });
-                R = M;
-            }
-            catch {
-                L = M;
-            }
-        }
-        const finalSending = await deployerJettonWallet.sendTransfer(deployer.getSender(), R, 1, someAddress, deployer.address, null, 0, null);
-        console.log("Minimal transfer fee is");
-        console.log(Number(R) / 1e9);
-        printTransactionFees(finalSending.transactions);
-        expect(finalSending.transactions).not.toHaveTransaction({
-            success: false,
-        })
-        expect(finalSending.transactions).toHaveTransaction({
-            from: deployerJettonWallet.address,
-            to: someJettonWallet.address,
-            success: true,
-            exitCode: 0,
-        })
-    })
     // implementation detail
     it('works with minimal ton amount', async () => {
         const deployerJettonWallet = await userWallet(deployer.address);
