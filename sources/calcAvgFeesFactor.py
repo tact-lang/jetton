@@ -1,5 +1,5 @@
 refferenceValues = [0.0099692, 0.0053376, 0.002827999]
-newValues = [0.014694, 0.007738799, 0.004915999]
+newValues = [0.0146844, 0.007670799, 0.004883999]
 
 def calcAvgFeesFactor(refferenceValues, newValues):
     avgFeesFactor = []

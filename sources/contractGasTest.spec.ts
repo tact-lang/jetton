@@ -154,9 +154,9 @@ describe("GasTests", () => {
         notDeployer = await blockchain.treasury('notDeployer');
 
         defaultContent = beginCell().endCell();
-        let msg: Deploy = {
-            $$type: "Deploy",
-            queryId: 0n,
+        let msg: TokenUpdateContent = {
+            $$type: "TokenUpdateContent",
+            content: new Cell(),
         }
 
 
