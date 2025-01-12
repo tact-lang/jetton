@@ -22,14 +22,12 @@ contract JettonMinter with MinterExitcodes, GasConstants {
     mintable: Bool;
     owner: Address;
     jettonContent: Cell;
-    jettonWalletCode: Cell;
 
     init(owner: Address, jettonContent: Cell) {
         self.totalSupply = 0;
         self.mintable = true;
         self.owner = owner;
         self.jettonContent = jettonContent;
-        self.jettonWalletCode = initOf JettonWallet(self.owner, myAddress()).code;
     }
 
     receive(msg: TokenBurnNotification) {
@@ -151,7 +149,8 @@ contract JettonMinter with MinterExitcodes, GasConstants {
             mintable: self.mintable,
             adminAddress: self.owner,
             jettonContent: self.jettonContent,
-            jettonWalletCode: self.jettonWalletCode
+                                                //Owner may be any address, what matters here is the code, not data.
+            jettonWalletCode: initOf JettonWallet(myAddress(), myAddress()).code
         }
     }
     get fun get_wallet_address(ownerAddress: Address): Address {
