@@ -1,13 +1,12 @@
 {
     "projects": [{
         "name": "Jetton",
-        "path": "./sources/jetton_minter.tact",
+        "path": "./sources/jetton_minter_discoverable.tact",
         "output": "./sources/output",
         "mode": "full",
         "options": {
             "external": false,
             "debug": true,
-            "masterchain": true,
             "ipfsAbiGetter": false,
             "interfacesGetter": false,
             "experimental": {
