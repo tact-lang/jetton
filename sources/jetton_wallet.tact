@@ -1,3 +1,6 @@
+import "./messages";
+import "./exit_codes";
+
 asm fun myCode(): Cell { MYCODE }
 
 //This contract also has Ownable functionality, but it is implemented without Ownable trait
@@ -118,7 +121,7 @@ contract JettonWallet with WalletExitcodes {
 
         // This is minimal possible amount of TONs for attached. But still, maybe we should icrease it?
 
-        let fwd_fee: Int = ctx.readForwardFee(); // Gas checks
+        //let fwd_fee: Int = ctx.readForwardFee(); // Gas checks
         nativeThrowUnless(self.UnsufficientAmountOfTonForBurn, ctx.value > ton("0.011408799"));
         // Burn tokens
         send(SendParameters{
