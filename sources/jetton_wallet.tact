@@ -1,11 +1,13 @@
 asm fun myCode(): Cell { MYCODE }
 
-contract JettonWallet with Ownable {
+//This contract also has Ownable functionality, but it is implemented without Ownable trait
+//to match refference implementation in terms of exit codes.
+contract JettonWallet with WalletExitcodes {
     balance: Int as coins;
     owner: Address;
     master: Address;
     const minTonsForStorage: Int = ton("0.015"); // 0.01 TON in original funC implementation. Increased as we have approx. x2 code size
-    const gasConsumption: Int = ton("0.015"); // 0.015 TON in original funC implementation. 0.13 TON is Howard's constant
+    const gasConsumption: Int = ton("0.015"); // 0.015 TON in original funC implementation.
     // According to tests, 23k gas is maximum gas consuption in transfer. 23k gas is 0.0092 TON
     // More precisely, max gas I could get is 22725
     init(owner: Address, master: Address) {
@@ -16,19 +18,19 @@ contract JettonWallet with Ownable {
 
 
     receive(msg: TokenTransfer) {
-        self.requireOwner();
+        nativeThrowUnless(self.IncorrectSender, sender() == self.owner);
 
         let totalFees: Int = (2 * context().readForwardFee() + 2 * self.gasConsumption) + self.minTonsForStorage + msg.forward_ton_amount;
 
         //Context() returns Structure with info about incoming message
-        require(context().value > totalFees, "Unsufficient amount of TON attached");
+        nativeThrowUnless(self.UnsufficientAmountOfTonAttached, context().value > totalFees);
 
         self.balance -= msg.amount;
 
         //coins type is unsigned type, so
         //self.balance is unsigned when storing and loading (msg.amount is unsigned too),
         //however when doing calculations it's value may be negative, so the check is correct
-        require(self.balance >= 0, "Invalid balance");
+        nativeThrowUnless(self.IncorrectBalanceAfrerSend, self.balance >= 0);
 
 
         //We shouldn't send transfers to masterchain due to higher gas price
@@ -59,7 +61,7 @@ contract JettonWallet with Ownable {
         // This message should come only from master, or from other JettonWallet
         if (sender() != self.master) {
             let init: StateInit = initOf JettonWallet(msg.from, self.master);
-            require(contractAddress(init) == sender(), "Sender is not another JettonWallet or JettonMaster");
+            nativeThrowUnless(self.IncorrectSenderInternal, contractAddress(init) == sender());
         }
         // Update balance
         self.balance += msg.amount;
@@ -108,17 +110,16 @@ contract JettonWallet with Ownable {
     }
 
     receive(msg: TokenBurn){
-        self.requireOwner();
+        nativeThrowUnless(self.IncorrectSender, sender() == self.owner);
 
         let ctx: Context = context();
         self.balance -= msg.amount; // Update balance
-        require(self.balance >= 0, "Invalid balance after burn");
+        nativeThrowUnless(self.IncorrectBalanceAfrerSend, self.balance >= 0);
 
         // This is minimal possible amount of TONs for attached. But still, maybe we should icrease it?
-        require(ctx.value > ton("0.011217199"), "Too little TONs for gas attached");
 
-        //let fwd_fee: Int = ctx.readForwardFee(); // Gas checks
-        //require(ctx.value > ((fwd_fee + 2 * self.gasConsumption) + self.minTonsForStorage), "Invalid value - Burn");
+        let fwd_fee: Int = ctx.readForwardFee(); // Gas checks
+        nativeThrowUnless(self.UnsufficientAmountOfTonForBurn, ctx.value > ton("0.011408799"));
         // Burn tokens
         send(SendParameters{
             to: self.master,
@@ -130,9 +131,8 @@ contract JettonWallet with Ownable {
                 amount: msg.amount,
                 sender: self.owner,
                 response_destination: msg.response_destination
-                }.toCell()
-        }
-        );
+            }.toCell()
+        });
     }
 
     bounced(msg: bounced<TokenTransferInternal>){
@@ -145,10 +145,10 @@ contract JettonWallet with Ownable {
 
     get fun get_wallet_data(): JettonWalletData {
         return JettonWalletData{
-        balance: self.balance,
-        owner: self.owner,
-        master: self.master,
-        code: myCode() //may be raplaced by "initOf JettonDefaultWallet(self.owner, self.master).code"
+            balance: self.balance,
+            owner: self.owner,
+            master: self.master,
+            code: myCode() //may be raplaced by "initOf JettonDefaultWallet(self.owner, self.master).code"
         };
     }
 }

@@ -14,7 +14,10 @@ struct JettonMasterState {
     jettonWalletCode: Cell;
 }
 
-contract JettonMinter with Exitcode {
+//Actually this contract has OwnableTransferable functionality
+//but this logic is implemented without OwnableTransferable trait
+//to match refference implementation in terms of exit codes.
+contract JettonMinter with MinterExitcodes {
     totalSupply: Int as coins;
     mintable: Bool;
     owner: Address;
@@ -31,7 +34,7 @@ contract JettonMinter with Exitcode {
 
     receive(msg: TokenBurnNotification) {
         //Check that the message is from msg.sender's jetton_wallet
-        nativeThrowUnless(self.IncorrectSenderOfTokenBurnNotification, sender() == self.getJettonWalletByOwner(msg.sender));
+        nativeThrowUnless(self.IncorrectSender, sender() == self.getJettonWalletByOwner(msg.sender));
 
         self.totalSupply -= msg.amount;
         send(SendParameters{
@@ -44,9 +47,17 @@ contract JettonMinter with Exitcode {
             }.toCell()
         });
     }
+    receive(msg: CustomChangeOwner) {
+        // Check if the sender is the owner
+        nativeThrowUnless(self.IncorrectSender, sender() == self.owner);
 
-    receive(msg: TokenUpdateContent){
-        self.requireOwner(); // Allow changing content only by owner
+        // Update owner
+        self.owner = msg.newOwner;
+    }
+
+    receive(msg: TokenUpdateContent) {
+        //Only owner may update content.
+        nativeThrowUnless(self.IncorrectSender, sender() == self.owner);
         self.jettonContent = msg.content; // Update content
     }
 
@@ -75,7 +86,7 @@ contract JettonMinter with Exitcode {
         });
     }
     receive(msg: Mint) {
-        self.requireOwner(); // Allow minting only by owner
+        nativeThrowUnless(self.IncorrectSender, sender() == self.owner); // Allow minting only by owner
 
         //We don't use nativeThrowUnless here as 'mintable' flag is implementation-defined
         //And not present in token-contract https://github.com/ton-blockchain/token-contract/tree/main/ft
@@ -93,7 +104,7 @@ contract JettonMinter with Exitcode {
             bounce: true,
             mode: SendRemainingValue,
             body: TokenTransferInternal{
-                query_id: 0,
+                query_id: msg.query_id,
                 amount: msg.amount,
                 from: myAddress(),
                 response_destination: self.owner, // Owner is minting, so send excess to owner
@@ -143,5 +154,8 @@ contract JettonMinter with Exitcode {
     }
     get fun get_wallet_address(ownerAddress: Address): Address {
         return self.getJettonWalletByOwner(ownerAddress);
+    }
+    get fun owner(): Address {
+        return self.owner;
     }
 }

@@ -12,7 +12,7 @@ import {
     JettonMinter,
     Mint,
     TokenUpdateContent,
-    TokenBurn, ProvideWalletAddress, storeTokenTransfer, storeTokenBurn, storeMint
+    TokenBurn, ProvideWalletAddress, storeTokenTransfer, storeTokenBurn, storeMint, CustomChangeOwner
 } from "./output/Jetton_JettonMinter";
 import { JettonWallet, TokenTransfer } from "./output/Jetton_JettonWallet";
 
@@ -57,6 +57,7 @@ JettonMinter.prototype.sendMint = async function (
     }
     const msg: Mint = {
         $$type: "Mint",
+        query_id: 0n,
         amount: jetton_amount,
         receiver: to,
     };
@@ -69,8 +70,8 @@ JettonMinter.prototype.sendChangeAdmin = async function (
     via: Sender,
     newOwner: Address
 ) {
-    const msg: ChangeOwner = {
-        $$type: "ChangeOwner",
+    const msg: CustomChangeOwner = {
+        $$type: "CustomChangeOwner",
         queryId: 0n,
         newOwner: newOwner,
     };
@@ -540,7 +541,7 @@ describe("JettonMinter", () => {
         it('minter should restore supply on internal_transfer bounce', async () => {
             const deployerJettonWallet    = await userWallet(deployer.address);
             const mintAmount = BigInt(getRandomInt(1000, 2000));
-            const mintMsg = beginCell().store(storeMint({$$type: "Mint", amount: mintAmount, receiver: deployer.address})).endCell();
+            const mintMsg = beginCell().store(storeMint({$$type: "Mint", query_id: 0n, amount: mintAmount, receiver: deployer.address})).endCell();
 
             const supplyBefore = await jettonMinter.getTotalSupply();
             const minterSmc    = await blockchain.getContract(jettonMinter.address);
@@ -832,7 +833,7 @@ describe("JettonMinter", () => {
             }
         }
         console.log(L);
-        let minimalFee = 11217199n;
+        let minimalFee = 11408799n;
         //It is the number you can get in console.log(L) if setting "false" to "true" in while loop above
 
         const sendLow    = await deployerJettonWallet.sendBurn(deployer.getSender(), minimalFee, // ton amount
