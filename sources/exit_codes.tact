@@ -1,5 +1,6 @@
 trait MinterExitcodes {
     const IncorrectSender: Int = 73;
+    const UnauthorizedBurn: Int = 74;
     const InsufficientGasForDiscovery: Int = 75;
 }
 
@@ -9,4 +10,5 @@ trait WalletExitcodes {
     const IncorrectSenderInternal: Int = 707;
     const UnsufficientAmountOfTonForBurn: Int = 707;
     const UnsufficientAmountOfTonAttached: Int = 709;
+    const InvalidDestinationWorkchain: Int = 333;
 }

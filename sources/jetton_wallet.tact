@@ -34,7 +34,7 @@ contract JettonWallet with WalletExitcodes {
 
 
         //We shouldn't send transfers to masterchain due to higher gas price
-        require(parseStdAddress(msg.destination.asSlice()).workchain == 0, "Invalid workchain of destination address");
+        nativeThrowUnless(self.InvalidDestinationWorkchain, parseStdAddress(msg.destination.asSlice()).workchain == 0);
 
         let init: StateInit = initOf JettonWallet(msg.destination, self.master);
         let wallet_address: Address = contractAddress(init);

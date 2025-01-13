@@ -34,7 +34,7 @@ contract JettonMinter with MinterExitcodes {
 
     receive(msg: TokenBurnNotification) {
         //Check that the message is from msg.sender's jetton_wallet
-        nativeThrowUnless(self.IncorrectSender, sender() == self.getJettonWalletByOwner(msg.sender));
+        nativeThrowUnless(self.UnauthorizedBurn, sender() == self.getJettonWalletByOwner(msg.sender));
 
         self.totalSupply -= msg.amount;
         send(SendParameters{
@@ -63,7 +63,7 @@ contract JettonMinter with MinterExitcodes {
 
     // https://github.com/ton-blockchain/TEPs/blob/master/text/0089-jetton-wallet-discovery.md
     receive(msg: ProvideWalletAddress) {
-        nativeThrowUnless(self.InsufficientGasForDiscovery, context().value >= ton("0.006625199"));
+        nativeThrowUnless(self.InsufficientGasForDiscovery, context().value >= ton("0.0067056"));
         let includedAddress: Address? = null;
         let workchain: Int = parseStdAddress(msg.owner_address.asSlice()).workchain;
         //Note, that emptyAddress != null, it is different values.
