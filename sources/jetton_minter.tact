@@ -1,6 +1,7 @@
 import "@stdlib/ownable";
 import "@stdlib/deploy";
 import "./jetton_wallet";
+import "./exit_codes";
 import "./messages";
 
 asm fun emptyAddress(): Address { b{00} PUSHSLICE }
@@ -13,7 +14,7 @@ struct JettonMasterState {
     jettonWalletCode: Cell;
 }
 
-contract JettonMinter with OwnableTransferable {
+contract JettonMinter with Exitcode {
     totalSupply: Int as coins;
     mintable: Bool;
     owner: Address;
@@ -30,7 +31,7 @@ contract JettonMinter with OwnableTransferable {
 
     receive(msg: TokenBurnNotification) {
         //Check that the message is from msg.sender's jetton_wallet
-        require(sender() == self.getJettonWalletByOwner(msg.sender), "Not wallet owner");
+        nativeThrowUnless(self.IncorrectSenderOfTokenBurnNotification, sender() == self.getJettonWalletByOwner(msg.sender));
 
         self.totalSupply -= msg.amount;
         send(SendParameters{
@@ -51,7 +52,7 @@ contract JettonMinter with OwnableTransferable {
 
     // https://github.com/ton-blockchain/TEPs/blob/master/text/0089-jetton-wallet-discovery.md
     receive(msg: ProvideWalletAddress) {
-        require(context().value >= ton("0.006625199"), "Insufficient gas");
+        nativeThrowUnless(self.InsufficientGasForDiscovery, context().value >= ton("0.006625199"));
         let includedAddress: Address? = null;
         let workchain: Int = parseStdAddress(msg.owner_address.asSlice()).workchain;
         //Note, that emptyAddress != null, it is different values.
@@ -75,10 +76,13 @@ contract JettonMinter with OwnableTransferable {
     }
     receive(msg: Mint) {
         self.requireOwner(); // Allow minting only by owner
+
+        //We don't use nativeThrowUnless here as 'mintable' flag is implementation-defined
+        //And not present in token-contract https://github.com/ton-blockchain/token-contract/tree/main/ft
         require(self.mintable, "Not mintable");
+
         //Maybe we should check that msg.value is enough to cover the gas fees
-        //Or, maybe we should do self.totalSupply -= msg.amount if bounced.
-        //But there is no any check in Howard's code and in official funC code,
+        //But there is no such check in token-contract,
         self.totalSupply += msg.amount; // Update total supply
 
         let winit: StateInit = self.getJettonWalletInit(msg.receiver);

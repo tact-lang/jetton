@@ -77,7 +77,7 @@ message(0xd1735400) TakeWalletAddress {
     owner_address: Cell?; //It is Maybe ^Address, just encoded it like this
 }
 
-message(0xfc708bd2) Mint {
+message(21) Mint { //We use opcode 21 to match token-contract.
     amount: Int;
     receiver: Address;
 }
