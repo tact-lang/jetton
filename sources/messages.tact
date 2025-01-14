@@ -17,7 +17,13 @@ struct MaybeAddress {
     address: Address?;
 }
 
-message TokenUpdateContent {
+message(3) CustomChangeOwner { // https://github.com/ton-blockchain/token-contract/blob/main/ft/jetton-minter-discoverable.fc#L126
+    queryId: Int as uint64;
+    newOwner: Address;
+}
+
+//https://github.com/ton-blockchain/token-contract/blob/main/ft/jetton-minter-discoverable.fc#L133
+message(4) TokenUpdateContent {
     content: Cell;
 }
 
@@ -77,7 +83,8 @@ message(0xd1735400) TakeWalletAddress {
     owner_address: Cell?; //It is Maybe ^Address, just encoded it like this
 }
 
-message(0xfc708bd2) Mint {
+message(21) Mint { //We use opcode 21 to match token-contract.
+    query_id: Int as uint64;
     amount: Int;
     receiver: Address;
 }

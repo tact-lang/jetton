@@ -1,6 +1,7 @@
 import "@stdlib/ownable";
 import "@stdlib/deploy";
 import "./jetton_wallet";
+import "./exit_codes";
 import "./messages";
 
 asm fun emptyAddress(): Address { b{00} PUSHSLICE }
@@ -13,7 +14,10 @@ struct JettonMasterState {
     jettonWalletCode: Cell;
 }
 
-contract JettonMinter with OwnableTransferable {
+//Actually this contract has OwnableTransferable functionality
+//but this logic is implemented without OwnableTransferable trait
+//to match refference implementation in terms of exit codes.
+contract JettonMinter with MinterExitcodes {
     totalSupply: Int as coins;
     mintable: Bool;
     owner: Address;
@@ -30,7 +34,7 @@ contract JettonMinter with OwnableTransferable {
 
     receive(msg: TokenBurnNotification) {
         //Check that the message is from msg.sender's jetton_wallet
-        require(sender() == self.getJettonWalletByOwner(msg.sender), "Not wallet owner");
+        nativeThrowUnless(self.UnauthorizedBurn, sender() == self.getJettonWalletByOwner(msg.sender));
 
         self.totalSupply -= msg.amount;
         send(SendParameters{
@@ -43,15 +47,23 @@ contract JettonMinter with OwnableTransferable {
             }.toCell()
         });
     }
+    receive(msg: CustomChangeOwner) {
+        // Check if the sender is the owner
+        nativeThrowUnless(self.IncorrectSender, sender() == self.owner);
 
-    receive(msg: TokenUpdateContent){
-        self.requireOwner(); // Allow changing content only by owner
+        // Update owner
+        self.owner = msg.newOwner;
+    }
+
+    receive(msg: TokenUpdateContent) {
+        //Only owner may update content.
+        nativeThrowUnless(self.IncorrectSender, sender() == self.owner);
         self.jettonContent = msg.content; // Update content
     }
 
     // https://github.com/ton-blockchain/TEPs/blob/master/text/0089-jetton-wallet-discovery.md
     receive(msg: ProvideWalletAddress) {
-        require(context().value >= ton("0.006625199"), "Insufficient gas");
+        nativeThrowUnless(self.InsufficientGasForDiscovery, context().value >= ton("0.0067056"));
         let includedAddress: Address? = null;
         let workchain: Int = parseStdAddress(msg.owner_address.asSlice()).workchain;
         //Note, that emptyAddress != null, it is different values.
@@ -74,11 +86,14 @@ contract JettonMinter with OwnableTransferable {
         });
     }
     receive(msg: Mint) {
-        self.requireOwner(); // Allow minting only by owner
+        nativeThrowUnless(self.IncorrectSender, sender() == self.owner); // Allow minting only by owner
+
+        //We don't use nativeThrowUnless here as 'mintable' flag is implementation-defined
+        //And not present in token-contract https://github.com/ton-blockchain/token-contract/tree/main/ft
         require(self.mintable, "Not mintable");
+
         //Maybe we should check that msg.value is enough to cover the gas fees
-        //Or, maybe we should do self.totalSupply -= msg.amount if bounced.
-        //But there is no any check in Howard's code and in official funC code,
+        //But there is no such check in token-contract,
         self.totalSupply += msg.amount; // Update total supply
 
         let winit: StateInit = self.getJettonWalletInit(msg.receiver);
@@ -89,7 +104,7 @@ contract JettonMinter with OwnableTransferable {
             bounce: true,
             mode: SendRemainingValue,
             body: TokenTransferInternal{
-                query_id: 0,
+                query_id: msg.query_id,
                 amount: msg.amount,
                 from: myAddress(),
                 response_destination: self.owner, // Owner is minting, so send excess to owner
@@ -139,5 +154,8 @@ contract JettonMinter with OwnableTransferable {
     }
     get fun get_wallet_address(ownerAddress: Address): Address {
         return self.getJettonWalletByOwner(ownerAddress);
+    }
+    get fun owner(): Address {
+        return self.owner;
     }
 }
