@@ -14,3 +14,8 @@ trait WalletExitcodes {
     const UnsufficientAmountOfTonAttached: Int = 709;
     const InvalidDestinationWorkchain: Int = 333;
 }
+
+trait GasConstants {
+    const gasForBurn: Int = ton("0.011408799");
+    const gasForDiscovery: Int = ton("0.0067056");
+}

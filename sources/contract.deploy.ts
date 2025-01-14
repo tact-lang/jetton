@@ -67,6 +67,7 @@ dotenv.config();
         .store(
             storeMint({
                 $$type: "Mint",
+                query_id: 0n,
                 amount: supply,
                 receiver: deployer_wallet_contract.address,
             })

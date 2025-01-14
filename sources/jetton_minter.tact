@@ -1,7 +1,7 @@
 import "@stdlib/ownable";
 import "@stdlib/deploy";
 import "./jetton_wallet";
-import "./exit_codes";
+import "./constants";
 import "./messages";
 
 asm fun emptyAddress(): Address { b{00} PUSHSLICE }
@@ -17,7 +17,7 @@ struct JettonMasterState {
 //Actually this contract has OwnableTransferable functionality
 //but this logic is implemented without OwnableTransferable trait
 //to match refference implementation in terms of exit codes.
-contract JettonMinter with MinterExitcodes {
+contract JettonMinter with MinterExitcodes, GasConstants {
     totalSupply: Int as coins;
     mintable: Bool;
     owner: Address;
@@ -63,14 +63,13 @@ contract JettonMinter with MinterExitcodes {
 
     // https://github.com/ton-blockchain/TEPs/blob/master/text/0089-jetton-wallet-discovery.md
     receive(msg: ProvideWalletAddress) {
-        nativeThrowUnless(self.InsufficientGasForDiscovery, context().value >= ton("0.0067056"));
+        nativeThrowUnless(self.InsufficientGasForDiscovery, context().value >= self.gasForDiscovery);
         let includedAddress: Address? = null;
         let workchain: Int = parseStdAddress(msg.owner_address.asSlice()).workchain;
         //Note, that emptyAddress != null, it is different values.
         //We do like that according to TEP above
         let targetJettonWallet: Address = emptyAddress();
 
-        //Here was no such check in Howard's code
         if(workchain == 0) {
             //Only in this case (address is from basechain) we can calculate the address
             targetJettonWallet = contractAddress(initOf JettonWallet(msg.owner_address, myAddress()));
@@ -119,9 +118,12 @@ contract JettonMinter with MinterExitcodes {
     bounced(msg: bounced<TokenTransferInternal>){
         self.totalSupply -= msg.amount;
     }
+
+    //https://github.com/ton-blockchain/TEPs/blob/master/text/0089-jetton-wallet-discovery.md#scheme
+    //take_wallet_address#d1735400 query_id:uint64 wallet_address:MsgAddress owner_address:(Maybe ^MsgAddress) = InternalMsgBody;
     inline fun takeWalletBody(targetJettonWallet: Address, includedAddress: Address?, query_id: Int): Cell {
         let body: Builder = beginCell()
-        .storeUint(0xd1735400, 32)
+        .storeUint(0xd1735400, 32) // takeWalletBody opcode
         .storeUint(query_id, 64)
         .storeSlice(targetJettonWallet.asSlice());
         if (includedAddress != null) {
