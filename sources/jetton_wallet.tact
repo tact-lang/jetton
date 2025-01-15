@@ -1,11 +1,11 @@
 import "./messages";
-import "./exit_codes";
+import "./constants";
 
 asm fun myCode(): Cell { MYCODE }
 
 //This contract also has Ownable functionality, but it is implemented without Ownable trait
 //to match refference implementation in terms of exit codes.
-contract JettonWallet with WalletExitcodes {
+contract JettonWallet with WalletExitcodes, GasConstants {
     balance: Int as coins;
     owner: Address;
     master: Address;
@@ -102,7 +102,7 @@ contract JettonWallet with WalletExitcodes {
             send(SendParameters{
                 to: msg.response_destination!!,
                 value: msgValue,
-                mode: SendIgnoreErrors, // Jetton transfer is already succeeded, Here was only PayGasSeparately in Howard's code
+                mode: SendIgnoreErrors, // Jetton transfer is already succeeded
                 //In official funC implementation it is SendIgnoreErrors
                 bounce: false,
                 body: TokenExcesses{
@@ -112,17 +112,15 @@ contract JettonWallet with WalletExitcodes {
         }
     }
 
-    receive(msg: TokenBurn){
+    receive(msg: TokenBurn) {
         nativeThrowUnless(self.IncorrectSender, sender() == self.owner);
 
         let ctx: Context = context();
         self.balance -= msg.amount; // Update balance
         nativeThrowUnless(self.IncorrectBalanceAfrerSend, self.balance >= 0);
 
-        // This is minimal possible amount of TONs for attached. But still, maybe we should icrease it?
-
-        //let fwd_fee: Int = ctx.readForwardFee(); // Gas checks
-        nativeThrowUnless(self.UnsufficientAmountOfTonForBurn, ctx.value > ton("0.011408799"));
+        // This is minimal possible amount of TONs for attached.
+        nativeThrowUnless(self.UnsufficientAmountOfTonForBurn, ctx.value > self.gasForBurn);
         // Burn tokens
         send(SendParameters{
             to: self.master,
@@ -151,7 +149,7 @@ contract JettonWallet with WalletExitcodes {
             balance: self.balance,
             owner: self.owner,
             master: self.master,
-            code: myCode() //may be raplaced by "initOf JettonDefaultWallet(self.owner, self.master).code"
+            code: myCode() //may be replaced with "initOf JettonDefaultWallet(self.owner, self.master).code"
         };
     }
 }
