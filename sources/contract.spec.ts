@@ -156,7 +156,10 @@ describe("JettonMinter", () => {
         // Create content Cell
 
         blockchain = await Blockchain.create();
+        blockchain.verbosity.blockchainLogs = true;
+
         deployer = await blockchain.treasury("deployer");
+
         notDeployer = await blockchain.treasury('notDeployer');
 
         defaultContent = beginCell().endCell();
