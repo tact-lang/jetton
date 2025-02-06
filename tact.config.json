@@ -7,7 +7,6 @@
         "options": {
             "external": false,
             "debug": true,
-            "masterchain": true,
             "ipfsAbiGetter": false,
             "interfacesGetter": false,
             "experimental": {

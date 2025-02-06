@@ -156,6 +156,8 @@ describe("JettonMinter", () => {
         // Create content Cell
 
         blockchain = await Blockchain.create();
+        blockchain.verbosity.vmLogs = "vm_logs";
+        // Create deployer contract
         deployer = await blockchain.treasury("deployer");
         notDeployer = await blockchain.treasury('notDeployer');
 

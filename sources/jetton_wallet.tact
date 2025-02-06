@@ -3,6 +3,10 @@ import "./constants";
 
 asm fun myCode(): Cell { MYCODE }
 
+fun force_chain(addr: Slice) {
+  nativeThrowUnless(333, parseStdAddress(addr).workchain == 0);
+}
+
 //This contract also has Ownable functionality, but it is implemented without Ownable trait
 //to match refference implementation in terms of exit codes.
 contract JettonWallet with WalletExitcodes, GasConstants {
@@ -18,122 +22,157 @@ contract JettonWallet with WalletExitcodes, GasConstants {
         self.owner = owner;
         self.master = master;
     }
+    fun send_tokens(in_msg_body: Slice, sender_address: Slice, msg_value: Int, fwd_fee: Int) {
+        let query_id = in_msg_body.loadUint(64);
+        let jetton_amount = in_msg_body.loadCoins();
+        let to_owner_address = in_msg_body.loadAddress();
+        force_chain(to_owner_address.asSlice());
+        self.balance -= jetton_amount;
 
+        nativeThrowUnless(705, (self.owner.asSlice() == sender_address));
+        nativeThrowUnless(706, self.balance >= 0);
 
-    receive(msg: TokenTransfer) {
-        nativeThrowUnless(self.IncorrectSender, sender() == self.owner);
+        let state_init = calculate_jetton_wallet_state_init(to_owner_address.asSlice(), self.master.asSlice(), myCode());
+        let to_wallet_address = calculate_jetton_wallet_address(state_init);
+        let response_address = in_msg_body.loadAddress();
+        let custom_payload = in_msg_body.loadBool();
+        let forward_ton_amount = in_msg_body.loadCoins();
+        nativeThrowUnless(708, in_msg_body.bits() >= 1);
+        let either_forward_payload = in_msg_body;
+        let msg = beginCell()
+            .storeUint(0x18, 6)
+            .storeSlice(to_wallet_address)
+            .storeCoins(0)
+            .storeUint(4 + 2 + 1, 1 + 4 + 4 + 64 + 32 + 1 + 1 + 1)
+            .storeRef(state_init);
+        let msg_body = beginCell()
+            .storeUint(internal_transfer(), 32)
+            .storeUint(query_id, 64)
+            .storeCoins(jetton_amount)
+            .storeSlice(self.owner.asSlice())
+            .storeSlice(response_address.asSlice())
+            .storeCoins(forward_ton_amount)
+            .storeSlice(either_forward_payload)
+            .endCell();
 
-        let totalFees: Int = (2 * context().readForwardFee() + 2 * self.gasConsumption) + self.minTonsForStorage + msg.forward_ton_amount;
+        msg = msg.storeRef(msg_body);
+        let fwd_count = forward_ton_amount != 0 ? 2 : 1;
+        nativeThrowUnless(709, msg_value >
+                            forward_ton_amount +
+                            
+                            
+                            fwd_count * fwd_fee +
+                            (2 * ton("0.015") + self.minTonsForStorage));
+                            
+                            
+                            
 
-        //Context() returns Structure with info about incoming message
-        nativeThrowUnless(self.UnsufficientAmountOfTonAttached, context().value > totalFees);
-
-        self.balance -= msg.amount;
-
-        //coins type is unsigned type, so
-        //self.balance is unsigned when storing and loading (msg.amount is unsigned too),
-        //however when doing calculations it's value may be negative, so the check is correct
-        nativeThrowUnless(self.IncorrectBalanceAfrerSend, self.balance >= 0);
-
-
-        //We shouldn't send transfers to masterchain due to higher gas price
-        nativeThrowUnless(self.InvalidDestinationWorkchain, parseStdAddress(msg.destination.asSlice()).workchain == 0);
-
-        let init: StateInit = initOf JettonWallet(msg.destination, self.master);
-        let wallet_address: Address = contractAddress(init);
-
-        send(SendParameters{
-            to: wallet_address,
-            value: 0,
-            mode: SendRemainingValue,
-            bounce: true,
-            body: TokenTransferInternal {
-            query_id: msg.query_id,
-                amount: msg.amount,
-                from: self.owner,
-                response_destination: msg.response_destination,
-                forward_ton_amount: msg.forward_ton_amount,
-                forward_payload: msg.forward_payload
-            }.toCell(),
-            code: init.code,
-            data: init.data
-        });
+        nativeSendMessage(msg.endCell(), 64); 
     }
 
-    receive(msg: TokenTransferInternal) {
-        // This message should come only from master, or from other JettonWallet
-        if (sender() != self.master) {
-            let init: StateInit = initOf JettonWallet(msg.from, self.master);
-            nativeThrowUnless(self.IncorrectSenderInternal, contractAddress(init) == sender());
+
+    fun receive_tokens (in_msg_body: Slice, sender_address: Slice, my_ton_balance: Int, fwd_fee: Int, msg_value: Int) {
+        let query_id = in_msg_body.loadUint(64);
+        let jetton_amount = in_msg_body.loadCoins();
+        self.balance += jetton_amount;
+        let from_address = in_msg_body.loadAddress();
+        let response_address = in_msg_body.loadAddress();
+        nativeThrowUnless(707,
+            (self.master.asSlice() == sender_address)
+            ||
+            (calculate_user_jetton_wallet_address(from_address.asSlice(), self.master.asSlice(), myCode()) == sender_address)
+        );
+        let forward_ton_amount = in_msg_body.loadCoins();
+
+        let ton_balance_before_msg = my_ton_balance - msg_value;
+        let storage_fee = self.minTonsForStorage - min(ton_balance_before_msg, ton("0.015"));
+        msg_value -= (storage_fee + self.gasConsumption);
+        if(forward_ton_amount > 0) {
+            msg_value -= (forward_ton_amount + fwd_fee);
+            let either_forward_payload = in_msg_body;
+
+            let msg_body = beginCell()
+                .storeUint(transfer_notification(), 32)
+                .storeUint(query_id, 64)
+                .storeCoins(jetton_amount)
+                .storeSlice(from_address.asSlice())
+                .storeSlice(either_forward_payload)
+                .endCell();
+
+            let msg = beginCell()
+            .storeUint(0x10, 6) 
+            .storeSlice(self.owner.asSlice())
+            .storeCoins(forward_ton_amount)
+            .storeUint(1, 1 + 4 + 4 + 64 + 32 + 1 + 1)
+            .storeRef(msg_body);
+
+            nativeSendMessage(msg.endCell(), 1);
         }
-        // Update balance
-        self.balance += msg.amount;
 
-        //Commented require() here because self.balance and msg.amount are coins, so they are unsigned
-        //require(self.balance >= 0, "Invalid balance");
-        // Get value for gas
-
-        let ctx: Context = context(); //Context of current message
-        let msgValue: Int = ctx.value;
-        let tonBalanceBeforeMsg = myBalance() - msgValue;
-        let storageFee = self.minTonsForStorage - min(tonBalanceBeforeMsg, self.minTonsForStorage);
-        msgValue -= (storageFee + self.gasConsumption);
-
-        let fwd_fee: Int = ctx.readForwardFee();
-
-
-        if (msg.forward_ton_amount > 0) {
-            msgValue = ((msgValue - msg.forward_ton_amount) - fwd_fee);
-            send(SendParameters{
-                to: self.owner,
-                value: msg.forward_ton_amount,
-                mode: SendPayGasSeparately,
-                bounce: false,
-                body: TokenNotification{ // 0x7362d09c -- Remind the new Owner
-                    query_id: msg.query_id,
-                    amount: msg.amount,
-                    from: msg.from,
-                    forward_payload: msg.forward_payload
-            }.toCell()
-            });
+        if ((response_address.asSlice().preloadUint(2) != 0) && (msg_value > 0)) {
+            let msg = beginCell()
+            .storeUint(0x10, 6) 
+            .storeSlice(response_address.asSlice())
+            .storeCoins(msg_value)
+            .storeUint(0, 1 + 4 + 4 + 64 + 32 + 1 + 1)
+            .storeUint(excesses(), 32)
+            .storeUint(query_id, 64);
+            nativeSendMessage(msg.endCell(), 2);
         }
-        // 0xd53276db -- Cashback to the original Sender
-        if (msg.response_destination != null && msgValue > 0) {
-            send(SendParameters{
-                to: msg.response_destination!!,
-                value: msgValue,
-                mode: SendIgnoreErrors, // Jetton transfer is already succeeded
-                //In official funC implementation it is SendIgnoreErrors
-                bounce: false,
-                body: TokenExcesses{
-                    query_id: msg.query_id
-                }.toCell()
-            });
         }
+
+        fun burn_tokens (in_msg_body: Slice, sender_address: Slice, msg_value: Int, fwd_fee: Int) {
+        let query_id = in_msg_body.loadUint(64);
+        let jetton_amount = in_msg_body.loadCoins();
+        let response_address = in_msg_body.loadAddress();
+        self.balance -= jetton_amount;
+        nativeThrowUnless(705, self.owner.asSlice() == sender_address);
+        nativeThrowUnless(706, self.balance >= 0);
+        nativeThrowUnless(707, msg_value > fwd_fee + 2 * ton("0.015"));
+
+        let msg_body = beginCell()
+            .storeUint(burn_notification(), 32)
+            .storeUint(query_id, 64)
+            .storeCoins(jetton_amount)
+            .storeSlice(self.owner.asSlice())
+            .storeSlice(response_address.asSlice())
+            .endCell();
+
+        let msg = beginCell()
+            .storeUint(0x18, 6)
+            .storeSlice(self.master.asSlice())
+            .storeCoins(0)
+            .storeUint(1, 1 + 4 + 4 + 64 + 32 + 1 + 1)
+            .storeRef(msg_body);
+
+        nativeSendMessage(msg.endCell(), 64);
     }
 
-    receive(msg: TokenBurn) {
-        nativeThrowUnless(self.IncorrectSender, sender() == self.owner);
+    receive(msg: Slice) {
+        if (msg.bits() == 0) { 
+            return;
+        }
 
-        let ctx: Context = context();
-        self.balance -= msg.amount; // Update balance
-        nativeThrowUnless(self.IncorrectBalanceAfrerSend, self.balance >= 0);
+        let fwd_fee = context().readForwardFee();
 
-        // This is minimal possible amount of TONs for attached.
-        nativeThrowUnless(self.UnsufficientAmountOfTonForBurn, ctx.value > self.gasForBurn);
-        // Burn tokens
-        send(SendParameters{
-            to: self.master,
-            value: 0,
-            mode: SendRemainingValue,
-            bounce: true,
-            body: TokenBurnNotification{
-                query_id: msg.query_id,
-                amount: msg.amount,
-                sender: self.owner,
-                response_destination: msg.response_destination
-            }.toCell()
-        });
+        let op = msg.loadUint(32);
+
+        if (op == transfer()) { 
+            self.send_tokens(msg, sender().asSlice(), context().value, fwd_fee);
+            return;
+        }
+
+        if (op == internal_transfer()) { 
+            self.receive_tokens(msg, sender().asSlice(), myBalance(), fwd_fee, context().value);
+            return;
+        }
+
+        if (op == burn()) { 
+            self.burn_tokens(msg, sender().asSlice(), context().value, fwd_fee);
+            return;
+        }
+
+        nativeThrow(0xffff);
     }
 
     bounced(msg: bounced<TokenTransferInternal>){

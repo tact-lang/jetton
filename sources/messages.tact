@@ -88,3 +88,40 @@ message(21) Mint { //We use opcode 21 to match token-contract.
     amount: Int;
     receiver: Address;
 }
+
+inline fun pack_jetton_wallet_data(balance: Int, owner_address: Slice, jetton_master_address: Slice, jetton_wallet_code: Cell): Cell {
+   return  beginCell()
+            .storeCoins(balance)
+            .storeSlice(owner_address)
+            .storeSlice(jetton_master_address)
+            .storeRef(jetton_wallet_code)
+           .endCell();
+}
+
+inline fun calculate_jetton_wallet_state_init(owner_address: Slice, jetton_master_address: Slice, jetton_wallet_code: Cell): Cell {
+  return beginCell()
+          .storeUint(0, 2)
+          .storeMaybeRef(jetton_wallet_code)
+          .storeMaybeRef(pack_jetton_wallet_data(0, owner_address, jetton_master_address, jetton_wallet_code))
+          .storeUint(0, 1)
+         .endCell();
+}
+
+inline fun calculate_jetton_wallet_address(state_init: Cell): Slice {
+  return beginCell().storeUint(4, 3)
+                     .storeInt(0, 8)
+                     .storeUint(state_init.hash(), 256)
+                     .endCell()
+                     .beginParse();
+}
+
+inline fun calculate_user_jetton_wallet_address(owner_address: Slice, jetton_master_address: Slice, jetton_wallet_code: Cell): Slice {
+  return calculate_jetton_wallet_address(calculate_jetton_wallet_state_init(owner_address, jetton_master_address, jetton_wallet_code));
+}
+
+asm fun transfer(): Int  { 0xf8a7ea5 PUSHINT }
+asm fun transfer_notification(): Int  { 0x7362d09c PUSHINT }
+asm fun internal_transfer(): Int  { 0x178d4519 PUSHINT }
+asm fun excesses(): Int  { 0xd53276db PUSHINT }
+asm fun burn(): Int  { 0x595f07bc PUSHINT }
+asm fun burn_notification(): Int  { 0x7bdd97de PUSHINT }
