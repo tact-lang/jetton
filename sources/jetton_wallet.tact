@@ -119,7 +119,7 @@ contract JettonWallet with WalletExitcodes, GasConstants {
             .storeUint(query_id, 64);
             nativeSendMessage(msg.endCell(), 2);
         }
-        }
+    }
 
         fun burn_tokens (in_msg_body: Slice, sender_address: Slice, msg_value: Int, fwd_fee: Int) {
         let query_id = in_msg_body.loadUint(64);
