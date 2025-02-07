@@ -90,8 +90,6 @@ message(21) Mint { //We use opcode 21 to match token-contract.
 }
 
 inline fun pack_jetton_wallet_data(balance: Int, owner_address: Slice, jetton_master_address: Slice, jetton_wallet_code: Cell): Cell {
-    dump(owner_address);
-    dump(jetton_master_address);
     return  beginCell()
             .storeUint(0, 1)
             .storeSlice(owner_address)
