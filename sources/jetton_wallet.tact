@@ -1,8 +1,6 @@
 import "./messages";
 import "./constants";
 
-asm fun myCode(): Cell { MYCODE }
-
 fun force_chain(addr: Slice) {
   nativeThrowUnless(333, parseStdAddress(addr).workchain == 0);
 }
@@ -121,7 +119,7 @@ contract JettonWallet with WalletExitcodes, GasConstants {
         }
     }
 
-        fun burn_tokens (in_msg_body: Slice, sender_address: Slice, msg_value: Int, fwd_fee: Int) {
+    fun burn_tokens (in_msg_body: Slice, sender_address: Slice, msg_value: Int, fwd_fee: Int) {
         let query_id = in_msg_body.loadUint(64);
         let jetton_amount = in_msg_body.loadCoins();
         let response_address = in_msg_body.loadAddress();
