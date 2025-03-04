@@ -713,6 +713,7 @@ describe("JettonMinter", () => {
         });
     });
     // implementation detail
+    // Skip this test because it is needed to proof that minimal ton amount is enough
     it.skip('works with minimal ton amount', async () => {
         const deployerJettonWallet = await userWallet(deployer.address);
         let initialJettonBalance = await deployerJettonWallet.getJettonBalance();
