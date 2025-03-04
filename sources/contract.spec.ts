@@ -712,66 +712,6 @@ describe("JettonMinter", () => {
             expect(await deployerJettonWallet.getJettonBalance()).toEqual(balanceBefore);
         });
     });
-    // implementation detail
-    // Skip this test because it is needed to proof that minimal ton amount is enough
-    it.skip('works with minimal ton amount', async () => {
-        const deployerJettonWallet = await userWallet(deployer.address);
-        let initialJettonBalance = await deployerJettonWallet.getJettonBalance();
-        const someAddress = Address.parse("EQD__________________________________________0vo");
-        const someJettonWallet = await userWallet(someAddress);
-        let initialJettonBalance2 = await someJettonWallet.getJettonBalance();
-        await deployer.send({value:toNano('1'), bounce:false, to: deployerJettonWallet.address});
-        let forwardAmount = toNano('0.3');
-        /*
-                     forward_ton_amount +
-                     fwd_count * fwd_fee +
-                     (2 * gas_consumption + min_tons_for_storage));
-        */
-        let minimalFee = 2n* fwd_fee + 2n*gas_consumption + min_tons_for_storage;
-        let sentAmount = forwardAmount + minimalFee; // not enough, need >
-
-        let forwardPayload = null;
-        (await blockchain.getContract(deployerJettonWallet.address)).balance;
-        (await blockchain.getContract(someJettonWallet.address)).balance;
-        let sendResult = await deployerJettonWallet.sendTransfer(deployer.getSender(), sentAmount,
-            sentAmount, someAddress,
-            deployer.address, null, forwardAmount, forwardPayload);
-
-        expect(sendResult.transactions).toHaveTransaction({
-            from: deployer.address,
-            to: deployerJettonWallet.address,
-            aborted: true,
-            exitCode: Errors.not_enough_ton,
-        });
-        sentAmount += 1n; // now enough
-        sendResult = await deployerJettonWallet.sendTransfer(deployer.getSender(), sentAmount,
-            sentAmount, someAddress,
-            deployer.address, null, forwardAmount, forwardPayload);
-        expect(sendResult.transactions).not.toHaveTransaction({ //no excesses
-            from: someJettonWallet.address,
-            to: deployer.address,
-        });
-        /*
-        transfer_notification#7362d09c query_id:uint64 amount:(VarUInteger 16)
-                                      sender:MsgAddress forward_payload:(Either Cell ^Cell)
-                                      = InternalMsgBody;
-        */
-        expect(sendResult.transactions).toHaveTransaction({ //notification
-            from: someJettonWallet.address,
-            to: someAddress,
-            value: forwardAmount,
-            body: beginCell().storeUint(Op.transfer_notification, 32).storeUint(0, 64) //default queryId
-                .storeCoins(sentAmount)
-                .storeAddress(deployer.address)
-                .storeUint(0, 1)
-                .endCell()
-        });
-        expect(await deployerJettonWallet.getJettonBalance()).toEqual(initialJettonBalance - sentAmount);
-        expect(await someJettonWallet.getJettonBalance()).toEqual(initialJettonBalance2 + sentAmount);
-
-        (await blockchain.getContract(deployerJettonWallet.address)).balance;
-        expect((await blockchain.getContract(someJettonWallet.address)).balance).toBeGreaterThan(min_tons_for_storage);
-    });
 
     // implementation detail
     it('wallet does not accept internal_transfer not from wallet', async () => {
@@ -858,61 +798,6 @@ describe("JettonMinter", () => {
         });
         expect(await deployerJettonWallet.getJettonBalance()).toEqual(initialJettonBalance);
         expect(await jettonMinter.getTotalSupply()).toEqual(initialTotalSupply);
-    });
-
-    it.skip('minimal burn message fee', async () => {
-        const deployerJettonWallet = await userWallet(deployer.address);
-        let initialJettonBalance   = await deployerJettonWallet.getJettonBalance();
-        let initialTotalSupply     = await jettonMinter.getTotalSupply();
-        let burnAmount   = toNano('0.01');
-        //let minimalFee   = fwd_fee + 2n*gas_consumption + min_tons_for_storage;
-        //let minimalFee = toNano("0.006");
-        let L = toNano(0.00000001);
-        let R = toNano(0.1);
-        //change false to true if you want to find minimal fee
-        //However, before doing it, remove gas-checks from the smart-contract code
-        //implementing binary search
-        while(R - L > 1 && false) {
-            let minimalFee = (L + R) / 2n;
-            try {
-                const sendLow    = await deployerJettonWallet.sendBurn(deployer.getSender(), minimalFee, // ton amount
-                    burnAmount, deployer.address, null); // amount, response address, custom payload
-
-                expect(sendLow.transactions).toHaveTransaction({
-                    from: deployerJettonWallet.address,
-                    to: jettonMinter.address,
-                    exitCode: 0
-                });
-                R = minimalFee;
-            }
-            catch {
-                L = minimalFee;
-            }
-        }
-        console.log(L);
-        let minimalFee = 11408799n;
-        //It is the number you can get in console.log(L) if setting "false" to "true" in while loop above
-
-        const sendLow    = await deployerJettonWallet.sendBurn(deployer.getSender(), minimalFee, // ton amount
-            burnAmount, deployer.address, null); // amount, response address, custom payload
-        //Here was tests, that checks that there is enough ton to jetton wallet to send a message.
-        //However, I check that it is enough ton to process a message from jetton wallet to jetton minter
-        expect(sendLow.transactions).not.toHaveTransaction({
-            from: deployerJettonWallet.address,
-            to: jettonMinter.address,
-            exitCode: 0,
-        });
-        const sendEnough = await deployerJettonWallet.sendBurn(deployer.getSender(), minimalFee + 1n,
-            burnAmount, deployer.address, null);
-
-        expect(sendEnough.transactions).toHaveTransaction({
-            from: deployerJettonWallet.address,
-            to: jettonMinter.address,
-            exitCode: 0,
-        });
-        expect(await deployerJettonWallet.getJettonBalance()).toEqual(initialJettonBalance - burnAmount);
-        expect(await jettonMinter.getTotalSupply()).toEqual(initialTotalSupply - burnAmount);
-
     });
 
     it('minter should only accept burn messages from jetton wallets', async () => {
