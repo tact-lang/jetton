@@ -6,8 +6,7 @@
         "mode": "full",
         "options": {
             "external": false,
-            "debug": true,
-            "masterchain": true,
+            "debug": false,
             "ipfsAbiGetter": false,
             "interfacesGetter": false,
             "experimental": {
