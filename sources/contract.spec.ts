@@ -3,16 +3,7 @@ import { Blockchain, internal, SandboxContract, TreasuryContract } from "@ton/sa
 import { ExtendedJettonWallet } from "./wrappers/ExtendedJettonWallet";
 import { ExtendedJettonMinter } from "./wrappers/ExtendedJettonMinter";
 
-import {
-    JettonBurn,
-    JettonMinter,
-    JettonUpdateContent,
-    Mint,
-    storeJettonBurn,
-    storeJettonTransfer,
-    storeMint,
-} from "./output/Jetton_JettonMinter";
-import { JettonTransfer } from "./output/Jetton_JettonWallet";
+import { JettonUpdateContent, storeJettonBurn, storeJettonTransfer, storeMint } from "./output/Jetton_JettonMinter";
 
 import "@ton/test-utils";
 import { getRandomInt, randomAddress } from "./utils/utils";
