@@ -1056,10 +1056,10 @@
     "@nodelib/fs.scandir" "2.1.5"
     fastq "^1.6.0"
 
-"@nowarp/misti@^0.7.0":
-  version "0.7.0"
-  resolved "https://registry.yarnpkg.com/@nowarp/misti/-/misti-0.7.0.tgz#011a14ab9d961365bf40e1f3cc3e85ed6dbe98dd"
-  integrity sha512-LuXEB04PEgRUGo6dfzoFAwE8iq5J2486zJp51v0gW4wE3+YHonYC8XS/AYWyAfayCb3f/Ff6LfY6payBbQjjLQ==
+"@nowarp/misti@^0.7.1":
+  version "0.7.1"
+  resolved "https://registry.yarnpkg.com/@nowarp/misti/-/misti-0.7.1.tgz#f78b13db27854199a1a3743e78a16bba78d9da2a"
+  integrity sha512-cgVq1p8ASFH4GTn1/h7ECn/bR5x0e/2L0zuTE9nUTjXsEJNaqXa2xfM24IlhI6D1O+EsDSOG2cqGbCIohIu3qw==
   dependencies:
     "@nowarp/souffle" "^0.1.2"
     "@tact-lang/compiler" "~1.6.1"
@@ -1185,7 +1185,23 @@
     "@smithy/util-buffer-from" "^2.2.0"
     tslib "^2.6.2"
 
-"@tact-lang/compiler@1.6.1", "@tact-lang/compiler@~1.6.1":
+"@tact-lang/compiler@github:tact-lang/tact#ef7991ddbbb5967cfb0a408ccd92fc1b9c6fc160":
+  version "1.6.1"
+  resolved "https://codeload.github.com/tact-lang/tact/tar.gz/ef7991ddbbb5967cfb0a408ccd92fc1b9c6fc160"
+  dependencies:
+    "@tact-lang/opcode" "^0.3.0"
+    "@ton/core" "0.60.1"
+    "@ton/crypto" "^3.2.0"
+    "@tonstudio/parser-runtime" "^0.0.1"
+    blockstore-core "1.0.5"
+    change-case "^4.1.2"
+    ipfs-unixfs-importer "9.0.10"
+    json-bigint "^1.0.0"
+    ohm-js "^17.1.0"
+    path-normalize "^6.0.13"
+    zod "^3.22.4"
+
+"@tact-lang/compiler@~1.6.1":
   version "1.6.1"
   resolved "https://registry.yarnpkg.com/@tact-lang/compiler/-/compiler-1.6.1.tgz#a375914ad53b4bb56312a204d27aff14e8491b1a"
   integrity sha512-EgC3dD/Nje90VHaPB4qLqAZolbf3LE0gyC6JGrWy+IOClEciAYgGZhNzE6UQam/m+K1LfCqurDv1GESq1x1Efw==
