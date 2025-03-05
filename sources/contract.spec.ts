@@ -104,6 +104,8 @@ describe("JettonMinter", () => {
         }
 
         //const playerWallet = await jettonMinter.getGetWalletAddress(deployer.address);
+        jettonWallet = blockchain.openContract(await JettonWallet.fromInit(0n, deployer.address, jettonMinter.address));
+
         jettonWallet = blockchain.openContract(
             await ExtendedJettonWallet.fromInit(0n, deployer.address, jettonMinter.address),
         );
@@ -590,9 +592,9 @@ describe("JettonMinter", () => {
         // The behavior is implementation-defined.
         // I'm still not sure if the code handling these bounces is really necessary,
         // but I could be wrong. Refer to this issue for details: https://github.com/tact-lang/jetton/issues/10
-        // This check are 100% necessary if we add an option not to deploy jetton wallet of destination address.
-        it("minter should restore supply on internal_transfer bounce", async () => {
-            const deployerJettonWallet = await userWallet(deployer.address);
+        // This check are 100% nessessary if we add an option not to deploy jetton wallet of destination address.
+        it('minter should restore supply on internal_transfer bounce', async () => {
+            const deployerJettonWallet    = await userWallet(deployer.address);
             const mintAmount = BigInt(getRandomInt(1000, 2000));
             const mintMsg = beginCell()
                 .store(
