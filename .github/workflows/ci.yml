@@ -1,37 +1,43 @@
 name: CI
 
 on:
-  push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
-  workflow_dispatch:
+    push:
+        branches: ["main"]
+    pull_request:
+        branches: ["main"]
+    workflow_dispatch:
 
 jobs:
-  test:
-    strategy:
-      fail-fast: false
-      matrix:
-        node-version: [22]
-        os: [ubuntu-latest]
-    runs-on: ${{ matrix.os }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
+    test:
+        strategy:
+            fail-fast: false
+            matrix:
+                node-version: [22]
+                os: [ubuntu-latest]
+        runs-on: ${{ matrix.os }}
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v2
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: ${{ matrix.node-version }}
+            - name: Setup Node.js
+              uses: actions/setup-node@v3
+              with:
+                  node-version: ${{ matrix.node-version }}
 
-      - name: Install dependencies
-        run: yarn install
+            - name: Install dependencies
+              run: yarn install
 
-      - name: Build
-        run: yarn build
+            - name: Check formatting
+              run: yarn fmt:check
 
-#      - name: Run Misti
-#        run: yarn misti --min-severity medium ./tact.config.json
+            - name: Type check
+              run: yarn tsc --noEmit
 
-      - name: Run tests
-        run: yarn test
+            - name: Build
+              run: yarn build
+
+            #  - name: Run Misti
+            #    run: yarn misti --min-severity medium ./tact.config.json
+
+            - name: Run tests
+              run: yarn test

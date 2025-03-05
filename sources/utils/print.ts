@@ -16,10 +16,10 @@ export function printAddress(address: Address, testnet: boolean = true) {
     console.log("Address: " + address.toString({ testOnly: testnet }));
     console.log(
         "Explorer: " +
-        "https://" +
-        (testnet ? "testnet." : "") +
-        "tonapi.io/account/" +
-        address.toString({ testOnly: testnet })
+            "https://" +
+            (testnet ? "testnet." : "") +
+            "tonapi.io/account/" +
+            address.toString({ testOnly: testnet }),
     );
     printSeparator();
 }
@@ -28,13 +28,13 @@ export function printDeploy(
     init: { code: Cell; data: Cell },
     value: bigint,
     command: Cell | string,
-    testnet: boolean = true
+    testnet: boolean = true,
 ) {
     // Resolve target address
-    let to = contractAddress(0, init);
+    const to = contractAddress(0, init);
 
-    // Resovle init
-    let initStr = base64url(beginCell().store(storeStateInit(init)).endCell().toBoc({ idx: false }));
+    // Resolve init
+    const initStr = base64url(beginCell().store(storeStateInit(init)).endCell().toBoc({ idx: false }));
 
     let link: string;
     if (typeof command === "string") {
