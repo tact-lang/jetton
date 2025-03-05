@@ -1,6 +1,6 @@
-import {JettonTransfer, JettonWallet} from "../output/Jetton_JettonWallet";
-import {Address, Builder, Cell, ContractProvider, Sender} from "@ton/core";
-import {JettonBurn} from "../output/Jetton_JettonMinter";
+import { JettonTransfer, JettonWallet } from "../output/Jetton_JettonWallet";
+import { Address, Builder, Cell, ContractProvider, Sender } from "@ton/core";
+import { JettonBurn } from "../output/Jetton_JettonMinter";
 
 export class ExtendedJettonWallet extends JettonWallet {
     constructor(address: Address, init?: { code: Cell; data: Cell }) {
