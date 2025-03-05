@@ -1,0 +1,22 @@
+{
+    "version": "0.2",
+    "language": "en",
+    "dictionaries": ["typescript", "node", "npm", "custom-dictionary"],
+    "dictionaryDefinitions": [
+        {
+            "name": "custom-dictionary",
+            "path": "./spell/custom-dictionary.txt",
+            "addWords": true
+        }
+    ],
+    "ignorePaths": [
+        "node_modules/**",
+        "dist/**",
+        "build/**",
+        ".git/**",
+        "package.json",
+        "yarn.lock",
+        "sources/output/**",
+        "tsconfig.json"
+    ]
+}

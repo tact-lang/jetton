@@ -16,7 +16,7 @@ const toKey = (key: string) => {
 };
 
 export function buildOnchainMetadata(data: { name: string; description: string; image: string }): Cell {
-    let dict = Dictionary.empty(Dictionary.Keys.BigUint(256), Dictionary.Values.Cell());
+    const dict = Dictionary.empty(Dictionary.Keys.BigUint(256), Dictionary.Values.Cell());
 
     // Store the on-chain metadata in the dictionary
     Object.entries(data).forEach(([key, value]) => {
@@ -28,7 +28,7 @@ export function buildOnchainMetadata(data: { name: string; description: string; 
 
 export function makeSnakeCell(data: Buffer) {
     // Create a cell that package the data
-    let chunks = bufferToChunks(data, CELL_MAX_SIZE_BYTES);
+    const chunks = bufferToChunks(data, CELL_MAX_SIZE_BYTES);
 
     const b = chunks.reduceRight((curCell, chunk, index) => {
         if (index === 0) {
@@ -46,7 +46,7 @@ export function makeSnakeCell(data: Buffer) {
 }
 
 function bufferToChunks(buff: Buffer, chunkSize: number) {
-    let chunks: Buffer[] = [];
+    const chunks: Buffer[] = [];
     while (buff.byteLength > 0) {
         chunks.push(buff.slice(0, chunkSize));
         buff = buff.slice(chunkSize);
