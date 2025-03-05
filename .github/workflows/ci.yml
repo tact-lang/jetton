@@ -30,11 +30,11 @@ jobs:
             - name: Check formatting
               run: yarn fmt:check
 
-            - name: Type check
-              run: yarn tsc --noEmit
-
             - name: Build
               run: yarn build
+
+            - name: Type check
+              run: yarn tsc --noEmit
 
             - name: Run Misti
               run: yarn misti --min-severity medium ./tact.config.json
