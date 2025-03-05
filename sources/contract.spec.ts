@@ -1,5 +1,7 @@
 import { Address, beginCell, Cell, ContractProvider, Sender, toNano, Builder } from "@ton/core";
 import { Blockchain, SandboxContract, TreasuryContract, internal } from "@ton/sandbox";
+import { ExtendedJettonWallet } from "./wrappers/ExtendedJettonWallet";
+import { ExtendedJettonMinter } from "./wrappers/ExtendedJettonMinter";
 
 import {
     ChangeOwner,
@@ -22,101 +24,6 @@ function jettonContentToCell(content: { type: 0 | 1; uri: string }) {
         .storeUint(content.type, 8)
         .storeStringTail(content.uri) //Snake logic under the hood
         .endCell();
-}
-class ExtendedJettonMinter extends JettonMinter {
-    constructor(address: Address, init?: { code: Cell; data: Cell }) {
-        super(address, init);
-    }
-
-    static async fromInit(totalSupply: bigint, owner: Address, jettonContent: Cell) {
-        const base = await JettonMinter.fromInit(totalSupply, owner, jettonContent);
-        if (base.init === undefined) {
-            throw new Error("JettonMinter init is not defined");
-        }
-        return new ExtendedJettonMinter(base.address, { code: base.init.code, data: base.init.data });
-    }
-
-    async getTotalSupply(provider: ContractProvider): Promise<bigint> {
-        const res = await this.getGetJettonData(provider);
-        return res.totalSupply;
-    }
-
-    async getWalletAddress(provider: ContractProvider, owner: Address): Promise<Address> {
-        return this.getGetWalletAddress(provider, owner);
-    }
-
-    async getAdminAddress(provider: ContractProvider): Promise<Address> {
-        const res = await this.getGetJettonData(provider);
-        return res.adminAddress;
-    }
-
-    async getContent(provider: ContractProvider): Promise<Cell> {
-        const res = await this.getGetJettonData(provider);
-        return res.jettonContent;
-    }
-
-    async sendMint(
-        provider: ContractProvider,
-        via: Sender,
-        to: Address,
-        jetton_amount: bigint,
-        forward_ton_amount: bigint,
-        total_ton_amount: bigint,
-    ): Promise<void> {
-        if (total_ton_amount <= forward_ton_amount) {
-            throw new Error("Total TON amount should be greater than the forward amount");
-        }
-        const msg: Mint = {
-            $$type: "Mint",
-            queryId: 0n,
-            receiver: to,
-            tonAmount: total_ton_amount,
-            mintMessage: {
-                $$type: "JettonTransferInternal",
-                queryId: 0n,
-                amount: jetton_amount,
-                sender: this.address,
-                responseDestination: this.address,
-                forwardTonAmount: forward_ton_amount,
-                forwardPayload: beginCell().storeUint(0, 1).asSlice(),
-            },
-        };
-        return this.send(provider, via, { value: total_ton_amount + toNano("0.015") }, msg);
-    }
-
-    async sendChangeAdmin(provider: ContractProvider, via: Sender, newOwner: Address): Promise<void> {
-        const msg: ChangeOwner = {
-            $$type: "ChangeOwner",
-            queryId: 0n,
-            newOwner: newOwner,
-        };
-        return this.send(provider, via, { value: toNano("0.05") }, msg);
-    }
-
-    async sendChangeContent(provider: ContractProvider, via: Sender, content: Cell): Promise<void> {
-        const msg: JettonUpdateContent = {
-            $$type: "JettonUpdateContent",
-            queryId: 0n,
-            content: content,
-        };
-        return this.send(provider, via, { value: toNano("0.05") }, msg);
-    }
-
-    async sendDiscovery(
-        provider: ContractProvider,
-        via: Sender,
-        address: Address,
-        includeAddress: boolean,
-        value: bigint = toNano("0.1"),
-    ): Promise<void> {
-        const msg: ProvideWalletAddress = {
-            $$type: "ProvideWalletAddress",
-            queryId: 0n,
-            ownerAddress: address,
-            includeAddress: includeAddress,
-        };
-        return this.send(provider, via, { value: value }, msg);
-    }
 }
 
 const min_tons_for_storage: bigint = toNano("0.015");
@@ -148,88 +55,6 @@ const Errors = {
     wrong_workchain: 333,
     balance_error: 706,
 };
-
-class ExtendedJettonWallet extends JettonWallet {
-    constructor(address: Address, init?: { code: Cell; data: Cell }) {
-        super(address, init);
-    }
-
-    static async fromInit(balance: bigint, owner: Address, minter: Address) {
-        const base = await JettonWallet.fromInit(balance, owner, minter);
-        if (base.init === undefined) {
-            throw new Error("JettonWallet init is not defined");
-        }
-        return new ExtendedJettonWallet(base.address, { code: base.init.code, data: base.init.data });
-    }
-
-    getJettonBalance = async (provider: ContractProvider): Promise<bigint> => {
-        const state = await provider.getState();
-        if (state.state.type !== "active") {
-            return 0n;
-        }
-        return (await this.getGetWalletData(provider)).balance;
-    };
-
-    sendTransfer = async (
-        provider: ContractProvider,
-        via: Sender,
-        value: bigint,
-        jetton_amount: bigint,
-        to: Address,
-        responseAddress: Address,
-        customPayload: Cell | null,
-        forward_ton_amount: bigint,
-        forwardPayload: Cell | null,
-    ): Promise<void> => {
-        const parsedForwardPayload =
-            forwardPayload != null ? forwardPayload.beginParse() : new Builder().storeUint(0, 1).endCell().beginParse();
-
-        const msg: JettonTransfer = {
-            $$type: "JettonTransfer",
-            queryId: 0n,
-            amount: jetton_amount,
-            destination: to,
-            responseDestination: responseAddress,
-            customPayload: customPayload,
-            forwardTonAmount: forward_ton_amount,
-            forwardPayload: parsedForwardPayload,
-        };
-
-        await this.send(provider, via, { value }, msg);
-    };
-
-    sendBurn = async (
-        provider: ContractProvider,
-        via: Sender,
-        value: bigint,
-        jetton_amount: bigint,
-        responseAddress: Address,
-        customPayload: Cell | null,
-    ): Promise<void> => {
-        const msg: JettonBurn = {
-            $$type: "JettonBurn",
-            queryId: 0n,
-            amount: jetton_amount,
-            responseDestination: responseAddress,
-            customPayload: customPayload,
-        };
-
-        await this.send(provider, via, { value }, msg);
-    };
-
-    sendWithdrawTons = async (_provider: ContractProvider, _via: Sender): Promise<void> => {
-        throw new Error("Not implemented");
-    };
-
-    sendWithdrawJettons = async (
-        _provider: ContractProvider,
-        _via: Sender,
-        _from: Address,
-        _amount: bigint,
-    ): Promise<void> => {
-        throw new Error("Not implemented");
-    };
-}
 
 describe("JettonMinter", () => {
     let blockchain: Blockchain;
