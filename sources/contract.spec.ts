@@ -1,20 +1,18 @@
-import { Address, beginCell, Cell, ContractProvider, Sender, toNano, Builder } from "@ton/core";
-import { Blockchain, SandboxContract, TreasuryContract, internal } from "@ton/sandbox";
+import { Address, beginCell, Cell, toNano } from "@ton/core";
+import { Blockchain, internal, SandboxContract, TreasuryContract } from "@ton/sandbox";
 import { ExtendedJettonWallet } from "./wrappers/ExtendedJettonWallet";
 import { ExtendedJettonMinter } from "./wrappers/ExtendedJettonMinter";
 
 import {
-    ChangeOwner,
-    JettonMinter,
-    Mint,
-    JettonUpdateContent,
     JettonBurn,
-    ProvideWalletAddress,
-    storeJettonTransfer,
+    JettonMinter,
+    JettonUpdateContent,
+    Mint,
     storeJettonBurn,
+    storeJettonTransfer,
     storeMint,
 } from "./output/Jetton_JettonMinter";
-import { JettonWallet, JettonTransfer } from "./output/Jetton_JettonWallet";
+import { JettonTransfer } from "./output/Jetton_JettonWallet";
 
 import "@ton/test-utils";
 import { getRandomInt, randomAddress } from "./utils/utils";
@@ -103,9 +101,6 @@ describe("JettonMinter", () => {
             _minter_code = minterCode;
         }
 
-        //const playerWallet = await jettonMinter.getGetWalletAddress(deployer.address);
-        jettonWallet = blockchain.openContract(await JettonWallet.fromInit(0n, deployer.address, jettonMinter.address));
-
         jettonWallet = blockchain.openContract(
             await ExtendedJettonWallet.fromInit(0n, deployer.address, jettonMinter.address),
         );
@@ -116,89 +111,8 @@ describe("JettonMinter", () => {
             _jwallet_code = walletCode;
         }
 
-        // userWallet = async (address: Address) => {
-        //     const newUserWallet = blockchain.openContract(
-        //         JettonWallet.fromAddress(await jettonMinter.getGetWalletAddress(address)) as ExtendedJettonWallet,
-        //     );
-
-        //     const getJettonBalance = async (provider: ContractProvider): Promise<bigint> => {
-        //         const state = await provider.getState();
-        //         if (state.state.type !== "active") {
-        //             return 0n;
-        //         }
-        //         return (await newUserWallet.getGetWalletData()).balance;
-        //     };
-
-        //     const sendTransfer = async (
-        //         provider: ContractProvider,
-        //         via: Sender,
-        //         value: bigint,
-        //         jetton_amount: bigint,
-        //         to: Address,
-        //         responseAddress: Address,
-        //         customPayload: Cell | null,
-        //         forward_ton_amount: bigint,
-        //         forwardPayload: Cell | null,
-        //     ) => {
-        //         const parsedForwardPayload =
-        //             forwardPayload != null
-        //                 ? forwardPayload.beginParse()
-        //                 : new Builder().storeUint(0, 1).endCell().beginParse(); //Either bit equals 0
-        //         const msg: JettonTransfer = {
-        //             $$type: "JettonTransfer",
-        //             queryId: 0n,
-        //             amount: jetton_amount,
-        //             destination: to,
-        //             responseDestination: responseAddress,
-        //             customPayload: customPayload,
-        //             forwardTonAmount: forward_ton_amount,
-        //             forwardPayload: parsedForwardPayload,
-        //         };
-
-        //         return await newUserWallet.send(via, { value }, msg);
-        //     };
-
-        //     const sendBurn = async (
-        //         provider: ContractProvider,
-        //         via: Sender,
-        //         value: bigint,
-        //         jetton_amount: bigint,
-        //         responseAddress: Address,
-        //         customPayload: Cell | null,
-        //     ) => {
-        //         const msg: JettonBurn = {
-        //             $$type: "JettonBurn",
-        //             queryId: 0n,
-        //             amount: jetton_amount,
-        //             responseDestination: responseAddress,
-        //             customPayload: customPayload,
-        //         };
-
-        //         return await newUserWallet.send(via, { value }, msg);
-        //     };
-
-        //     const sendWithdrawTons = async (_via: Sender): Promise<SendMessageResult> => {
-        //         throw new Error("Not implemented");
-        //     };
-
-        //     const sendWithdrawJettons = async (_via: Sender, _from: Address, _amount: bigint): Promise<SendMessageResult> => {
-        //         throw new Error("Not implemented");
-        //     };
-
-        //     return {
-        //         ...newUserWallet,
-        //         getJettonBalance,
-        //         sendTransfer,
-        //         sendBurn,
-        //         sendWithdrawTons,
-        //         sendWithdrawJettons,
-        //     };
-        // };
         userWallet = async (address: Address) => {
-            const newUserWallet = blockchain.openContract(
-                new ExtendedJettonWallet(await jettonMinter.getGetWalletAddress(address)),
-            );
-            return newUserWallet;
+            return blockchain.openContract(new ExtendedJettonWallet(await jettonMinter.getGetWalletAddress(address)));
         };
     });
 
@@ -593,8 +507,8 @@ describe("JettonMinter", () => {
         // I'm still not sure if the code handling these bounces is really necessary,
         // but I could be wrong. Refer to this issue for details: https://github.com/tact-lang/jetton/issues/10
         // This check are 100% nessessary if we add an option not to deploy jetton wallet of destination address.
-        it('minter should restore supply on internal_transfer bounce', async () => {
-            const deployerJettonWallet    = await userWallet(deployer.address);
+        it("minter should restore supply on internal_transfer bounce", async () => {
+            const deployerJettonWallet = await userWallet(deployer.address);
             const mintAmount = BigInt(getRandomInt(1000, 2000));
             const mintMsg = beginCell()
                 .store(
