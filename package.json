@@ -1,6 +1,5 @@
 {
     "private": true,
-    "type": "module",
     "scripts": {
         "build": "tact --config ./tact.config.json",
         "lint": "yarn misti ./tact.config.json",
