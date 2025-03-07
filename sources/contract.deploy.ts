@@ -34,7 +34,6 @@ dotenv.config()
     5. Run "yarn build" to compile the contract.
     6. Run this script by "yarn deploy"
  */
-
 ;(async () => {
     const client4 = new TonClient4({
         endpoint: "https://sandbox-v4.tonhubapi.com",

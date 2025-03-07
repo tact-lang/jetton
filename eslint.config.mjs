@@ -12,8 +12,8 @@ export default [
     {
         plugins: {
             "@typescript-eslint": eslintPluginTS,
-            "@unused-imports": unusedImports
-        }
+            "@unused-imports": unusedImports,
+        },
     },
 
     // add files and folders to be ignored
@@ -24,8 +24,8 @@ export default [
             ".github/*",
             ".yarn/*",
             "dist/*",
-            "sources/output/*"
-        ]
+            "sources/output/*",
+        ],
     },
 
     // Применяем базовые правила
@@ -35,8 +35,8 @@ export default [
             parser: tsParser,
             parserOptions: {
                 project: "./tsconfig.json",
-                tsconfigRootDir: __dirname
-            }
+                tsconfigRootDir: __dirname,
+            },
         },
 
         rules: {
@@ -49,8 +49,8 @@ export default [
                 {
                     argsIgnorePattern: "^_",
                     caughtErrorsIgnorePattern: "^_",
-                    varsIgnorePattern: "^_"
-                }
+                    varsIgnorePattern: "^_",
+                },
             ],
             "@typescript-eslint/prefer-optional-chain": "off",
             "@typescript-eslint/no-extraneous-class": "off",
@@ -92,7 +92,7 @@ export default [
             "unicorn/no-static-only-class": "off",
             "unicorn/no-keyword-prefix": "off",
             "unicorn/prefer-json-parse-buffer": "off",
-            "unicorn/no-array-reduce": "off"
-        }
-    }
+            "unicorn/no-array-reduce": "off",
+        },
+    },
 ]
