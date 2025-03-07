@@ -1,14 +1,22 @@
 //Huge thanks to Howard Peng for the original code of deploy script. https://github.com/howardpen9/jetton-implementation-in-tact
 
-import { beginCell, contractAddress, toNano, TonClient4, WalletContractV4, internal, fromNano } from "@ton/ton";
-import { mnemonicToPrivateKey } from "@ton/crypto";
-import { buildOnchainMetadata } from "./utils/jetton-helpers";
+import {
+    beginCell,
+    contractAddress,
+    toNano,
+    TonClient4,
+    WalletContractV4,
+    internal,
+    fromNano,
+} from "@ton/ton"
+import {mnemonicToPrivateKey} from "@ton/crypto"
+import {buildOnchainMetadata} from "./utils/jetton-helpers"
 
-import { JettonMinter, storeMint } from "./output/Jetton_JettonMinter";
+import {JettonMinter, storeMint} from "./output/Jetton_JettonMinter"
 
-import { printSeparator } from "./utils/print";
-import * as dotenv from "dotenv";
-dotenv.config();
+import {printSeparator} from "./utils/print"
+import * as dotenv from "dotenv"
+dotenv.config()
 
 /*
     (Remember to install dependencies by running "yarn install" in the terminal)
@@ -27,39 +35,39 @@ dotenv.config();
     6. Run this script by "yarn deploy"
  */
 
-(async () => {
+;(async () => {
     const client4 = new TonClient4({
         endpoint: "https://sandbox-v4.tonhubapi.com",
         //endpoint: "https://mainnet-v4.tonhubapi.com",
-    });
+    })
 
-    const mnemonics = (process.env.mnemonics || "").toString(); // 🔴 Change to your own, by creating .env file!
-    const keyPair = await mnemonicToPrivateKey(mnemonics.split(" "));
-    const secretKey = keyPair.secretKey;
-    const workchain = 0; //we are working in basechain.
-    const deployer_wallet = WalletContractV4.create({ workchain, publicKey: keyPair.publicKey });
-    console.log(deployer_wallet.address);
+    const mnemonics = (process.env.mnemonics || "").toString() // 🔴 Change to your own, by creating .env file!
+    const keyPair = await mnemonicToPrivateKey(mnemonics.split(" "))
+    const secretKey = keyPair.secretKey
+    const workchain = 0 //we are working in basechain.
+    const deployer_wallet = WalletContractV4.create({workchain, publicKey: keyPair.publicKey})
+    console.log(deployer_wallet.address)
 
-    const deployer_wallet_contract = client4.open(deployer_wallet);
+    const deployer_wallet_contract = client4.open(deployer_wallet)
 
     const jettonParams = {
         name: "TactJetton",
         description: "This is description of Jetton, written in Tact-lang",
         symbol: "TACT",
         image: "https://raw.githubusercontent.com/tact-lang/tact/refs/heads/main/docs/public/logomark-light.svg",
-    };
+    }
 
     // Create content Cell
-    const content = buildOnchainMetadata(jettonParams);
+    const content = buildOnchainMetadata(jettonParams)
 
     // Compute init data for deployment
     // NOTICE: the parameters inside the init functions were the input for the contract address
     // which means any changes will change the smart contract address as well
-    const init = await JettonMinter.init(0n, deployer_wallet_contract.address, content);
-    const jettonMaster = contractAddress(workchain, init);
-    const deployAmount = toNano("0.15");
+    const init = await JettonMinter.init(0n, deployer_wallet_contract.address, content)
+    const jettonMaster = contractAddress(workchain, init)
+    const deployAmount = toNano("0.15")
 
-    const supply = toNano(1000000000); // 🔴 Specify total supply in nano
+    const supply = toNano(1000000000) // 🔴 Specify total supply in nano
     const packed_msg = beginCell()
         .store(
             storeMint({
@@ -78,20 +86,23 @@ dotenv.config();
                 tonAmount: supply,
             }),
         )
-        .endCell();
+        .endCell()
 
     // send a message on new address contract to deploy it
-    const seqno: number = await deployer_wallet_contract.getSeqno();
-    console.log("🛠️Preparing new outgoing massage from deployment wallet. \n" + deployer_wallet_contract.address);
-    console.log("Seqno: ", seqno + "\n");
-    printSeparator();
+    const seqno: number = await deployer_wallet_contract.getSeqno()
+    console.log(
+        "🛠️Preparing new outgoing massage from deployment wallet. \n" +
+            deployer_wallet_contract.address,
+    )
+    console.log("Seqno: ", seqno + "\n")
+    printSeparator()
 
     // Get deployment wallet balance
-    const balance: bigint = await deployer_wallet_contract.getBalance();
+    const balance: bigint = await deployer_wallet_contract.getBalance()
 
-    console.log("Current deployment wallet balance = ", fromNano(balance).toString(), "💎TON");
-    console.log("Minting:: ", fromNano(supply));
-    printSeparator();
+    console.log("Current deployment wallet balance = ", fromNano(balance).toString(), "💎TON")
+    console.log("Minting:: ", fromNano(supply))
+    printSeparator()
 
     await deployer_wallet_contract.sendTransfer({
         seqno,
@@ -107,6 +118,6 @@ dotenv.config();
                 body: packed_msg,
             }),
         ],
-    });
-    console.log("====== Deployment message sent to =======\n", jettonMaster);
-})();
+    })
+    console.log("====== Deployment message sent to =======\n", jettonMaster)
+})()
