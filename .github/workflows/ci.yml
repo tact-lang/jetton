@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
   workflow_dispatch:
 
 jobs:
@@ -27,11 +27,20 @@ jobs:
       - name: Install dependencies
         run: yarn install
 
+      - name: Check formatting
+        run: yarn fmt:check
+
+      - name: Check spelling
+        run: yarn spell:check
+
       - name: Build
         run: yarn build
 
-#      - name: Run Misti
-#        run: yarn misti --min-severity medium ./tact.config.json
+      - name: Type check
+        run: yarn tsc --noEmit
+
+      - name: Run Misti
+        run: yarn misti --min-severity medium ./tact.config.json
 
       - name: Run tests
         run: yarn test

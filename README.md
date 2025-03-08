@@ -1,4 +1,5 @@
 # Jetton (Fungible Token) Implementation in Tact
+
 ![Work in Progress](https://img.shields.io/badge/Work_In_Progress-Do%20not%20use%20in%20production%20yet-red?style=for-the-badge)
 
 # **This will definitely be a stable version of Jettons, but not for now. Please, do not use this code in production. It might have some bugs.**
@@ -14,6 +15,7 @@ This project includes a complete setup for working with Tact-based Jetton smart 
 ## Goals
 
 This implementation is fully compatible with the following TON standards:
+
 - [TEP-64](https://github.com/ton-blockchain/TEPs/blob/master/text/0064-token-data-standard.md),
 - [TEP-74](https://github.com/ton-blockchain/TEPs/blob/master/text/0074-jettons-standard.md),
 - [TEP-89](https://github.com/ton-blockchain/TEPs/blob/master/text/0089-jetton-wallet-discovery.md).
@@ -92,7 +94,7 @@ The main smart contract is `jetton_minter.tact`, it imports `messages.tact` and 
 
 ### Inherited traits
 
-Jetton Minter uses only *OwnableTransferable*, which is inherited from the *Ownable* trait. Jetton Wallet only uses the *Ownable* trait. All these traits come from the Tact's [standard libraries](https://docs.tact-lang.org/ref/standard-libraries/).
+Jetton Minter uses only _OwnableTransferable_, which is inherited from the _Ownable_ trait. Jetton Wallet only uses the _Ownable_ trait. All these traits come from the Tact's [standard libraries](https://docs.tact-lang.org/ref/standard-libraries/).
 
 Schemes of inheritance and imports:
 
