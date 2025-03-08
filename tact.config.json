@@ -11,7 +11,7 @@
                 "ipfsAbiGetter": false,
                 "interfacesGetter": false,
                 "experimental": {
-                    "inline": false
+                    "inline": true
                 }
             }
         }

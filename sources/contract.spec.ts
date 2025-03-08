@@ -539,7 +539,7 @@ describe("JettonMinter", () => {
         // The behavior is implementation-defined.
         // I'm still not sure if the code handling these bounces is really necessary,
         // but I could be wrong. Refer to this issue for details: https://github.com/tact-lang/jetton/issues/10
-        // This check are 100% nessessary if we add an option not to deploy jetton wallet of destination address.
+        // This check are 100% necessary if we add an option not to deploy jetton wallet of destination address.
         it("minter should restore supply on internal_transfer bounce", async () => {
             const deployerJettonWallet = await userWallet(deployer.address)
             const mintAmount = BigInt(getRandomInt(1000, 2000))

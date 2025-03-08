@@ -30,6 +30,9 @@ jobs:
       - name: Check formatting
         run: yarn fmt:check
 
+      - name: Check spelling
+        run: yarn spell:check
+
       - name: Build
         run: yarn build
 
