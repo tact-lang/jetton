@@ -17,7 +17,7 @@ contract JettonWallet(
         throwUnless(708, msg.forwardPayload.bits() >= 1);
 
         let ctx = context();
-        let fwdCount = 1 + msg.forwardTonAmount & 1;
+        let fwdCount = 1 + sign(msg.forwardTonAmount); // msg.forwardTonAmount is coins, so it's not negative
         throwUnless(709, ctx.value >
             msg.forwardTonAmount +
             fwdCount * ctx.readForwardFee() +
@@ -52,8 +52,6 @@ contract JettonWallet(
         let ctx: Context = context();
         let msgValue: Int = ctx.value;
         let tonBalanceBeforeMsg = myBalance() - msgValue;
-        let storageFee = self.minTonsForStorage - min(tonBalanceBeforeMsg, self.minTonsForStorage);
-        msgValue -= (storageFee + self.gasConsumption);
 
         if (msg.forwardTonAmount > 0) {
             let fwdFee: Int = ctx.readForwardFee();
@@ -71,7 +69,7 @@ contract JettonWallet(
                 }.toCell(),
             });
         }
-
+        nativeReserve(self.minTonsForStorage, ReserveAtMost);
         // 0xd53276db -- Cashback to the original Sender
         if (msg.responseDestination != null && msgValue > 0) {
             message(MessageParameters{
