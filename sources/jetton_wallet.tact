@@ -1,7 +1,7 @@
 import "./messages";
 import "./constants";
 
-contract JettonWallet (
+contract JettonWallet(
     balance: Int as coins,
     owner: Address,
     master: Address,
