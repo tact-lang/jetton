@@ -69,13 +69,13 @@ contract JettonWallet(
                 }.toCell(),
             });
         }
-        nativeReserve(self.minTonsForStorage, ReserveAtMost);
+        nativeReserve(max(tonBalanceBeforeMsg, self.minTonsForStorage), ReserveAtMost);
         // 0xd53276db -- Cashback to the original Sender
         if (msg.responseDestination != null && msgValue > 0) {
             message(MessageParameters{
                 to: msg.responseDestination!!,
                 value: msgValue,
-                mode: SendIgnoreErrors,
+                mode: SendRemainingBalance + SendIgnoreErrors,
                 bounce: false,
                 body: JettonExcesses{ queryId: msg.queryId }.toCell(),
             });
