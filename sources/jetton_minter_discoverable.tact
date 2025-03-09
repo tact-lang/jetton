@@ -2,8 +2,8 @@
 
 import "./jetton_wallet";
 import "./messages";
+import "./constants";
 
-const ProvideAddressGasConsumption: Int = ton("0.01");
 const Workchain: Int = 0;
 
 struct JettonMasterState {
@@ -18,12 +18,12 @@ contract JettonMinter(
     totalSupply: Int as coins,
     owner: Address,
     jettonContent: Cell,
-) {
+) with MinterExitcodes, GasConstants {
     receive(msg: JettonBurnNotification) {
         let sender = parseStdAddress(sender().asSlice());
         let wallet = getJettonBasechainWalletByOwner(msg.sender);
 
-        throwUnless(74, sender.workchain == Workchain && sender.address == wallet.hash!!);
+        throwUnless(self.UnauthorizedBurn, sender.workchain == Workchain && sender.address == wallet.hash!!);
 
         self.totalSupply -= msg.amount;
 
@@ -42,7 +42,7 @@ contract JettonMinter(
         // we use message fwdFee for estimation of forward_payload costs
         let ctx = context();
         let fwdFee = ctx.readForwardFee();
-        throwUnless(75, ctx.value > fwdFee + ProvideAddressGasConsumption);
+        throwUnless(self.InsufficientGasForDiscovery, ctx.value > fwdFee + getComputeFee(self.gasForDiscovery, false));
 
         let ownerWorkchain: Int = parseStdAddress(msg.ownerAddress.asSlice()).workchain;
 
@@ -60,12 +60,12 @@ contract JettonMinter(
     }
 
     receive(msg: JettonUpdateContent) {
-        throwUnless(73, sender() == self.owner);
+        throwUnless(self.IncorrectSender, sender() == self.owner);
         self.jettonContent = msg.content;
     }
 
     receive(msg: Mint) {
-        throwUnless(73, sender() == self.owner);
+        throwUnless(self.IncorrectSender, sender() == self.owner);
         self.totalSupply += msg.mintMessage.amount;
 
         deploy(DeployParameters{
@@ -78,7 +78,7 @@ contract JettonMinter(
     }
 
     receive(msg: ChangeOwner) {
-        throwUnless(73, sender() == self.owner);
+        throwUnless(self.IncorrectSender, sender() == self.owner);
         self.owner = msg.newOwner;
     }
 

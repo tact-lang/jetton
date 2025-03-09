@@ -1,27 +1,26 @@
 import "./messages";
+import "./constants";
 
-contract JettonWallet(
+contract JettonWallet (
     balance: Int as coins,
     owner: Address,
     master: Address,
-) {
-    const minTonsForStorage: Int = ton("0.01");
-    const gasConsumption: Int = ton("0.015");
+) with WalletExitcodes, GasConstants {
 
     receive(msg: JettonTransfer) {
-        throwUnless(333, parseStdAddress(msg.destination.asSlice()).workchain == 0);
-        throwUnless(705, sender() == self.owner);
+        throwUnless(self.InvalidDestinationWorkchain, parseStdAddress(msg.destination.asSlice()).workchain == 0);
+        throwUnless(self.IncorrectSender, sender() == self.owner);
 
         self.balance -= msg.amount;
-        throwUnless(706, self.balance >= 0);
-        throwUnless(708, msg.forwardPayload.bits() >= 1);
+        throwUnless(self.IncorrectBalanceAfrerSend, self.balance >= 0);
+        throwUnless(self.InvalidForwardPayload, msg.forwardPayload.bits() >= 1);
 
         let ctx = context();
         let fwdCount = 1 + msg.forwardTonAmount & 1;
-        throwUnless(709, ctx.value >
+        throwUnless(self.UnsufficientAmountOfTonAttached, ctx.value >
             msg.forwardTonAmount +
             fwdCount * ctx.readForwardFee() +
-            (2 * self.gasConsumption + self.minTonsForStorage)
+            (2 * getComputeFee(self.gasForTransfer, false) + self.minTonsForStorage)
         );
 
         deploy(DeployParameters{
@@ -46,14 +45,14 @@ contract JettonWallet(
         // This message should come only from master, or from other JettonWallet
         let wallet: StateInit = initOf JettonWallet(0, msg.sender, self.master);
         if (sender() != contractAddress(wallet)) {
-            throwUnless(707, self.master == sender());
+            throwUnless(self.IncorrectSenderInternal, self.master == sender());
         }
 
         let ctx: Context = context();
         let msgValue: Int = ctx.value;
         let tonBalanceBeforeMsg = myBalance() - msgValue;
         let storageFee = self.minTonsForStorage - min(tonBalanceBeforeMsg, self.minTonsForStorage);
-        msgValue -= (storageFee + self.gasConsumption);
+        msgValue -= (storageFee + getComputeFee(self.gasForTransfer, false));
 
         if (msg.forwardTonAmount > 0) {
             let fwdFee: Int = ctx.readForwardFee();
@@ -85,14 +84,14 @@ contract JettonWallet(
     }
 
     receive(msg: JettonBurn) {
-        throwUnless(705, sender() == self.owner);
+        throwUnless(self.IncorrectSender, sender() == self.owner);
 
         self.balance -= msg.amount;
-        throwUnless(706, self.balance >= 0);
+        throwUnless(self.IncorrectBalanceAfrerSend, self.balance >= 0);
 
         let ctx = context();
         let fwdFee: Int = ctx.readForwardFee();
-        throwUnless(707, ctx.value > (fwdFee + 2 * self.gasConsumption));
+        throwUnless(self.UnsufficientAmountOfTonForBurn, ctx.value > (fwdFee + 2 * getComputeFee(self.gasForBurn, false)));
 
         message(MessageParameters{
             to: self.master,
