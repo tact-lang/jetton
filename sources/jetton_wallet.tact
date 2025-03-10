@@ -21,7 +21,7 @@ contract JettonWallet(
             msg.forwardTonAmount +
             fwdCount * ctx.readForwardFee() +
             (2 * getComputeFee(gasForTransfer, false) + minTonsForStorage),
-            "Unsufficient amount of TON attached"
+            "Insufficient amount of TON attached"
         );
 
         deploy(DeployParameters{

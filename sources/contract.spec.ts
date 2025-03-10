@@ -498,7 +498,7 @@ describe("JettonMinter", () => {
             from: deployer.address,
             on: deployerJettonWallet.address,
             aborted: true,
-            exitCode: JettonWallet.errors["Unsufficient amount of TON attached"],
+            exitCode: JettonWallet.errors["Insufficient amount of TON attached"],
         })
         // Make sure value bounced
         expect(sendResult.transactions).toHaveTransaction({
