@@ -58,7 +58,7 @@ export class ExtendedJettonWallet extends JettonWallet {
         via: Sender,
         value: bigint,
         jetton_amount: bigint,
-        responseAddress: Address,
+        responseAddress: Address | null,
         customPayload: Cell | null,
     ): Promise<void> => {
         const msg: JettonBurn = {
