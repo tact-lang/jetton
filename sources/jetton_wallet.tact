@@ -69,7 +69,7 @@ contract JettonWallet(
                 }.toCell(),
             });
         }
-        nativeReserve(max(tonBalanceBeforeMsg, self.minTonsForStorage), ReserveAtMost);
+        nativeReserve(max(tonBalanceBeforeMsg, minTonsForStorage), ReserveAtMost);
         // 0xd53276db -- Cashback to the original Sender
         if (msg.responseDestination != null && msgValue > 0) {
             message(MessageParameters{
