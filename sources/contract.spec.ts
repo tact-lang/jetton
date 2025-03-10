@@ -10,6 +10,7 @@ import {
     storeMint,
     CloseMinting,
     Mint,
+    JettonMinter,
 } from "./output/Jetton_JettonMinter"
 
 import "@ton/test-utils"
@@ -1167,6 +1168,7 @@ describe("JettonMinter", () => {
             from: deployer.address,
             to: jettonMinter.address,
             aborted: true,
+            exitCode: Number(JettonMinter.MintIsClosed),
         })
     })
 
