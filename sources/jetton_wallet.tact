@@ -5,7 +5,7 @@ contract JettonWallet(
     balance: Int as coins,
     owner: Address,
     master: Address,
-) with GasConstants {
+) {
 
     receive(msg: JettonTransfer) {
         require(parseStdAddress(msg.destination.asSlice()).workchain == 0, "Invalid destination workchain");
@@ -20,7 +20,7 @@ contract JettonWallet(
         require(ctx.value >
             msg.forwardTonAmount +
             fwdCount * ctx.readForwardFee() +
-            (2 * getComputeFee(self.gasForTransfer, false) + self.minTonsForStorage),
+            (2 * getComputeFee(gasForTransfer, false) + minTonsForStorage),
             "Unsufficient amount of TON attached"
         );
 
@@ -52,8 +52,8 @@ contract JettonWallet(
         let ctx: Context = context();
         let msgValue: Int = ctx.value;
         let tonBalanceBeforeMsg = myBalance() - msgValue;
-        let storageFee = self.minTonsForStorage - min(tonBalanceBeforeMsg, self.minTonsForStorage);
-        msgValue -= (storageFee + getComputeFee(self.gasForTransfer, false));
+        let storageFee = minTonsForStorage - min(tonBalanceBeforeMsg, minTonsForStorage);
+        msgValue -= (storageFee + getComputeFee(gasForTransfer, false));
 
         if (msg.forwardTonAmount > 0) {
             let fwdFee: Int = ctx.readForwardFee();
@@ -92,7 +92,7 @@ contract JettonWallet(
 
         let ctx = context();
         let fwdFee: Int = ctx.readForwardFee();
-        require(ctx.value > (fwdFee + 2 * getComputeFee(self.gasForBurn, false)), "Unsufficient amount of TON attached");
+        require(ctx.value > (fwdFee + 2 * getComputeFee(gasForBurn, false)), "Unsufficient amount of TON attached");
 
         message(MessageParameters{
             to: self.master,

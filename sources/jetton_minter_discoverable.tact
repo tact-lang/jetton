@@ -18,7 +18,7 @@ contract JettonMinter(
     totalSupply: Int as coins,
     owner: Address,
     jettonContent: Cell,
-) with GasConstants {
+) {
     receive(msg: JettonBurnNotification) {
         let sender = parseStdAddress(sender().asSlice());
         let wallet = getJettonBasechainWalletByOwner(msg.sender);
@@ -42,7 +42,7 @@ contract JettonMinter(
         // we use message fwdFee for estimation of forward_payload costs
         let ctx = context();
         let fwdFee = ctx.readForwardFee();
-        require(ctx.value > fwdFee + getComputeFee(self.gasForDiscovery, false), "Insufficient gas for discovery");
+        require(ctx.value > fwdFee + getComputeFee(gasForDiscovery, false), "Insufficient gas for discovery");
         let ownerWorkchain: Int = parseStdAddress(msg.ownerAddress.asSlice()).workchain;
 
         let targetJettonWallet: BasechainAddress =
