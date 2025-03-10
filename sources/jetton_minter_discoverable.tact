@@ -83,7 +83,7 @@ contract JettonMinter(
     }
 
     receive(msg: CloseMinting) {
-        throwUnless(self.IncorrectSender, sender() == self.owner);
+        require(sender() == self.owner, "Incorrect sender");
         self.mintable = false;
         cashback(sender());
     }
