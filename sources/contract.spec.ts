@@ -1,4 +1,4 @@
-import {Address, beginCell, Cell, toNano} from "@ton/core"
+import {Address, beginCell, Builder, Cell, toNano} from "@ton/core"
 import {Blockchain, internal, SandboxContract, TreasuryContract} from "@ton/sandbox"
 import {ExtendedJettonWallet} from "./wrappers/ExtendedJettonWallet"
 import {ExtendedJettonMinter} from "./wrappers/ExtendedJettonMinter"
@@ -14,6 +14,7 @@ import {
 import "@ton/test-utils"
 import {getRandomInt, randomAddress} from "./utils/utils"
 import {JettonWallet} from "./output/Jetton_JettonWallet"
+import {randomBytes} from "crypto"
 
 function jettonContentToCell(content: {type: 0 | 1; uri: string}) {
     return beginCell()
@@ -1008,6 +1009,73 @@ describe("JettonMinter", () => {
                 .storeRef(beginCell().storeAddress(badAddr).endCell())
                 .endCell(),
         })
+    })
+
+    it("Can send even giant payload", async () => {
+        const deployerJettonWallet = await userWallet(deployer.address)
+        const jwState = (await blockchain.getContract(deployerJettonWallet.address)).account
+        const originalBalance = jwState.account!.storage.balance.coins
+
+        jwState.account!.storage.balance.coins = 0n // set balance to 0
+        await blockchain.setShardAccount(deployerJettonWallet.address, jwState)
+
+        const storeMaxPayload = (curBuilder: Builder) => {
+            let rootBuilder = curBuilder
+            let depth = 0
+            const maxDepth = 5
+
+            function dfs(builder: Builder, currentDepth: number) {
+                if (currentDepth >= maxDepth) {
+                    return
+                }
+
+                builder.storeBuffer(randomBytes(127))
+
+                for (let i = 0; i < 4; i++) {
+                    let newBuilder = beginCell()
+                    dfs(newBuilder, currentDepth + 1)
+                    builder.storeRef(newBuilder.endCell())
+                }
+            }
+
+            dfs(rootBuilder, depth)
+            return rootBuilder
+        }
+        const maxPayload = beginCell()
+            .storeUint(1, 1)
+            .storeRef(storeMaxPayload(beginCell()).endCell())
+            .endCell()
+
+        const sendResult = await deployerJettonWallet.sendTransfer(
+            deployer.getSender(),
+            toNano("0.2"),
+            0n,
+            notDeployer.address,
+            notDeployer.address,
+            null,
+            2n,
+            maxPayload,
+        )
+
+        console.log((await blockchain.getContract(deployerJettonWallet.address)).balance)
+        try {
+            expect(sendResult.transactions).toHaveTransaction({
+                from: (await userWallet(notDeployer.address)).address,
+                to: notDeployer.address,
+                success: true,
+            })
+        } catch {
+            expect(sendResult.transactions).toHaveTransaction({
+                on: deployerJettonWallet.address,
+                aborted: true,
+            })
+        }
+
+        jwState.account!.storage.balance.coins = originalBalance // restore balance
+        await blockchain.setShardAccount(deployerJettonWallet.address, jwState)
+        expect((await blockchain.getContract(deployerJettonWallet.address)).balance).toEqual(
+            originalBalance,
+        )
     })
 
     // This test consume a lot of time: 18 sec
