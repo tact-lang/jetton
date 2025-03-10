@@ -4,7 +4,6 @@ import {ExtendedJettonWallet} from "./wrappers/ExtendedJettonWallet"
 import {ExtendedJettonMinter} from "./wrappers/ExtendedJettonMinter"
 
 import {
-    JettonMinter,
     JettonUpdateContent,
     storeJettonBurn,
     storeJettonTransfer,
@@ -1104,7 +1103,7 @@ describe("JettonMinter", () => {
             from: notDeployer.address,
             to: jettonMinter.address,
             aborted: true,
-            exitCode: Errors.not_admin,
+            exitCode: JettonMinter.errors["Incorrect sender"],
         })
         expect((await jettonMinter.getGetJettonData()).mintable).toBeTruthy()
 
@@ -1144,7 +1143,7 @@ describe("JettonMinter", () => {
             from: deployer.address,
             to: jettonMinter.address,
             aborted: true,
-            exitCode: Number(JettonMinter.MintIsClosed),
+            exitCode: JettonMinter.errors["Mint is closed"],
         })
     })
 

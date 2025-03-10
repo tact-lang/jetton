@@ -66,6 +66,7 @@ contract JettonMinter(
 
     receive(msg: Mint) {
         require(sender() == self.owner, "Incorrect sender");
+        require(self.mintable, "Mint is closed");
         self.totalSupply += msg.mintMessage.amount;
 
         deploy(DeployParameters{
