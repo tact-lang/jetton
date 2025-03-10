@@ -4,6 +4,7 @@ import {ExtendedJettonWallet} from "./wrappers/ExtendedJettonWallet"
 import {ExtendedJettonMinter} from "./wrappers/ExtendedJettonMinter"
 
 import {
+    JettonMinter,
     JettonUpdateContent,
     storeJettonBurn,
     storeJettonTransfer,
@@ -12,6 +13,7 @@ import {
 
 import "@ton/test-utils"
 import {getRandomInt, randomAddress} from "./utils/utils"
+import {JettonWallet} from "./output/Jetton_JettonWallet"
 
 function jettonContentToCell(content: {type: 0 | 1; uri: string}) {
     return beginCell()
@@ -23,32 +25,6 @@ function jettonContentToCell(content: {type: 0 | 1; uri: string}) {
 const min_tons_for_storage: bigint = toNano("0.015")
 const _gas_consumption: bigint = toNano("0.015")
 const _fwd_fee: bigint = 721606n
-
-const Op = {
-    token_transfer: 0xf8a7ea5,
-    internal_transfer: 0x178d4519,
-    transfer_notification: 0x7362d09c,
-    token_burn: 0x595f07bc,
-    burn_notification: 0x7bdd97de,
-    token_excesses: 0xd53276db,
-    provide_wallet_address: 0x2c76b973,
-    take_wallet_address: 0xd1735400,
-    mint: 0xfc708bd2,
-}
-
-const Errors = {
-    invalid_op: 709,
-    not_admin: 73,
-    unauthorized_burn: 74,
-    discovery_fee_not_matched: 75,
-    wrong_op: 0xffff,
-    not_owner: 705,
-    not_enough_ton: 709,
-    not_enough_gas: 707,
-    not_valid_wallet: 707,
-    wrong_workchain: 333,
-    balance_error: 706,
-}
 
 describe("JettonMinter", () => {
     let blockchain: Blockchain
@@ -203,7 +179,7 @@ describe("JettonMinter", () => {
             from: notDeployer.address,
             to: jettonMinter.address,
             aborted: true,
-            exitCode: Errors.not_admin,
+            exitCode: JettonMinter.errors["Incorrect sender"],
         })
         expect(await deployerJettonWallet.getJettonBalance()).toEqual(initialJettonBalance)
         expect(await jettonMinter.getTotalSupply()).toEqual(initialTotalSupply)
@@ -237,7 +213,7 @@ describe("JettonMinter", () => {
             from: notDeployer.address,
             on: jettonMinter.address,
             aborted: true,
-            exitCode: Errors.not_admin,
+            exitCode: JettonMinter.errors["Incorrect sender"],
         })
     })
 
@@ -263,7 +239,7 @@ describe("JettonMinter", () => {
             from: notDeployer.address,
             to: jettonMinter.address,
             aborted: true,
-            exitCode: Errors.not_admin, // error::unauthorized_change_content_request
+            exitCode: JettonMinter.errors["Incorrect sender"],
         })
     })
     it("wallet owner should be able to send jettons", async () => {
@@ -325,7 +301,7 @@ describe("JettonMinter", () => {
             from: notDeployer.address,
             to: deployerJettonWallet.address,
             aborted: true,
-            exitCode: Errors.not_owner,
+            exitCode: JettonWallet.errors["Incorrect sender"],
         })
         expect(await deployerJettonWallet.getJettonBalance()).toEqual(initialJettonBalance)
         expect(await notDeployerJettonWallet.getJettonBalance()).toEqual(initialJettonBalance2)
@@ -353,7 +329,7 @@ describe("JettonMinter", () => {
             from: deployer.address,
             to: deployerJettonWallet.address,
             aborted: true,
-            exitCode: Errors.balance_error,
+            exitCode: JettonWallet.errors["Incorrect balance after send"],
         })
         expect(await deployerJettonWallet.getJettonBalance()).toEqual(initialJettonBalance)
         expect(await notDeployerJettonWallet.getJettonBalance()).toEqual(initialJettonBalance2)
@@ -394,7 +370,7 @@ describe("JettonMinter", () => {
             to: notDeployer.address,
             value: forwardAmount,
             body: beginCell()
-                .storeUint(Op.transfer_notification, 32)
+                .storeUint(JettonMinter.opcodes.JettonNotification, 32)
                 .storeUint(0, 64) //default queryId
                 .storeCoins(sentAmount)
                 .storeAddress(deployer.address)
@@ -449,7 +425,7 @@ describe("JettonMinter", () => {
             to: notDeployer.address,
             value: forwardAmount,
             body: beginCell()
-                .storeUint(Op.transfer_notification, 32)
+                .storeUint(JettonMinter.opcodes.JettonNotification, 32)
                 .storeUint(0, 64) //default queryId
                 .storeCoins(sentAmount)
                 .storeAddress(deployer.address)
@@ -522,7 +498,7 @@ describe("JettonMinter", () => {
             from: deployer.address,
             on: deployerJettonWallet.address,
             aborted: true,
-            exitCode: Errors.not_enough_ton,
+            exitCode: JettonWallet.errors["Unsufficient amount of TON attached"],
         })
         // Make sure value bounced
         expect(sendResult.transactions).toHaveTransaction({
@@ -582,7 +558,7 @@ describe("JettonMinter", () => {
                 throw new Error("No out message") // It is impossible due to the check above
             }
             const outMsgSc = firstOutMsg.body.beginParse()
-            expect(outMsgSc.preloadUint(32)).toEqual(Op.internal_transfer)
+            expect(outMsgSc.preloadUint(32)).toEqual(JettonMinter.opcodes.JettonTransferInternal)
 
             expect(await jettonMinter.getTotalSupply()).toEqual(supplyBefore + mintAmount)
 
@@ -648,7 +624,7 @@ describe("JettonMinter", () => {
                 throw new Error("No out message") // It is impossible due to the check above
             }
             const outMsgSc = firstOutMsg.body.beginParse()
-            expect(outMsgSc.preloadUint(32)).toEqual(Op.internal_transfer)
+            expect(outMsgSc.preloadUint(32)).toEqual(JettonMinter.opcodes.JettonTransferInternal)
 
             expect(await deployerJettonWallet.getJettonBalance()).toEqual(balanceBefore - txAmount)
 
@@ -701,7 +677,7 @@ describe("JettonMinter", () => {
                 throw new Error("No out message") // It is impossible due to the check above
             }
             const outMsgSc = firstOutMsg.body.beginParse()
-            expect(outMsgSc.preloadUint(32)).toEqual(Op.burn_notification)
+            expect(outMsgSc.preloadUint(32)).toEqual(JettonMinter.opcodes.JettonBurnNotification)
 
             expect(await deployerJettonWallet.getJettonBalance()).toEqual(
                 balanceBefore - burnAmount,
@@ -754,7 +730,7 @@ describe("JettonMinter", () => {
             from: notDeployer.address,
             to: deployerJettonWallet.address,
             aborted: true,
-            exitCode: Errors.not_valid_wallet,
+            exitCode: JettonWallet.errors["Incorrect sender"],
         })
         expect(await deployerJettonWallet.getJettonBalance()).toEqual(initialJettonBalance)
     })
@@ -803,7 +779,7 @@ describe("JettonMinter", () => {
             from: notDeployer.address,
             to: deployerJettonWallet.address,
             aborted: true,
-            exitCode: Errors.not_owner,
+            exitCode: JettonWallet.errors["Incorrect sender"],
         })
         expect(await deployerJettonWallet.getJettonBalance()).toEqual(initialJettonBalance)
         expect(await jettonMinter.getTotalSupply()).toEqual(initialTotalSupply)
@@ -825,7 +801,7 @@ describe("JettonMinter", () => {
             from: deployer.address,
             to: deployerJettonWallet.address,
             aborted: true,
-            exitCode: Errors.balance_error,
+            exitCode: JettonWallet.errors["Incorrect balance after send"],
         })
         expect(await deployerJettonWallet.getJettonBalance()).toEqual(initialJettonBalance)
         expect(await jettonMinter.getTotalSupply()).toEqual(initialTotalSupply)
@@ -836,7 +812,7 @@ describe("JettonMinter", () => {
         const burnAmount = toNano("1")
         const burnNotification = (amount: bigint, addr: Address) => {
             return beginCell()
-                .storeUint(Op.burn_notification, 32)
+                .storeUint(JettonMinter.opcodes.JettonBurnNotification, 32)
                 .storeUint(0, 64)
                 .storeCoins(amount)
                 .storeAddress(addr)
@@ -857,7 +833,7 @@ describe("JettonMinter", () => {
             from: deployerJettonWallet.address,
             to: jettonMinter.address,
             aborted: true,
-            exitCode: Errors.unauthorized_burn,
+            exitCode: JettonMinter.errors["Unauthorized burn"],
         })
 
         res = await blockchain.sendMessage(
@@ -891,7 +867,7 @@ describe("JettonMinter", () => {
             from: jettonMinter.address,
             to: deployer.address,
             body: beginCell()
-                .storeUint(Op.take_wallet_address, 32)
+                .storeUint(JettonMinter.opcodes.TakeWalletAddress, 32)
                 .storeUint(0, 64)
                 .storeAddress(deployerJettonWallet.address)
                 .storeUint(1, 1)
@@ -909,7 +885,7 @@ describe("JettonMinter", () => {
             from: jettonMinter.address,
             to: deployer.address,
             body: beginCell()
-                .storeUint(Op.take_wallet_address, 32)
+                .storeUint(JettonMinter.opcodes.TakeWalletAddress, 32)
                 .storeUint(0, 64)
                 .storeAddress(notDeployerJettonWallet.address)
                 .storeUint(1, 1)
@@ -927,7 +903,7 @@ describe("JettonMinter", () => {
             from: jettonMinter.address,
             to: deployer.address,
             body: beginCell()
-                .storeUint(Op.take_wallet_address, 32)
+                .storeUint(JettonMinter.opcodes.TakeWalletAddress, 32)
                 .storeUint(0, 64)
                 .storeAddress(notDeployerJettonWallet.address)
                 .storeUint(0, 1)
@@ -976,7 +952,7 @@ describe("JettonMinter", () => {
             from: deployer.address,
             to: jettonMinter.address,
             aborted: true,
-            exitCode: Errors.discovery_fee_not_matched,
+            exitCode: JettonMinter.errors["Insufficient gas for discovery"],
         })
         /*
          * Might be helpful to have logical OR in expect lookup
@@ -1010,7 +986,7 @@ describe("JettonMinter", () => {
             from: jettonMinter.address,
             to: deployer.address,
             body: beginCell()
-                .storeUint(Op.take_wallet_address, 32)
+                .storeUint(JettonMinter.opcodes.TakeWalletAddress, 32)
                 .storeUint(0, 64)
                 .storeUint(0, 2) // addr_none
                 .storeUint(0, 1)
@@ -1025,7 +1001,7 @@ describe("JettonMinter", () => {
             from: jettonMinter.address,
             to: deployer.address,
             body: beginCell()
-                .storeUint(Op.take_wallet_address, 32)
+                .storeUint(JettonMinter.opcodes.TakeWalletAddress, 32)
                 .storeUint(0, 64)
                 .storeUint(0, 2) // addr_none
                 .storeUint(1, 1)
@@ -1108,7 +1084,7 @@ describe("JettonMinter", () => {
             from: deployer.address,
             to: deployerJettonWallet.address,
             aborted: true,
-            exitCode: Errors.wrong_workchain,
+            exitCode: JettonWallet.errors["Invalid destination workchain"],
         })
     })
 

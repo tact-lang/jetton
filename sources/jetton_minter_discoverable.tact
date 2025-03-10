@@ -18,12 +18,12 @@ contract JettonMinter(
     totalSupply: Int as coins,
     owner: Address,
     jettonContent: Cell,
-) with MinterExitcodes, GasConstants {
+) with GasConstants {
     receive(msg: JettonBurnNotification) {
         let sender = parseStdAddress(sender().asSlice());
         let wallet = getJettonBasechainWalletByOwner(msg.sender);
 
-        throwUnless(self.UnauthorizedBurn, sender.workchain == Workchain && sender.address == wallet.hash!!);
+        require(sender.workchain == Workchain && sender.address == wallet.hash!!, "Unauthorized burn");
 
         self.totalSupply -= msg.amount;
 
@@ -42,8 +42,7 @@ contract JettonMinter(
         // we use message fwdFee for estimation of forward_payload costs
         let ctx = context();
         let fwdFee = ctx.readForwardFee();
-        throwUnless(self.InsufficientGasForDiscovery, ctx.value > fwdFee + getComputeFee(self.gasForDiscovery, false));
-
+        require(ctx.value > fwdFee + getComputeFee(self.gasForDiscovery, false), "Insufficient gas for discovery");
         let ownerWorkchain: Int = parseStdAddress(msg.ownerAddress.asSlice()).workchain;
 
         let targetJettonWallet: BasechainAddress =
@@ -60,12 +59,12 @@ contract JettonMinter(
     }
 
     receive(msg: JettonUpdateContent) {
-        throwUnless(self.IncorrectSender, sender() == self.owner);
+        require(sender() == self.owner, "Incorrect sender");
         self.jettonContent = msg.content;
     }
 
     receive(msg: Mint) {
-        throwUnless(self.IncorrectSender, sender() == self.owner);
+        require(sender() == self.owner, "Incorrect sender");
         self.totalSupply += msg.mintMessage.amount;
 
         deploy(DeployParameters{
@@ -78,7 +77,7 @@ contract JettonMinter(
     }
 
     receive(msg: ChangeOwner) {
-        throwUnless(self.IncorrectSender, sender() == self.owner);
+        require(sender() == self.owner, "Incorrect sender");
         self.owner = msg.newOwner;
     }
 
