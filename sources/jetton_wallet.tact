@@ -16,7 +16,7 @@ contract JettonWallet(
         require(msg.forwardPayload.bits() >= 1, "Invalid forward payload");
 
         let ctx = context();
-        let fwdCount = 1 + msg.forwardTonAmount & 1;
+        let fwdCount = 1 + sign(msg.forwardTonAmount); // msg.forwardTonAmount is coins, so it's positive
         require(ctx.value >
             msg.forwardTonAmount +
             fwdCount * ctx.readForwardFee() +
@@ -52,8 +52,6 @@ contract JettonWallet(
         let ctx: Context = context();
         let msgValue: Int = ctx.value;
         let tonBalanceBeforeMsg = myBalance() - msgValue;
-        let storageFee = minTonsForStorage - min(tonBalanceBeforeMsg, minTonsForStorage);
-        msgValue -= (storageFee + getComputeFee(gasForTransfer, false));
 
         if (msg.forwardTonAmount > 0) {
             let fwdFee: Int = ctx.readForwardFee();
@@ -71,13 +69,13 @@ contract JettonWallet(
                 }.toCell(),
             });
         }
-
+        nativeReserve(max(tonBalanceBeforeMsg, minTonsForStorage), ReserveAtMost);
         // 0xd53276db -- Cashback to the original Sender
         if (msg.responseDestination != null && msgValue > 0) {
             message(MessageParameters{
                 to: msg.responseDestination!!,
                 value: msgValue,
-                mode: SendIgnoreErrors,
+                mode: SendRemainingBalance + SendIgnoreErrors,
                 bounce: false,
                 body: JettonExcesses{ queryId: msg.queryId }.toCell(),
             });
