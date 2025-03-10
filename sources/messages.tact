@@ -86,6 +86,8 @@ message(21) Mint {
     mintMessage: JettonTransferInternal;
 }
 
+message(22) CloseMinting {}
+
 message(3) ChangeOwner {
     queryId: Int as uint64;
     newOwner: Address;

@@ -62,7 +62,7 @@ dotenv.config()
     // Compute init data for deployment
     // NOTICE: the parameters inside the init functions were the input for the contract address
     // which means any changes will change the smart contract address as well
-    const init = await JettonMinter.init(0n, deployer_wallet_contract.address, content)
+    const init = await JettonMinter.init(0n, deployer_wallet_contract.address, content, true)
     const jettonMaster = contractAddress(workchain, init)
     const deployAmount = toNano("0.15")
 
