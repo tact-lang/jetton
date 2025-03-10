@@ -11,6 +11,7 @@ import {
     CloseMinting,
     Mint,
     JettonMinter,
+    minTonsForStorage,
 } from "./output/Jetton_JettonMinter"
 
 import "@ton/test-utils"
@@ -24,7 +25,6 @@ function jettonContentToCell(content: {type: 0 | 1; uri: string}) {
         .endCell()
 }
 
-const min_tons_for_storage: bigint = toNano("0.015")
 const _gas_consumption: bigint = toNano("0.015")
 const _fwd_fee: bigint = 721606n
 
@@ -1162,7 +1162,7 @@ describe("JettonMinter", () => {
         const finalBalance = (await blockchain.getContract(deployer.address)).balance
         const finalWalletBalance = (await blockchain.getContract(deployerJettonWallet.address))
             .balance
-        expect(finalWalletBalance).toEqual(min_tons_for_storage)
+        expect(finalWalletBalance).toEqual(minTonsForStorage)
         expect(finalBalance - initialBalance).toBeGreaterThan(toNano("0.99"))
     })
     // implementation detail
