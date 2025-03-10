@@ -16,7 +16,7 @@ contract JettonWallet(
         require(msg.forwardPayload.bits() >= 1, "Invalid forward payload");
 
         let ctx = context();
-        let fwdCount = 1 + sign(msg.forwardTonAmount); // msg.forwardTonAmount is coins, so it's not negative
+        let fwdCount = 1 + sign(msg.forwardTonAmount); // msg.forwardTonAmount is coins, so it's positive
         require(ctx.value >
             msg.forwardTonAmount +
             fwdCount * ctx.readForwardFee() +
