@@ -2,6 +2,7 @@ trait MinterExitcodes {
     const IncorrectSender: Int = 73;
     const UnauthorizedBurn: Int = 74;
     const InsufficientGasForDiscovery: Int = 75;
+    const MintIsClosed: Int = 76;
 }
 
 trait WalletExitcodes {

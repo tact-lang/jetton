@@ -13,7 +13,7 @@ export class ExtendedJettonMinter extends JettonMinter {
     }
 
     static async fromInit(totalSupply: bigint, owner: Address, jettonContent: Cell) {
-        const base = await JettonMinter.fromInit(totalSupply, owner, jettonContent)
+        const base = await JettonMinter.fromInit(totalSupply, owner, jettonContent, true)
         if (base.init === undefined) {
             throw new Error("JettonMinter init is not defined")
         }

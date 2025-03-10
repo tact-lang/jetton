@@ -18,6 +18,7 @@ contract JettonMinter(
     totalSupply: Int as coins,
     owner: Address,
     jettonContent: Cell,
+    mintable: Bool, // Should be deployed with this flag set to true
 ) with MinterExitcodes, GasConstants {
     receive(msg: JettonBurnNotification) {
         let sender = parseStdAddress(sender().asSlice());
@@ -66,6 +67,7 @@ contract JettonMinter(
 
     receive(msg: Mint) {
         throwUnless(self.IncorrectSender, sender() == self.owner);
+        throwUnless(self.MintIsClosed, self.mintable);
         self.totalSupply += msg.mintMessage.amount;
 
         deploy(DeployParameters{
@@ -82,6 +84,12 @@ contract JettonMinter(
         self.owner = msg.newOwner;
     }
 
+    receive(msg: CloseMinting) {
+        throwUnless(self.IncorrectSender, sender() == self.owner);
+        self.mintable = false;
+        cashback(sender());
+    }
+
     bounced(msg: bounced<JettonTransferInternal>) {
         self.totalSupply -= msg.amount;
     }
@@ -89,7 +97,7 @@ contract JettonMinter(
     get fun get_jetton_data(): JettonMasterState {
         return JettonMasterState {
             totalSupply: self.totalSupply,
-            mintable: true,
+            mintable: self.mintable,
             adminAddress: self.owner,
             jettonContent: self.jettonContent,
             jettonWalletCode: codeOf JettonWallet

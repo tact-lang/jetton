@@ -1,4 +1,4 @@
-import {Address, beginCell, Cell, toNano} from "@ton/core"
+import {Address, beginCell, Cell, Slice, toNano} from "@ton/core"
 import {Blockchain, internal, SandboxContract, TreasuryContract} from "@ton/sandbox"
 import {ExtendedJettonWallet} from "./wrappers/ExtendedJettonWallet"
 import {ExtendedJettonMinter} from "./wrappers/ExtendedJettonMinter"
@@ -8,6 +8,8 @@ import {
     storeJettonBurn,
     storeJettonTransfer,
     storeMint,
+    CloseMinting,
+    Mint,
 } from "./output/Jetton_JettonMinter"
 
 import "@ton/test-utils"
@@ -1109,6 +1111,62 @@ describe("JettonMinter", () => {
             to: deployerJettonWallet.address,
             aborted: true,
             exitCode: Errors.wrong_workchain,
+        })
+    })
+
+    it("Can close minting", async () => {
+        const closeMinting: CloseMinting = {
+            $$type: "CloseMinting",
+        }
+        const unsuccessfulCloseMinting = await jettonMinter.send(
+            notDeployer.getSender(),
+            {value: toNano("0.1")},
+            closeMinting,
+        )
+        expect(unsuccessfulCloseMinting.transactions).toHaveTransaction({
+            from: notDeployer.address,
+            to: jettonMinter.address,
+            aborted: true,
+            exitCode: Errors.not_admin,
+        })
+        expect((await jettonMinter.getGetJettonData()).mintable).toBeTruthy()
+
+        const successfulCloseMinting = await jettonMinter.send(
+            deployer.getSender(),
+            {value: toNano("0.1")},
+            closeMinting,
+        )
+        expect(successfulCloseMinting.transactions).toHaveTransaction({
+            from: deployer.address,
+            to: jettonMinter.address,
+            success: true,
+        })
+        expect((await jettonMinter.getGetJettonData()).mintable).toBeFalsy()
+
+        const mintMsg: Mint = {
+            $$type: "Mint",
+            queryId: 0n,
+            receiver: deployer.address,
+            tonAmount: toNano("0.1"),
+            mintMessage: {
+                $$type: "JettonTransferInternal",
+                queryId: 0n,
+                amount: toNano("0.1"),
+                sender: deployer.address,
+                responseDestination: deployer.address,
+                forwardPayload: beginCell().storeUint(0, 1).endCell().asSlice(),
+                forwardTonAmount: 0n,
+            },
+        }
+        const mintTryAfterClose = await jettonMinter.send(
+            deployer.getSender(),
+            {value: toNano("0.1")},
+            mintMsg,
+        )
+        expect(mintTryAfterClose.transactions).toHaveTransaction({
+            from: deployer.address,
+            to: jettonMinter.address,
+            aborted: true,
         })
     })
 
