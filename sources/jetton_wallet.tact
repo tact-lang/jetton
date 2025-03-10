@@ -5,22 +5,23 @@ contract JettonWallet(
     balance: Int as coins,
     owner: Address,
     master: Address,
-) with WalletExitcodes, GasConstants {
+) {
 
     receive(msg: JettonTransfer) {
-        throwUnless(self.InvalidDestinationWorkchain, parseStdAddress(msg.destination.asSlice()).workchain == 0);
-        throwUnless(self.IncorrectSender, sender() == self.owner);
+        require(parseStdAddress(msg.destination.asSlice()).workchain == 0, "Invalid destination workchain");
+        require(sender() == self.owner, "Incorrect sender");
 
         self.balance -= msg.amount;
-        throwUnless(self.IncorrectBalanceAfrerSend, self.balance >= 0);
-        throwUnless(self.InvalidForwardPayload, msg.forwardPayload.bits() >= 1);
+        require(self.balance >= 0, "Incorrect balance after send");
+        require(msg.forwardPayload.bits() >= 1, "Invalid forward payload");
 
         let ctx = context();
-        let fwdCount = 1 + msg.forwardTonAmount & 1;
-        throwUnless(self.UnsufficientAmountOfTonAttached, ctx.value >
+        let fwdCount = 1 + sign(msg.forwardTonAmount); // msg.forwardTonAmount is coins, so it's positive
+        require(ctx.value >
             msg.forwardTonAmount +
             fwdCount * ctx.readForwardFee() +
-            (2 * getComputeFee(self.gasForTransfer, false) + self.minTonsForStorage)
+            (2 * getComputeFee(gasForTransfer, false) + minTonsForStorage),
+            "Insufficient amount of TON attached"
         );
 
         deploy(DeployParameters{
@@ -45,14 +46,12 @@ contract JettonWallet(
         // This message should come only from master, or from other JettonWallet
         let wallet: StateInit = initOf JettonWallet(0, msg.sender, self.master);
         if (sender() != contractAddress(wallet)) {
-            throwUnless(self.IncorrectSenderInternal, self.master == sender());
+            require(self.master == sender(), "Incorrect sender");
         }
 
         let ctx: Context = context();
         let msgValue: Int = ctx.value;
         let tonBalanceBeforeMsg = myBalance() - msgValue;
-        let storageFee = self.minTonsForStorage - min(tonBalanceBeforeMsg, self.minTonsForStorage);
-        msgValue -= (storageFee + getComputeFee(self.gasForTransfer, false));
 
         if (msg.forwardTonAmount > 0) {
             let fwdFee: Int = ctx.readForwardFee();
@@ -70,13 +69,13 @@ contract JettonWallet(
                 }.toCell(),
             });
         }
-
+        nativeReserve(max(tonBalanceBeforeMsg, minTonsForStorage), ReserveAtMost);
         // 0xd53276db -- Cashback to the original Sender
         if (msg.responseDestination != null && msgValue > 0) {
             message(MessageParameters{
                 to: msg.responseDestination!!,
                 value: msgValue,
-                mode: SendIgnoreErrors,
+                mode: SendRemainingBalance + SendIgnoreErrors,
                 bounce: false,
                 body: JettonExcesses{ queryId: msg.queryId }.toCell(),
             });
@@ -84,14 +83,14 @@ contract JettonWallet(
     }
 
     receive(msg: JettonBurn) {
-        throwUnless(self.IncorrectSender, sender() == self.owner);
+        require(sender() == self.owner, "Incorrect sender");
 
         self.balance -= msg.amount;
-        throwUnless(self.IncorrectBalanceAfrerSend, self.balance >= 0);
+        require(self.balance >= 0, "Incorrect balance after send");
 
         let ctx = context();
         let fwdFee: Int = ctx.readForwardFee();
-        throwUnless(self.UnsufficientAmountOfTonForBurn, ctx.value > (fwdFee + 2 * getComputeFee(self.gasForBurn, false)));
+        require(ctx.value > (fwdFee + 2 * getComputeFee(gasForBurn, false)), "Unsufficient amount of TON attached");
 
         message(MessageParameters{
             to: self.master,
