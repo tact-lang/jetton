@@ -25,9 +25,6 @@ function jettonContentToCell(content: {type: 0 | 1; uri: string}) {
         .endCell()
 }
 
-const _gas_consumption: bigint = toNano("0.015")
-const _fwd_fee: bigint = 721606n
-
 describe("JettonMinter", () => {
     let blockchain: Blockchain
     let jettonMinter: SandboxContract<ExtendedJettonMinter>
