@@ -1045,28 +1045,35 @@ describe("JettonMinter", () => {
         }
         const maxPayload = beginCell()
             .storeUint(1, 1)
-            .storeRef(storeMaxPayload(beginCell()).endCell())
+            .storeRef(storeMaxPayload(beginCell()).endCell()) // Here we generate big payload, to cause high forward fee
             .endCell()
 
         const sendResult = await deployerJettonWallet.sendTransfer(
             deployer.getSender(),
-            toNano("0.2"),
+            toNano("0.2"), // Quite low amount, enough to cover one forward fee but not enough to cover two
             0n,
             notDeployer.address,
             notDeployer.address,
             null,
-            2n,
+            2n, // Forward ton amount, that causes bug, described below
             maxPayload,
         )
 
-        console.log((await blockchain.getContract(deployerJettonWallet.address)).balance)
+        // Here we check, that the transaction should bounce on the first jetton wallet
+        // Or it should be fully completed
+
+        // However, as we had incorrect logic of forward fee calculation,
+        // https://github.com/tact-lang/jetton/issues/58
+        // Jetton version with that bug will not be able to send Jetton Notification
         try {
+            // Expect that JettonNotify is sent
             expect(sendResult.transactions).toHaveTransaction({
                 from: (await userWallet(notDeployer.address)).address,
                 to: notDeployer.address,
                 success: true,
             })
         } catch {
+            // OR that the transaction is bounced on the first jetton wallet
             expect(sendResult.transactions).toHaveTransaction({
                 on: deployerJettonWallet.address,
                 aborted: true,
