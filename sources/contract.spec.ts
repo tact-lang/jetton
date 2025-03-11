@@ -1215,6 +1215,34 @@ describe("JettonMinter", () => {
         })
     })
 
+    it("Should correctly handle response destination as addr_none", async () => {
+        const deployerJettonWallet = await userWallet(deployer.address)
+
+        const burnResult = await deployerJettonWallet.sendBurn(
+            deployer.getSender(),
+            toNano("0.1"),
+            0n,
+            deployer.address,
+            null,
+        )
+
+        expect(burnResult.transactions).toHaveTransaction({
+            from: jettonMinter.address,
+            to: deployer.address,
+        })
+
+        const burnResult2 = await deployerJettonWallet.sendBurn(
+            deployer.getSender(),
+            toNano("0.1"),
+            0n, // Let's burn 0 jettons, it won't affect balance, but we still can check if excesses are sent
+            null,
+            null,
+        )
+        expect(burnResult2.transactions).not.toHaveTransaction({
+            from: jettonMinter.address,
+        })
+    })
+
     // Current wallet version doesn't support those operations
     // implementation detail
     it.skip("owner can withdraw excesses", async () => {

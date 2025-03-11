@@ -28,9 +28,9 @@ contract JettonMinter(
 
         self.totalSupply -= msg.amount;
 
-        if (msg.responseDestination.isNotNone()) {
+        if (msg.responseDestination != null) {
             message(MessageParameters {
-                to: msg.responseDestination,
+                to: msg.responseDestination!!,
                 body: JettonExcesses{ queryId: msg.queryId }.toCell(),
                 value: 0,
                 bounce: false,
@@ -131,5 +131,3 @@ inline fun getJettonWalletByOwner(jettonWalletOwner: Address): Address {
 inline fun getJettonBasechainWalletByOwner(jettonWalletOwner: Address): BasechainAddress {
     return contractBasechainAddress(getJettonWalletInit(jettonWalletOwner));
 }
-
-inline extends fun isNotNone(self: Address): Bool { return self.asSlice().preloadUint(2) != 0 }
