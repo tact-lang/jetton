@@ -33,6 +33,9 @@ jobs:
       - name: Check spelling
         run: yarn spell:check
 
+      - name: ESLint
+        run: yarn lint:es
+
       - name: Build
         run: yarn build
 
