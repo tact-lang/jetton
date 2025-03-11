@@ -16,7 +16,7 @@
         ".git/**",
         "package.json",
         "yarn.lock",
-        "sources/output/**",
+        "src/output/**",
         "tsconfig.json"
     ]
 }

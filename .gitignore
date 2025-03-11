@@ -1,6 +1,6 @@
 node_modules
 .DS_Store
-sources/output
+src/output
 .idea
 .vscode
 .env
