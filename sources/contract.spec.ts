@@ -1,4 +1,4 @@
-import {Address, beginCell, Cell, Slice, toNano} from "@ton/core"
+import {Address, beginCell, Cell, toNano} from "@ton/core"
 import {Blockchain, internal, SandboxContract, TreasuryContract} from "@ton/sandbox"
 import {ExtendedJettonWallet} from "./wrappers/ExtendedJettonWallet"
 import {ExtendedJettonMinter} from "./wrappers/ExtendedJettonMinter"
