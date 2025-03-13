@@ -1,4 +1,4 @@
-import {Address, beginCell, Cell, Slice, toNano} from "@ton/core"
+import {Address, beginCell, Cell, toNano} from "@ton/core"
 import {Blockchain, internal, SandboxContract, TreasuryContract} from "@ton/sandbox"
 import {ExtendedJettonWallet} from "./wrappers/ExtendedJettonWallet"
 import {ExtendedJettonMinter} from "./wrappers/ExtendedJettonMinter"
@@ -24,9 +24,6 @@ function jettonContentToCell(content: {type: 0 | 1; uri: string}) {
         .storeStringTail(content.uri) //Snake logic under the hood
         .endCell()
 }
-
-const _gas_consumption: bigint = toNano("0.015")
-const _fwd_fee: bigint = 721606n
 
 describe("JettonMinter", () => {
     let blockchain: Blockchain
