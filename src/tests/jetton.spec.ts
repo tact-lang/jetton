@@ -1015,7 +1015,7 @@ describe("JettonMinter", () => {
         const jwState = (await blockchain.getContract(deployerJettonWallet.address)).account
         const originalBalance = jwState.account!.storage.balance.coins
 
-        jwState.account!.storage.balance.coins = 0n // set balance to 0
+        jwState.account!.storage.balance.coins = 0n
         await blockchain.setShardAccount(deployerJettonWallet.address, jwState)
 
         const storeBigPayload = (curBuilder: Builder) => {
