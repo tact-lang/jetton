@@ -1271,10 +1271,10 @@
     "@smithy/util-buffer-from" "^2.2.0"
     tslib "^2.6.2"
 
-"@tact-lang/compiler@^1.6.2":
-  version "1.6.2"
-  resolved "https://registry.yarnpkg.com/@tact-lang/compiler/-/compiler-1.6.2.tgz#a949a9099e4014b64148d6323826b8b8e8085d05"
-  integrity sha512-Qo8ooKWxLWy6o1ePdiyCo1+hdaX5rm1qoUs+S/L9R+wV7SpODYM1dHtKE3RkvyuItnBsl9WokgnkWzlC4qnMVQ==
+"@tact-lang/compiler@^1.6.3":
+  version "1.6.3"
+  resolved "https://registry.yarnpkg.com/@tact-lang/compiler/-/compiler-1.6.3.tgz#ab2073c8190accb53d7bd9ab2e6c339564f6b939"
+  integrity sha512-TLskaEiipGOM4Y93tYVH1xxLpm4gFuB11RxyrYYfJoZ7A5qPXT9IF9fZXP+niUdUlxXuzS3zS1Yc4O4hs9eK4A==
   dependencies:
     "@tact-lang/opcode" "^0.3.0"
     "@ton/core" "0.60.1"
@@ -1284,7 +1284,6 @@
     change-case "^4.1.2"
     ipfs-unixfs-importer "9.0.10"
     json-bigint "^1.0.0"
-    ohm-js "^17.1.0"
     path-normalize "^6.0.13"
     zod "^3.22.4"
 
