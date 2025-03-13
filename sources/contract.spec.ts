@@ -26,9 +26,6 @@ function jettonContentToCell(content: {type: 0 | 1; uri: string}) {
         .endCell()
 }
 
-const _gas_consumption: bigint = toNano("0.015")
-const _fwd_fee: bigint = 721606n
-
 describe("JettonMinter", () => {
     let blockchain: Blockchain
     let jettonMinter: SandboxContract<ExtendedJettonMinter>
@@ -1021,18 +1018,17 @@ describe("JettonMinter", () => {
         jwState.account!.storage.balance.coins = 0n // set balance to 0
         await blockchain.setShardAccount(deployerJettonWallet.address, jwState)
 
-        const storeMaxPayload = (curBuilder: Builder) => {
+        const storeBigPayload = (curBuilder: Builder) => {
             let rootBuilder = curBuilder
-            let depth = 0
-            const maxDepth = 5
+            const maxDepth = 5 // Max depth is 5, as 4^5 = 1024 cells, which is quite big payload
 
             function dfs(builder: Builder, currentDepth: number) {
                 if (currentDepth >= maxDepth) {
                     return
                 }
-
+                // Cell has a capacity of 1023 bits, so we can store 127 bytes max
                 builder.storeBuffer(randomBytes(127))
-
+                // Store all 4 references
                 for (let i = 0; i < 4; i++) {
                     let newBuilder = beginCell()
                     dfs(newBuilder, currentDepth + 1)
@@ -1040,12 +1036,12 @@ describe("JettonMinter", () => {
                 }
             }
 
-            dfs(rootBuilder, depth)
+            dfs(rootBuilder, 0) // Start DFS with depth 0
             return rootBuilder
         }
         const maxPayload = beginCell()
-            .storeUint(1, 1)
-            .storeRef(storeMaxPayload(beginCell()).endCell()) // Here we generate big payload, to cause high forward fee
+            .storeUint(1, 1) // Store Either bit = 1, as we store payload in ref
+            .storeRef(storeBigPayload(beginCell()).endCell()) // Here we generate big payload, to cause high forward fee
             .endCell()
 
         const sendResult = await deployerJettonWallet.sendTransfer(
