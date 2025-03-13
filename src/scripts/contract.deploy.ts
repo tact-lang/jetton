@@ -10,11 +10,11 @@ import {
     fromNano,
 } from "@ton/ton"
 import {mnemonicToPrivateKey} from "@ton/crypto"
-import {buildOnchainMetadata} from "./utils/jetton-helpers"
+import {buildOnchainMetadata} from "../utils/jetton-helpers"
 
-import {JettonMinter, storeMint} from "./output/Jetton_JettonMinter"
+import {JettonMinter, storeMint} from "../output/Jetton_JettonMinter"
 
-import {printSeparator} from "./utils/print"
+import {printSeparator} from "../utils/print"
 import * as dotenv from "dotenv"
 dotenv.config()
 

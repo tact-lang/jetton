@@ -2,8 +2,8 @@
     "projects": [
         {
             "name": "Jetton",
-            "path": "./sources/jetton_minter_discoverable.tact",
-            "output": "./sources/output",
+            "path": "./src/contracts/jetton-minter.tact",
+            "output": "./src/output",
             "mode": "full",
             "options": {
                 "external": false,
