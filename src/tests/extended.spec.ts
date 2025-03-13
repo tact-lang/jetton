@@ -7,6 +7,7 @@ import {JettonUpdateContent, CloseMinting, Mint, JettonMinter} from "../output/J
 
 import "@ton/test-utils"
 
+// this test suite includes tests for the extended functionality
 describe("Jetton Minter Extended", () => {
     let blockchain: Blockchain
     let jettonMinter: SandboxContract<ExtendedJettonMinter>
