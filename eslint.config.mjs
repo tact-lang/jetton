@@ -24,7 +24,7 @@ export default [
             ".github/*",
             ".yarn/*",
             "dist/*",
-            "sources/output/*",
+            "src/output/*",
         ],
     },
 

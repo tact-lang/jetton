@@ -62,31 +62,34 @@ If you’re new to Jettons, read the [TON Jettons Processing](https://docs.ton.o
 
 ## Project Structure
 
-Smart contracts, their tests and the deployment script are located in the `sources/` directory:
+Smart contracts, their tests, and the deployment script are located in the `src` directory:
 
 ```
-sources/
+src/
 │
 │   # Contracts and auxiliary Tact code
-├── jetton_minter.tact
-├── jetton_wallet.tact
-├── messages.tact
+├── contracts/
+│   ├── jetton-minter.tact
+│   ├── jetton-wallet.tact
+│   ├── messages.tact
+│   └── constants.tact
 │
 │   # Tests
-├── contract.spec.ts
+├── tests/
+│   └── jetton.spec.ts
 │
 │   # Deployment script
-├── contract.deploy.ts
+├── scripts/
+│   ├── contract.deploy.ts
+│   └── contract.read.ts
 │
 │   # Miscellaneous utility things
-│   # used for tests and deployments
-├── contract.read.ts
 └── utils/
 ```
 
-Note, that tests and the deployment script require the compiled contracts to be present in the `sources/output/` directory.
+Note that tests and the deployment script require the compiled contracts to be present in the `src/output` directory.
 
-The configuration for the Tact compiler is in `tact.config.json` in the root of the repository. In most cases you won't need to change this file.
+The configuration for the Tact compiler is in `tact.config.json` in the root of the repository. In most cases, you won't need to change this file.
 
 ## Smart Contracts Structure
 

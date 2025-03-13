@@ -1,12 +1,12 @@
 // https://github.com/ton-blockchain/TEPs/blob/master/text/0089-jetton-wallet-discovery.md
 
-import "./jetton_wallet";
+import "./jetton-wallet";
 import "./messages";
 import "./constants";
 
 const Workchain: Int = 0;
 
-struct JettonMasterState {
+struct JettonMinterState {
     totalSupply: Int as coins;
     mintable: Bool;
     adminAddress: Address;
@@ -93,8 +93,8 @@ contract JettonMinter(
         self.totalSupply -= msg.amount;
     }
 
-    get fun get_jetton_data(): JettonMasterState {
-        return JettonMasterState {
+    get fun get_jetton_data(): JettonMinterState {
+        return JettonMinterState {
             totalSupply: self.totalSupply,
             mintable: self.mintable,
             adminAddress: self.owner,
