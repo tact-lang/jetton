@@ -23,9 +23,6 @@ function jettonContentToCell(content: {type: 0 | 1; uri: string}) {
         .endCell()
 }
 
-const _gas_consumption: bigint = toNano("0.015")
-const _fwd_fee: bigint = 721606n
-
 // this test suite includes tests from original reference TEP-74 implementation
 // https://github.com/ton-blockchain/token-contract/blob/main/sandbox_tests/JettonWallet.spec.ts
 describe("Jetton Minter", () => {
