@@ -30,7 +30,7 @@ jobs:
       - name: Check for yarn.lock changes
         run: |
           git diff --exit-code yarn.lock
-        
+
       - name: Check for dublicates in yarn.lock
         run: yarn deduplicate
 
