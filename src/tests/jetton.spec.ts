@@ -1,4 +1,4 @@
-import {Address, beginCell, Cell, toNano} from "@ton/core"
+import {Address, Builder, beginCell, Cell, toNano} from "@ton/core"
 import {Blockchain, internal, SandboxContract, TreasuryContract} from "@ton/sandbox"
 import {ExtendedJettonWallet} from "../wrappers/ExtendedJettonWallet"
 import {ExtendedJettonMinter} from "../wrappers/ExtendedJettonMinter"
@@ -15,6 +15,7 @@ import {
 import "@ton/test-utils"
 import {getRandomInt, randomAddress} from "../utils/utils"
 import {JettonWallet} from "../output/Jetton_JettonWallet"
+import {randomBytes} from "crypto"
 
 function jettonContentToCell(content: {type: 0 | 1; uri: string}) {
     return beginCell()
@@ -1007,6 +1008,79 @@ describe("Jetton Minter", () => {
                 .storeRef(beginCell().storeAddress(badAddr).endCell())
                 .endCell(),
         })
+    })
+
+    it("Can send even giant payload", async () => {
+        const deployerJettonWallet = await userWallet(deployer.address)
+        const jwState = (await blockchain.getContract(deployerJettonWallet.address)).account
+        const originalBalance = jwState.account!.storage.balance.coins
+
+        jwState.account!.storage.balance.coins = 0n
+        await blockchain.setShardAccount(deployerJettonWallet.address, jwState)
+
+        const storeBigPayload = (curBuilder: Builder) => {
+            let rootBuilder = curBuilder
+            const maxDepth = 5 // Max depth is 5, as 4^5 = 1024 cells, which is quite big payload
+
+            function dfs(builder: Builder, currentDepth: number) {
+                if (currentDepth >= maxDepth) {
+                    return
+                }
+                // Cell has a capacity of 1023 bits, so we can store 127 bytes max
+                builder.storeBuffer(randomBytes(127))
+                // Store all 4 references
+                for (let i = 0; i < 4; i++) {
+                    let newBuilder = beginCell()
+                    dfs(newBuilder, currentDepth + 1)
+                    builder.storeRef(newBuilder.endCell())
+                }
+            }
+
+            dfs(rootBuilder, 0) // Start DFS with depth 0
+            return rootBuilder
+        }
+        const maxPayload = beginCell()
+            .storeUint(1, 1) // Store Either bit = 1, as we store payload in ref
+            .storeRef(storeBigPayload(beginCell()).endCell()) // Here we generate big payload, to cause high forward fee
+            .endCell()
+
+        const sendResult = await deployerJettonWallet.sendTransfer(
+            deployer.getSender(),
+            toNano("0.2"), // Quite low amount, enough to cover one forward fee but not enough to cover two
+            0n,
+            notDeployer.address,
+            notDeployer.address,
+            null,
+            2n, // Forward ton amount, that causes bug, described below
+            maxPayload,
+        )
+
+        // Here we check, that the transaction should bounce on the first jetton wallet
+        // Or it should be fully completed
+
+        // However, as we had incorrect logic of forward fee calculation,
+        // https://github.com/tact-lang/jetton/issues/58
+        // Jetton version with that bug will not be able to send Jetton Notification
+        try {
+            // Expect that JettonNotify is sent
+            expect(sendResult.transactions).toHaveTransaction({
+                from: (await userWallet(notDeployer.address)).address,
+                to: notDeployer.address,
+                success: true,
+            })
+        } catch {
+            // OR that the transaction is bounced on the first jetton wallet
+            expect(sendResult.transactions).toHaveTransaction({
+                on: deployerJettonWallet.address,
+                aborted: true,
+            })
+        }
+
+        jwState.account!.storage.balance.coins = originalBalance // restore balance
+        await blockchain.setShardAccount(deployerJettonWallet.address, jwState)
+        expect((await blockchain.getContract(deployerJettonWallet.address)).balance).toEqual(
+            originalBalance,
+        )
     })
 
     // This test consume a lot of time: 18 sec
