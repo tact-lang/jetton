@@ -31,7 +31,7 @@ jobs:
         run: |
           git diff --exit-code yarn.lock
 
-      - name: Check for dublicates in yarn.lock
+      - name: Check for duplicates in yarn.lock
         run: yarn deduplicate
 
       - name: Check formatting
