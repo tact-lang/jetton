@@ -1,0 +1,15 @@
+{
+    "results": [
+      {
+        "label": "Initial",
+        "gas": {
+          "transfer": "16319",
+          "mint": "18811",
+          "burn": "12558",
+          "discovery": "6655"
+        },
+        "pr": "https://github.com/tact-lang/jetton/pull/77"
+      }
+    ]
+  }
+  

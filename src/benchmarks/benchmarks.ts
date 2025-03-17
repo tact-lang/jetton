@@ -1,3 +1,4 @@
+import {strict as assert} from "assert"
 import {Blockchain} from "@ton/sandbox"
 import {JettonUpdateContent} from "../output/Jetton_JettonMinter"
 import {Address, beginCell, Cell, toNano} from "@ton/core"
@@ -8,7 +9,8 @@ import {
 } from "../utils/assert"
 import {ExtendedJettonMinter} from "../wrappers/ExtendedJettonMinter"
 import {ExtendedJettonWallet} from "../wrappers/ExtendedJettonWallet"
-import {getUsedGasInternal} from "../utils/gas"
+import {generateResults, getUsedGasInternal, printBenchmarkTable} from "../utils/gas"
+import benchmarkResults from "./results_gas.json"
 
 const DEFAULT_MINTER_CONTENT = beginCell().endCell()
 
@@ -167,17 +169,25 @@ const runDiscoveryBenchmark = async () => {
 }
 
 const main = async () => {
+    const results = generateResults(benchmarkResults)
+    const expectedResult = results.at(-1)!
+
     const gasUsedForTransfer = await runTransferBenchmark()
-    console.log(gasUsedForTransfer)
+    assert.equal(gasUsedForTransfer, expectedResult.gas["transfer"])
 
     const gasUsedForMint = await runMintBenchmark()
-    console.log(gasUsedForMint)
+    assert.equal(gasUsedForMint, expectedResult.gas["mint"])
 
     const gasUsedForBurn = await runBurnBenchmark()
-    console.log(gasUsedForBurn)
+    assert.equal(gasUsedForBurn, expectedResult.gas["burn"])
 
     const gasUsedForDiscovery = await runDiscoveryBenchmark()
-    console.log(gasUsedForDiscovery)
+    assert.equal(gasUsedForDiscovery, expectedResult.gas["discovery"])
+
+    printBenchmarkTable(results, undefined, {
+        implementationName: "Tact Jetton",
+        printMode: "full",
+    })
 }
 
 void main()
