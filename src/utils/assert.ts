@@ -1,6 +1,7 @@
 import {strict as assert} from "assert"
 import {Address, Cell, AccountStatus, ContractABI, fromNano} from "@ton/core"
 import {BlockchainTransaction} from "@ton/sandbox/dist/blockchain/Blockchain"
+import chalk from "chalk"
 
 type FlatTransaction = {
     readonly from?: Address
@@ -153,7 +154,7 @@ const PRINT_LEVEL_KEYS: Record<FlatPrintLevels, Array<keyof FlatTransaction>> = 
     ],
 }
 
-export function printTransaction(tx: BlockchainTransaction, args?: FlatPrintParameters) {
+function getPrettyTx(tx: FlatTransaction, args?: FlatPrintParameters): string {
     const level = args?.level ?? "info"
     const keys = PRINT_LEVEL_KEYS[level]
 
@@ -202,7 +203,11 @@ export function printTransaction(tx: BlockchainTransaction, args?: FlatPrintPara
         return value
     }
 
-    console.log(JSON.stringify(flattenTransaction(tx), replacer, 2))
+    return JSON.stringify(tx, replacer, 2)
+}
+
+export function printTransaction(tx: BlockchainTransaction, args?: FlatPrintParameters) {
+    console.log(getPrettyTx(flattenTransaction(tx), args))
 }
 
 function compareTransactionValues(a: FlatTransactionValue, b: FlatTransactionValue): boolean {
@@ -218,6 +223,28 @@ function compareTransactionValues(a: FlatTransactionValue, b: FlatTransactionVal
     }
 
     return a === b
+}
+
+// Find the transaction with the most matching fields for pretty assertion message
+function findClosestTxMatch(transactions: FlatTransaction[], criteria: FlatTransaction) {
+    let bestMatch: FlatTransaction | undefined
+    let bestMatchCount = 0
+
+    for (const tx of transactions) {
+        let matchCount = 0
+        for (const key of getTypedObjectKeys(criteria)) {
+            if (compareTransactionValues(criteria[key], tx[key])) {
+                matchCount++
+            }
+        }
+
+        if (matchCount > bestMatchCount) {
+            bestMatch = tx
+            bestMatchCount = matchCount
+        }
+    }
+
+    return bestMatch
 }
 
 const getTypedObjectKeys = <T extends object>(obj: T) => {
@@ -247,10 +274,36 @@ export function assertTransaction(
     const matchingTransaction = transactions.find(tx =>
         compareTransaction(flattenTransaction(tx), criteria),
     )
-    assert(
-        typeof matchingTransaction !== "undefined",
-        `No transaction found matching criteria: ${JSON.stringify(criteria)}`,
-    )
+
+    if (typeof matchingTransaction === "undefined") {
+        const closestTx = findClosestTxMatch(transactions.map(flattenTransaction), criteria)
+
+        if (typeof closestTx === "undefined") {
+            assert(
+                typeof matchingTransaction !== "undefined",
+                `No transaction found matching criteria:\n ${getPrettyTx(criteria)}`,
+            )
+        }
+
+        const diffLines = []
+        diffLines.push("Difference:")
+
+        for (const key of getTypedObjectKeys(criteria)) {
+            if (!compareTransactionValues(criteria[key], closestTx![key])) {
+                diffLines.push(chalk.dim(`  ${key}: {`))
+                diffLines.push(`    Expected  ${chalk.green(closestTx![key])}`)
+                diffLines.push(`    Received  ${chalk.red(criteria[key])}`)
+                diffLines.push(chalk.dim("  }"))
+            }
+        }
+
+        const prettyClosestTx = chalk.dim(getPrettyTx(closestTx!))
+
+        assert(
+            typeof matchingTransaction !== "undefined",
+            `Transaction does not match criteria. Closest match:\n${prettyClosestTx} \n${diffLines.join("\n")}`,
+        )
+    }
 }
 
 const identity = <T>(x: T): T => x
@@ -274,11 +327,10 @@ export function assertTransactionChainSuccessfullEither(
 
     assert(
         allEitherSuccessful || allOrSuccessful,
-        `Not all transactions in the chain were successful. Failed transactions: ${JSON.stringify(
-            transactions.filter(tx => !flattenTransaction(tx).success).map(flattenTransaction),
-            (key, value) => (typeof value === "bigint" ? value.toString() : value),
-            2,
-        )}`,
+        `Not all transactions in the chain were successful. Failed transactions:\n ${transactions
+            .map(tx => flattenTransaction(tx))
+            .filter(tx => tx.success !== true)
+            .map(v => getPrettyTx(v))}`,
     )
 }
 
@@ -293,7 +345,7 @@ export function assertTransactionChainSuccessfull(
     const failedTransactions = transactions.filter(tx => flattenTransaction(tx).success !== true)
     assert(
         failedTransactions.length === 0,
-        `Not all transactions in the chain were successful. Failed transactions: ${failedTransactions.map(flattenTransaction)}`,
+        `Not all transactions in the chain were successful. Failed transactions:\n ${failedTransactions.map(tx => flattenTransaction(tx)).map(v => getPrettyTx(v))}`,
     )
 }
 
