@@ -12,6 +12,7 @@
         "fmt:check": "yarn prettier --check .",
         "spell": "cspell \"**/*.{ts,js,json,md,yml}\"",
         "spell:check": "cspell --no-progress \"**/*.{ts,js,json,md,yml}\"",
+        "bench": "ts-node ./src/benchmarks/benchmarks.ts",
         "deduplicate": "yarn yarn-deduplicate --list --fail",
         "prepare": "husky"
     },
