@@ -12,7 +12,7 @@
       "pr": "https://github.com/tact-lang/jetton/pull/77"
     },
     {
-      "label": "With Tact-leng changes",
+      "label": "With Tact-lang changes",
       "pr": "https://github.com/tact-lang/jetton/pull/83",
       "gas": {
         "transfer": "15651",
