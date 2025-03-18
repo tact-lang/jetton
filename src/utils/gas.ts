@@ -39,6 +39,7 @@ type BenchmarkResult = {
     label: string
     pr: string | undefined
     gas: Record<string, number>
+    summary: number
 }
 
 export type RawBenchmarkResult = {
@@ -46,6 +47,7 @@ export type RawBenchmarkResult = {
         label: string
         pr: string | null
         gas: Record<string, string>
+        summary: string
     }[]
 }
 
@@ -56,6 +58,7 @@ export function generateResults(benchmarkResults: RawBenchmarkResult): Benchmark
         gas: Object.fromEntries(
             Object.entries(result.gas).map(([key, value]) => [key, Number(value)]),
         ),
+        summary: Number(result.summary),
     }))
 }
 
@@ -132,11 +135,9 @@ function calculateChange(prev: number, curr: number): string {
     return number >= 0 ? chalk.redBright(`(+${change}%)`) : chalk.green(`(${change}%)`)
 }
 
-function calculateChanges<T extends {gas?: Record<string, number>; size?: Record<string, number>}>(
-    results: T[],
-    metrics: readonly string[],
-    type: "gas" | "size",
-): string[][] {
+function calculateChanges<
+    T extends {gas?: Record<string, number>; size?: Record<string, number>; summary?: number},
+>(results: T[], metrics: readonly string[], type: "gas" | "size"): string[][] {
     return results.reduce<string[][]>((changes, currentResult, index) => {
         if (index === 0) {
             return [metrics.map(() => "")]
@@ -157,6 +158,22 @@ function calculateChanges<T extends {gas?: Record<string, number>; size?: Record
     }, [])
 }
 
+function calculateSummaryChanges<T extends {summary?: number}>(results: T[]): string[] {
+    return results.reduce<string[]>((changes, currentResult, index) => {
+        if (index === 0) {
+            return [""]
+        }
+
+        const previousResult = results.at(index - 1)
+        const change =
+            typeof previousResult !== "undefined"
+                ? calculateChange(previousResult.summary!, currentResult.summary!)
+                : ""
+
+        return [...changes, change]
+    }, [])
+}
+
 type BenchmarkTableArgs = {
     implementationName: string
     printMode: "first-last" | "full" | "last-diff"
@@ -166,12 +183,13 @@ function createTable<
     T extends {
         gas?: Record<string, number>
         size?: Record<string, number>
+        summary?: number
         label: string
         pr?: string
     },
 >(results: T[], metrics: readonly string[], type: "gas" | "size"): string {
     const table = new Table({
-        head: ["Run", ...metrics, "PR #"],
+        head: ["Run", ...metrics, "Summary", "PR #"],
         style: {
             head: ["cyan"],
             border: ["gray"],
@@ -179,11 +197,13 @@ function createTable<
     })
 
     const changes = calculateChanges(results, metrics, type)
+    const summaryChanges = calculateSummaryChanges(results)
 
     results
-        .map(({label, [type]: data, pr: commit}, i) => [
+        .map(({label, [type]: data, summary, pr: commit}, i) => [
             label,
             ...metrics.map((metric, j) => `${data![metric]} ${changes[i]?.[j]}`),
+            `${summary} ${summaryChanges[i]}`,
             commit
                 ? commit.substring(commit.lastIndexOf("/") + 1, commit.lastIndexOf("/") + 8)
                 : "-",

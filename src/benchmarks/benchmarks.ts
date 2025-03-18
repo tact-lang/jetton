@@ -184,6 +184,11 @@ const main = async () => {
     const gasUsedForDiscovery = await runDiscoveryBenchmark()
     assert.equal(gasUsedForDiscovery, expectedResult.gas["discovery"])
 
+    assert.equal(
+        gasUsedForTransfer + gasUsedForMint + gasUsedForBurn + gasUsedForDiscovery,
+        expectedResult.summary,
+    )
+
     printBenchmarkTable(results, undefined, {
         implementationName: "Tact Jetton",
         printMode: "full",
