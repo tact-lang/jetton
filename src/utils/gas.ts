@@ -222,7 +222,7 @@ const handleTablePrintMode = (results: BenchmarkResult[], arg: BenchmarkTableArg
         case "full":
             return results
         case "last-diff":
-            return results.slice(results.length - 3)
+            return results.slice(results.length - 2)
     }
 }
 
