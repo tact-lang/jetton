@@ -253,7 +253,7 @@ const getTypedObjectKeys = <T extends object>(obj: T) => {
 
 function compareTransaction(targetTx: FlatTransaction, cmpTx: FlatTransaction): boolean {
     for (const key of getTypedObjectKeys(cmpTx)) {
-        // we allow the compraion object to be a partial, while the target object must contain all partial keys
+        // we allow the comparison object to be a partial, while the target object must contain all partial keys
         if (!(key in targetTx)) {
             throw new Error(`Unknown flat transaction object key ${key}`)
         }
@@ -308,7 +308,7 @@ export function assertTransaction(
 
 const identity = <T>(x: T): T => x
 
-export function assertTransactionChainSuccessfullEither(
+export function assertTransactionChainSuccessfulEither(
     transactions: BlockchainTransaction[],
     chainLength: {
         either: number
@@ -334,7 +334,7 @@ export function assertTransactionChainSuccessfullEither(
     )
 }
 
-export function assertTransactionChainSuccessfull(
+export function assertTransactionChainSuccessful(
     transactions: BlockchainTransaction[],
     chainLength: number,
 ) {

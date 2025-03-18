@@ -2,8 +2,8 @@ import {Blockchain} from "@ton/sandbox"
 import {JettonUpdateContent} from "../output/Jetton_JettonMinter"
 import {Address, beginCell, Cell, toNano} from "@ton/core"
 import {
-    assertTransactionChainSuccessfull,
-    assertTransactionChainSuccessfullEither,
+    assertTransactionChainSuccessful,
+    assertTransactionChainSuccessfulEither,
     assertWasDeployed,
 } from "../utils/assert"
 import {ExtendedJettonMinter} from "../wrappers/ExtendedJettonMinter"
@@ -64,7 +64,7 @@ export const runTransferBenchmark = async () => {
     )
 
     // external -> mint -> transfer internal -> excesses <could fail> + notification
-    assertTransactionChainSuccessfullEither(mintResult.transactions, {
+    assertTransactionChainSuccessfulEither(mintResult.transactions, {
         either: 4,
         or: 5,
     })
@@ -84,7 +84,7 @@ export const runTransferBenchmark = async () => {
     )
 
     // external -> transfer -> transfer internal -> excesses <could fail>
-    assertTransactionChainSuccessfullEither(transferResult.transactions, {
+    assertTransactionChainSuccessfulEither(transferResult.transactions, {
         either: 3,
         or: 4,
     })
@@ -105,7 +105,7 @@ export const runMintBenchmark = async () => {
     )
 
     // external -> mint -> transfer internal -> excesses <could fail> + notification
-    assertTransactionChainSuccessfullEither(mintResult.transactions, {
+    assertTransactionChainSuccessfulEither(mintResult.transactions, {
         either: 4,
         or: 5,
     })
@@ -125,7 +125,7 @@ export const runBurnBenchmark = async () => {
         toNano("1"),
     )
 
-    assertTransactionChainSuccessfullEither(mintResult.transactions, {
+    assertTransactionChainSuccessfulEither(mintResult.transactions, {
         either: 4,
         or: 5,
     })
@@ -141,7 +141,7 @@ export const runBurnBenchmark = async () => {
     )
 
     // external -> burn -> burn notification -> excesses <could fail>
-    assertTransactionChainSuccessfullEither(burnResult.transactions, {
+    assertTransactionChainSuccessfulEither(burnResult.transactions, {
         either: 3,
         or: 4,
     })
@@ -161,7 +161,7 @@ export const runDiscoveryBenchmark = async () => {
     )
 
     // external -> discovery -> provide
-    assertTransactionChainSuccessfull(discoveryResult.transactions, 3)
+    assertTransactionChainSuccessful(discoveryResult.transactions, 3)
 
     return getUsedGasInternal(discoveryResult, {type: "single"})
 }
