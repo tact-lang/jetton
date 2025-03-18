@@ -8,7 +8,7 @@ contract JettonWallet(
 ) {
 
     receive(msg: JettonTransfer) {
-        require(parseStdAddress(msg.destination.asSlice()).workchain == 0, "Invalid destination workchain");
+        forceBasechain(msg.destination);
         require(sender() == self.owner, "Incorrect sender");
 
         self.balance -= msg.amount;
@@ -45,7 +45,7 @@ contract JettonWallet(
 
         // This message should come only from master, or from other JettonWallet
         let wallet: StateInit = initOf JettonWallet(0, msg.sender, self.master);
-        if (sender() != contractAddress(wallet)) {
+        if (!wallet.hasSameBasechainAddress(sender())) {
             require(self.master == sender(), "Incorrect sender");
         }
 
