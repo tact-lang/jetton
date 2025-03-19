@@ -1,104 +1,10 @@
 import {strict as assert} from "assert"
 import {Address, Cell, AccountStatus, ContractABI, fromNano} from "@ton/core"
-import {BlockchainTransaction} from "@ton/sandbox/dist/blockchain/Blockchain"
 import chalk from "chalk"
-
-type FlatTransaction = {
-    readonly from?: Address
-    readonly to?: Address
-    readonly value?: bigint
-    readonly body?: Cell
-    readonly inMessageBounced?: boolean
-    readonly inMessageBounceable?: boolean
-    readonly op?: number
-    readonly initData?: Cell
-    readonly initCode?: Cell
-    readonly deploy?: boolean
-    readonly lt?: bigint
-    readonly now?: number
-    readonly outMessagesCount?: number
-    readonly statusBefore?: AccountStatus
-    readonly statusAfter?: AccountStatus
-    readonly totalFees?: bigint
-    readonly aborted?: boolean
-    readonly destroyed?: boolean
-    readonly exitCode?: number
-    readonly actionResultCode?: number
-    readonly success?: boolean
-}
+import {BlockchainTransaction} from "@ton/sandbox"
+import {flattenTransaction, FlatTransaction} from "@ton/test-utils"
 
 type FlatTransactionValue = number | bigint | boolean | Address | Cell | AccountStatus | undefined
-
-const extractOp = (body: Cell) => {
-    const s = body.beginParse()
-    return s.remainingBits >= 32 ? s.loadUint(32) : undefined
-}
-
-function flattenTransaction(tx: BlockchainTransaction): FlatTransaction {
-    if (tx === undefined) {
-        throw new Error("Transaction is undefined")
-    }
-
-    return {
-        from: tx.inMessage?.info.src instanceof Address ? tx.inMessage.info.src : undefined,
-        to: tx.inMessage?.info.dest instanceof Address ? tx.inMessage.info.dest : undefined,
-        value: tx.inMessage?.info.type === "internal" ? tx.inMessage.info.value.coins : undefined,
-        body: tx.inMessage?.body,
-        inMessageBounced:
-            tx.inMessage?.info.type === "internal" ? tx.inMessage.info.bounced : undefined,
-        inMessageBounceable:
-            tx.inMessage?.info.type === "internal" ? tx.inMessage.info.bounce : undefined,
-        op: tx.inMessage?.body ? extractOp(tx.inMessage.body) : undefined,
-        initData: tx.inMessage?.init?.data ?? undefined,
-        initCode: tx.inMessage?.init?.code ?? undefined,
-        deploy: tx.inMessage?.init ? tx.oldStatus !== "active" && tx.endStatus === "active" : false,
-        lt: tx.lt,
-        now: tx.now,
-        outMessagesCount: tx.outMessagesCount,
-        statusBefore: tx.oldStatus,
-        statusAfter: tx.endStatus,
-        totalFees: tx.totalFees.coins,
-        aborted:
-            tx.description.type === "generic" ||
-            tx.description.type === "tick-tock" ||
-            tx.description.type === "split-prepare" ||
-            tx.description.type === "merge-install"
-                ? tx.description.aborted
-                : undefined,
-        destroyed:
-            tx.description.type === "generic" ||
-            tx.description.type === "tick-tock" ||
-            tx.description.type === "split-prepare" ||
-            tx.description.type === "merge-install"
-                ? tx.description.destroyed
-                : undefined,
-        exitCode:
-            tx.description.type === "generic" ||
-            tx.description.type === "tick-tock" ||
-            tx.description.type === "split-prepare" ||
-            tx.description.type === "merge-install"
-                ? tx.description.computePhase.type === "vm"
-                    ? tx.description.computePhase.exitCode
-                    : undefined
-                : undefined,
-        actionResultCode:
-            tx.description.type === "generic" ||
-            tx.description.type === "tick-tock" ||
-            tx.description.type === "split-prepare" ||
-            tx.description.type === "merge-install"
-                ? tx.description.actionPhase?.resultCode
-                : undefined,
-        success:
-            tx.description.type === "generic" ||
-            tx.description.type === "tick-tock" ||
-            tx.description.type === "split-prepare" ||
-            tx.description.type === "merge-install"
-                ? tx.description.computePhase.type === "vm"
-                    ? tx.description.computePhase.success && tx.description.actionPhase?.success
-                    : false
-                : undefined,
-    }
-}
 
 type FlatPrintLevels = "info" | "extended" | "raw"
 
@@ -120,8 +26,8 @@ const PRINT_LEVEL_KEYS: Record<FlatPrintLevels, Array<keyof FlatTransaction>> = 
         "lt",
         "now",
         "outMessagesCount",
-        "statusBefore",
-        "statusAfter",
+        "endStatus",
+        "oldStatus",
         "totalFees",
         "aborted",
         "destroyed",
@@ -143,8 +49,8 @@ const PRINT_LEVEL_KEYS: Record<FlatPrintLevels, Array<keyof FlatTransaction>> = 
         "lt",
         "now",
         "outMessagesCount",
-        "statusBefore",
-        "statusAfter",
+        "endStatus",
+        "oldStatus",
         "totalFees",
         "aborted",
         "destroyed",
@@ -154,7 +60,7 @@ const PRINT_LEVEL_KEYS: Record<FlatPrintLevels, Array<keyof FlatTransaction>> = 
     ],
 }
 
-function getPrettyTx(tx: FlatTransaction, args?: FlatPrintParameters): string {
+function getPrettyTx(tx: Partial<FlatTransaction>, args?: FlatPrintParameters): string {
     const level = args?.level ?? "info"
     const keys = PRINT_LEVEL_KEYS[level]
 
@@ -226,8 +132,11 @@ function compareTransactionValues(a: FlatTransactionValue, b: FlatTransactionVal
 }
 
 // Find the transaction with the most matching fields for pretty assertion message
-function findClosestTxMatch(transactions: FlatTransaction[], criteria: FlatTransaction) {
-    let bestMatch: FlatTransaction | undefined
+function findClosestTxMatch(
+    transactions: Partial<FlatTransaction>[],
+    criteria: Partial<FlatTransaction>,
+) {
+    let bestMatch: Partial<FlatTransaction> | undefined
     let bestMatchCount = 0
 
     for (const tx of transactions) {
@@ -251,7 +160,10 @@ const getTypedObjectKeys = <T extends object>(obj: T) => {
     return Object.keys(obj) as Array<keyof T>
 }
 
-function compareTransaction(targetTx: FlatTransaction, cmpTx: FlatTransaction): boolean {
+function compareTransaction(
+    targetTx: Partial<FlatTransaction>,
+    cmpTx: Partial<FlatTransaction>,
+): boolean {
     for (const key of getTypedObjectKeys(cmpTx)) {
         // we allow the comparison object to be a partial, while the target object must contain all partial keys
         if (!(key in targetTx)) {
@@ -269,7 +181,7 @@ function compareTransaction(targetTx: FlatTransaction, cmpTx: FlatTransaction): 
 
 export function assertTransaction(
     transactions: BlockchainTransaction[],
-    criteria: FlatTransaction,
+    criteria: Partial<FlatTransaction>,
 ) {
     const matchingTransaction = transactions.find(tx =>
         compareTransaction(flattenTransaction(tx), criteria),
@@ -306,46 +218,23 @@ export function assertTransaction(
     }
 }
 
-const identity = <T>(x: T): T => x
-
-export function assertTransactionChainSuccessfulEither(
+export function assertTransactionChainWasSuccessful(
     transactions: BlockchainTransaction[],
-    chainLength: {
-        either: number
-        or: number
-    },
+    chainLengthPredicate: (len: number) => boolean,
 ) {
     assert(
-        transactions.length === chainLength.either || transactions.length === chainLength.or,
-        `Expected ${chainLength.either} or ${chainLength.or} transactions, got ${transactions.length}`,
+        chainLengthPredicate(transactions.length),
+        `Tx chain length check failed, got ${transactions.length}`,
     )
-    const txStatuses = transactions.map(tx => flattenTransaction(tx).success)
-
-    const allEitherSuccessful = txStatuses.slice(0, chainLength.either).every(identity)
-
-    const allOrSuccessful = txStatuses.slice(0, chainLength.or).every(identity)
+    const failedTxAmount = transactions.map(flattenTransaction).filter(tx => !tx.success).length
 
     assert(
-        allEitherSuccessful || allOrSuccessful,
+        chainLengthPredicate(transactions.length - failedTxAmount),
         `Not all transactions in the chain were successful. Failed transactions:\n ${transactions
-            .map(tx => flattenTransaction(tx))
-            .filter(tx => tx.success !== true)
-            .map(v => getPrettyTx(v))}`,
-    )
-}
-
-export function assertTransactionChainSuccessful(
-    transactions: BlockchainTransaction[],
-    chainLength: number,
-) {
-    assert(
-        transactions.length === chainLength,
-        `Expected ${chainLength} transactions, got ${transactions.length}`,
-    )
-    const failedTransactions = transactions.filter(tx => flattenTransaction(tx).success !== true)
-    assert(
-        failedTransactions.length === 0,
-        `Not all transactions in the chain were successful. Failed transactions:\n ${failedTransactions.map(tx => flattenTransaction(tx)).map(v => getPrettyTx(v))}`,
+            .map(flattenTransaction)
+            .filter(tx => !tx.success)
+            .map(v => getPrettyTx(v))
+            .join("\n")}`,
     )
 }
 
