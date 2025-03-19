@@ -1,6 +1,6 @@
 import {JettonTransfer, JettonWallet} from "../output/Jetton_JettonWallet"
 import {Address, Builder, Cell, ContractProvider, Sender} from "@ton/core"
-import {JettonBurn} from "../output/Jetton_JettonMinter"
+import {JettonBurn, ProvideWalletBalance} from "../output/Jetton_JettonMinter"
 
 export class ExtendedJettonWallet extends JettonWallet {
     constructor(address: Address, init?: {code: Cell; data: Cell}) {
@@ -67,6 +67,22 @@ export class ExtendedJettonWallet extends JettonWallet {
             amount: jetton_amount,
             responseDestination: responseAddress,
             customPayload: customPayload,
+        }
+
+        await this.send(provider, via, {value}, msg)
+    }
+
+    sendProvideWalletBalance = async (
+        provider: ContractProvider,
+        via: Sender,
+        value: bigint,
+        receiver: Address,
+        includeInfo: boolean,
+    ): Promise<void> => {
+        const msg: ProvideWalletBalance = {
+            $$type: "ProvideWalletBalance",
+            receiver: receiver,
+            includeVerifyInfo: includeInfo,
         }
 
         await this.send(provider, via, {value}, msg)

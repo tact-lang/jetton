@@ -105,6 +105,6 @@ struct VerifyInfo {
 }
 
 message TakeWalletBalance {
-    balance: Int;
+    balance: Int as coins;
     verifyInfo: VerifyInfo?;
 }

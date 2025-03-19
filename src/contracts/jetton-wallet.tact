@@ -111,17 +111,22 @@ contract JettonWallet(
         let ctx = context();
         let fwdFee = ctx.readForwardFee();
 
-        forceBasechain();
-        require(ctx.value > fwdFee + getComputeFee(gasForBalanceReport, receiverWorkchain != Workchain), "Insufficient gas for balance report");
+        forceBasechain(msg.receiver);
+        require(ctx.value > fwdFee + getComputeFee(gasForBalanceReport, false), "Insufficient gas for balance report");
+
+        let info: VerifyInfo? = null;
+        if (msg.includeVerifyInfo) {
+            info = VerifyInfo{
+                minter: self.minter,
+                owner: self.owner,
+                code: myCode(),
+            }
+        }
 
         message(MessageParameters {
             body: TakeWalletBalance{
                 balance: self.balance,
-                verifyInfo: msg.includeVerifyInfo ? VerifyInfo{
-                    owner: self.owner,
-                    minter: self.minter,
-                    code: myCode(),
-                } : null,
+                verifyInfo: info,
             }.toCell(),
             to: msg.receiver,
             value: 0,
