@@ -218,46 +218,23 @@ export function assertTransaction(
     }
 }
 
-const identity = <T>(x: T): T => x
-
-export function assertTransactionChainSuccessfulEither(
+export function assertTransactionChainWasSuccessful(
     transactions: BlockchainTransaction[],
-    chainLength: {
-        either: number
-        or: number
-    },
+    chainLengthPredicate: (len: number) => boolean,
 ) {
     assert(
-        transactions.length === chainLength.either || transactions.length === chainLength.or,
-        `Expected ${chainLength.either} or ${chainLength.or} transactions, got ${transactions.length}`,
+        chainLengthPredicate(transactions.length),
+        `Tx chain length check failed, got ${transactions.length}`,
     )
-    const txStatuses = transactions.map(tx => flattenTransaction(tx).success)
-
-    const allEitherSuccessful = txStatuses.slice(0, chainLength.either).every(identity)
-
-    const allOrSuccessful = txStatuses.slice(0, chainLength.or).every(identity)
+    const failedTxAmount = transactions.map(flattenTransaction).filter(tx => !tx.success).length
 
     assert(
-        allEitherSuccessful || allOrSuccessful,
+        chainLengthPredicate(transactions.length - failedTxAmount),
         `Not all transactions in the chain were successful. Failed transactions:\n ${transactions
-            .map(tx => flattenTransaction(tx))
-            .filter(tx => tx.success !== true)
-            .map(v => getPrettyTx(v))}`,
-    )
-}
-
-export function assertTransactionChainSuccessful(
-    transactions: BlockchainTransaction[],
-    chainLength: number,
-) {
-    assert(
-        transactions.length === chainLength,
-        `Expected ${chainLength} transactions, got ${transactions.length}`,
-    )
-    const failedTransactions = transactions.filter(tx => flattenTransaction(tx).success !== true)
-    assert(
-        failedTransactions.length === 0,
-        `Not all transactions in the chain were successful. Failed transactions:\n ${failedTransactions.map(tx => flattenTransaction(tx)).map(v => getPrettyTx(v))}`,
+            .map(flattenTransaction)
+            .filter(tx => !tx.success)
+            .map(v => getPrettyTx(v))
+            .join("\n")}`,
     )
 }
 

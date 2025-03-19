@@ -1,11 +1,7 @@
 import {Blockchain} from "@ton/sandbox"
 import {JettonUpdateContent} from "../output/Jetton_JettonMinter"
 import {Address, beginCell, Cell, toNano} from "@ton/core"
-import {
-    assertTransactionChainSuccessful,
-    assertTransactionChainSuccessfulEither,
-    assertWasDeployed,
-} from "../utils/assert"
+import {assertTransactionChainWasSuccessful, assertWasDeployed} from "../utils/assert"
 import {ExtendedJettonMinter} from "../wrappers/ExtendedJettonMinter"
 import {ExtendedJettonWallet} from "../wrappers/ExtendedJettonWallet"
 import {getUsedGasInternal} from "../utils/gas"
@@ -60,6 +56,9 @@ const initializeJettonEnvironment = async () => {
 
 const loadJettonEnvironment = initializeJettonEnvironment()
 
+const lengthEqualsEither = (either: number, or: number) => (chainLength: number) =>
+    chainLength === either || chainLength === or
+
 export const runTransferBenchmark = async () => {
     const {deployer, jettonMinter, getJettonWallet} = await loadJettonEnvironment.then(v => v())
 
@@ -72,10 +71,7 @@ export const runTransferBenchmark = async () => {
     )
 
     // external -> mint -> transfer internal -> excesses <could fail> + notification
-    assertTransactionChainSuccessfulEither(mintResult.transactions, {
-        either: 4,
-        or: 5,
-    })
+    assertTransactionChainWasSuccessful(mintResult.transactions, lengthEqualsEither(4, 5))
 
     const deployerWallet = await getJettonWallet(deployer.address)
     const someAddress = Address.parse("EQD__________________________________________0vo")
@@ -92,10 +88,7 @@ export const runTransferBenchmark = async () => {
     )
 
     // external -> transfer -> transfer internal -> excesses <could fail>
-    assertTransactionChainSuccessfulEither(transferResult.transactions, {
-        either: 3,
-        or: 4,
-    })
+    assertTransactionChainWasSuccessful(transferResult.transactions, lengthEqualsEither(3, 4))
 
     // benchmark [transfer -> transfer internal]
     return getUsedGasInternal(transferResult, {type: "chain", chainLength: 2})
@@ -113,10 +106,7 @@ export const runMintBenchmark = async () => {
     )
 
     // external -> mint -> transfer internal -> excesses <could fail> + notification
-    assertTransactionChainSuccessfulEither(mintResult.transactions, {
-        either: 4,
-        or: 5,
-    })
+    assertTransactionChainWasSuccessful(mintResult.transactions, lengthEqualsEither(4, 5))
 
     // benchmark [mint -> transfer internal]
     return getUsedGasInternal(mintResult, {type: "chain", chainLength: 2})
@@ -133,10 +123,7 @@ export const runBurnBenchmark = async () => {
         toNano("1"),
     )
 
-    assertTransactionChainSuccessfulEither(mintResult.transactions, {
-        either: 4,
-        or: 5,
-    })
+    assertTransactionChainWasSuccessful(mintResult.transactions, lengthEqualsEither(4, 5))
 
     const deployerWallet = await getJettonWallet(deployer.address)
 
@@ -149,10 +136,7 @@ export const runBurnBenchmark = async () => {
     )
 
     // external -> burn -> burn notification -> excesses <could fail>
-    assertTransactionChainSuccessfulEither(burnResult.transactions, {
-        either: 3,
-        or: 4,
-    })
+    assertTransactionChainWasSuccessful(burnResult.transactions, lengthEqualsEither(3, 4))
 
     // benchmark [burn -> burn notification]
     return getUsedGasInternal(burnResult, {type: "chain", chainLength: 2})
@@ -169,7 +153,7 @@ export const runDiscoveryBenchmark = async () => {
     )
 
     // external -> discovery -> provide
-    assertTransactionChainSuccessful(discoveryResult.transactions, 3)
+    assertTransactionChainWasSuccessful(discoveryResult.transactions, (l: number) => l === 3)
 
     return getUsedGasInternal(discoveryResult, {type: "single"})
 }
