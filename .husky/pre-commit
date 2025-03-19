@@ -1,5 +1,5 @@
-# #!/usr/bin/env sh
-# . "$(dirname -- "$0")/_/husky.sh"
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
 
-# yarn deduplicate
-# yarn lint-staged
+yarn deduplicate
+yarn lint-staged
