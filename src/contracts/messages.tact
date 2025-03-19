@@ -9,7 +9,7 @@ struct JettonData {
 struct JettonWalletData {
     balance: Int;
     owner: Address;
-    master: Address;
+    minter: Address;
     code: Cell;
 }
 
@@ -91,4 +91,20 @@ message(22) CloseMinting {}
 message(3) ChangeOwner {
     queryId: Int as uint64;
     newOwner: Address;
+}
+
+message ProvideWalletBalance {
+    receiver: Address;
+    includeVerifyInfo: Bool;
+}
+
+struct VerifyInfo {
+    owner: Address;
+    minter: Address;
+    code: Cell;
+}
+
+message TakeWalletBalance {
+    balance: Int;
+    verifyInfo: VerifyInfo?;
 }
