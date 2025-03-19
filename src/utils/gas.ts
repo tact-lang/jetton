@@ -137,7 +137,6 @@ function calculateChange(prev: number, curr: number): string {
         if (typeof prev === "undefined" && typeof curr !== "undefined") {
             return chalk.greenBright(`(new)`)
         }
-        console.log(prev)
         return ""
     }
 
@@ -275,10 +274,10 @@ export function printBenchmarkTable(
         ...METRICS.map(metric => {
             const ratio = (Number(last.gas[metric]) / Number(first.gas[metric])) * 100
 
+            const metricNumber = Number.isNaN(ratio) ? "new!" : `${ratio.toFixed(2)}%`
+
             return `${metric.charAt(0).toUpperCase() + metric.slice(1)}: ${
-                ratio > 100
-                    ? chalk.redBright(`${ratio.toFixed(2)}%`)
-                    : chalk.green(`${ratio.toFixed(2)}%`)
+                ratio > 100 ? chalk.redBright(metricNumber) : chalk.green(metricNumber)
             } of ${args.implementationName} gas usage`
         }),
     )
