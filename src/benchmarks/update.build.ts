@@ -71,7 +71,7 @@ const main = async () => {
 
     await writeFile(
         join(__dirname, "results_gas.json"),
-        JSON.stringify(benchmarkResults, null, 2) + "\n",
+        JSON.stringify(benchmarkResults, null, 4) + "\n",
     )
 }
 

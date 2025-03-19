@@ -10,6 +10,17 @@
             },
             "summary": "54343",
             "pr": "https://github.com/tact-lang/jetton/pull/77"
+        },
+        {
+            "label": "With Tact-lang changes",
+            "pr": "https://github.com/tact-lang/jetton/pull/83",
+            "gas": {
+                "transfer": "15651",
+                "mint": "18195",
+                "burn": "12558",
+                "discovery": "6655"
+            },
+            "summary": "53059"
         }
     ]
 }

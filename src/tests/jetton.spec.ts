@@ -940,7 +940,6 @@ describe("Jetton Minter", () => {
                 L = minimalFee
             }
         }
-        console.log(L)
         const minimalFee = L
         let discoveryResult = await jettonMinter.sendDiscovery(
             deployer.getSender(),
@@ -1157,7 +1156,7 @@ describe("Jetton Minter", () => {
             from: deployer.address,
             to: deployerJettonWallet.address,
             aborted: true,
-            exitCode: JettonWallet.errors["Invalid destination workchain"],
+            exitCode: JettonWallet.errors["Not a basechain address"],
         })
     })
 
