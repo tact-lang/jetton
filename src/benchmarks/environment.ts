@@ -39,21 +39,29 @@ const initializeJettonEnvironment = async () => {
         deployedContractAddress: jettonMinter.address,
     })
 
-    return {
-        blockchain,
-        deployer,
-        notDeployer,
-        jettonMinter,
-        getJettonWallet: async (address: Address) => {
-            return blockchain.openContract(
-                new ExtendedJettonWallet(await jettonMinter.getGetWalletAddress(address)),
-            )
-        },
+    const initSnapshot = blockchain.snapshot()
+
+    return async () => {
+        await blockchain.loadFrom(initSnapshot)
+
+        return {
+            blockchain,
+            deployer,
+            notDeployer,
+            jettonMinter,
+            getJettonWallet: async (address: Address) => {
+                return blockchain.openContract(
+                    new ExtendedJettonWallet(await jettonMinter.getGetWalletAddress(address)),
+                )
+            },
+        }
     }
 }
 
+const loadJettonEnvironment = initializeJettonEnvironment()
+
 export const runTransferBenchmark = async () => {
-    const {deployer, jettonMinter, getJettonWallet} = await initializeJettonEnvironment()
+    const {deployer, jettonMinter, getJettonWallet} = await loadJettonEnvironment.then(v => v())
 
     const mintResult = await jettonMinter.sendMint(
         deployer.getSender(),
@@ -94,7 +102,7 @@ export const runTransferBenchmark = async () => {
 }
 
 export const runMintBenchmark = async () => {
-    const {deployer, jettonMinter} = await initializeJettonEnvironment()
+    const {deployer, jettonMinter} = await loadJettonEnvironment.then(v => v())
 
     const mintResult = await jettonMinter.sendMint(
         deployer.getSender(),
@@ -115,7 +123,7 @@ export const runMintBenchmark = async () => {
 }
 
 export const runBurnBenchmark = async () => {
-    const {deployer, jettonMinter, getJettonWallet} = await initializeJettonEnvironment()
+    const {deployer, jettonMinter, getJettonWallet} = await loadJettonEnvironment.then(v => v())
 
     const mintResult = await jettonMinter.sendMint(
         deployer.getSender(),
@@ -151,7 +159,7 @@ export const runBurnBenchmark = async () => {
 }
 
 export const runDiscoveryBenchmark = async () => {
-    const {deployer, jettonMinter} = await initializeJettonEnvironment()
+    const {deployer, jettonMinter} = await loadJettonEnvironment.then(v => v())
 
     const discoveryResult = await jettonMinter.sendDiscovery(
         deployer.getSender(),
