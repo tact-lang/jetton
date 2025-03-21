@@ -12,27 +12,27 @@
             "pr": "https://github.com/tact-lang/jetton/pull/77"
         },
         {
-            "label": "With Tact-lang changes",
+            "label": "With Tact-lang changes (selector hack and basechain optimizations)",
             "pr": "https://github.com/tact-lang/jetton/pull/83",
             "gas": {
-                "transfer": "15651",
-                "mint": "18195",
-                "burn": "12558",
-                "discovery": "6655"
+                "transfer": "15511",
+                "mint": "18027",
+                "burn": "12390",
+                "discovery": "6557"
             },
-            "summary": "53059"
-        },
-        {
-            "label": "With Report Balance",
-            "pr": "https://github.com/tact-lang/jetton/pull/84",
-            "gas": {
-                "transfer": "15651",
-                "mint": "18195",
-                "burn": "12576",
-                "discovery": "6655",
-                "reportBalance": "4607"
-            },
-            "summary": "57684"
+            "summary": "52485"
         }
     ]
 }
+
+        {
+            "pr": "https://github.com/tact-lang/jetton/pull/84",
+            "label": "With Report Balance",
+                "transfer": "15651",
+            "gas": {
+                "mint": "18195",
+                "burn": "12576",
+                "reportBalance": "4607"
+                "discovery": "6655",
+            },
+            "summary": "57684"
