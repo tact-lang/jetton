@@ -48,7 +48,26 @@ Customize your Jetton by editing the `contract.deploy.ts` file. This file also i
 yarn deploy
 ```
 
-### 4. Test Contracts
+### 4. Read Jetton Metadata
+
+To read the metadata of a deployed Jetton, set the Jetton address in your `.env` file:
+
+```
+JETTON_ADDRESS=EQYour_Jetton_Address_Here
+```
+
+Then run:
+
+```bash
+yarn read
+```
+
+This will display:
+- General Jetton information (total supply, mintable status, owner)
+- Jetton metadata (name, symbol, description, image, etc.)
+- A link to view the Jetton in a blockchain explorer
+
+### 5. Test Contracts
 
 Run tests in the `@ton/sandbox` environment:
 
@@ -58,7 +77,7 @@ yarn test
 
 ## Jetton Architecture
 
-If you’re new to Jettons, read the [TON Jettons Processing](https://docs.ton.org/develop/dapps/asset-processing/jettons).
+If you're new to Jettons, read the [TON Jettons Processing](https://docs.ton.org/develop/dapps/asset-processing/jettons).
 
 ## Project Structure
 
