@@ -23,7 +23,6 @@ describe("Jetton Minter Extended", () => {
     let defaultContent: Cell
     beforeAll(async () => {
         blockchain = await Blockchain.create()
-        blockchain.verbosity.vmLogs = "vm_logs_full"
         deployer = await blockchain.treasury("deployer")
         notDeployer = await blockchain.treasury("notDeployer")
 
