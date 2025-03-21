@@ -37,7 +37,6 @@ dotenv.config()
  */
 ;(async () => {
     const mnemonics = (process.env.mnemonics || "").toString() // 🔴 Mnemonic should be placed in .env file
-
     const network = process.env.network ?? "testnet"
     if (network != "mainnet" && network != "testnet") {
         throw new Error("Invalid network")
