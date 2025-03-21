@@ -1,0 +1,34 @@
+name: Deploy Test
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: yarn install
+
+      - name: Build
+        run: yarn build
+
+      - name: Test deploy
+        env:
+          mnemonics: ${{ secrets.TESTNET_WALLET_SEED_PHRASE }}
+          network: testnet
+          jettonName: TactJetton
+          jettonSymbol: TACT
+          jettonDescription: "This is description of Jetton #${{ github.run_number }} (Run at ${{ github.run_id }})"
+          jettonImage: https://raw.githubusercontent.com/tact-lang/tact/refs/heads/main/docs/public/logomark-light.svg
+          jettonSupply: 1000000000
+          enableDeployVerify: true
+        run: yarn deploy
