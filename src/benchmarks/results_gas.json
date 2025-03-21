@@ -10,6 +10,17 @@
             },
             "summary": "54343",
             "pr": "https://github.com/tact-lang/jetton/pull/77"
+        },
+        {
+            "label": "With Tact-lang changes (selector hack and basechain optimizations)",
+            "pr": "https://github.com/tact-lang/jetton/pull/83",
+            "gas": {
+                "transfer": "15511",
+                "mint": "18027",
+                "burn": "12390",
+                "discovery": "6557"
+            },
+            "summary": "52485"
         }
     ]
 }
