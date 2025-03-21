@@ -54,6 +54,7 @@ const initializeJettonEnvironment = async () => {
     }
 }
 
+// this is promise object that resolves to the async load environment function
 const loadJettonEnvironment = initializeJettonEnvironment()
 
 const lengthEqualsEither = (either: number, or: number) => (chainLength: number) =>
