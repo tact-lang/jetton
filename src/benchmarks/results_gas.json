@@ -21,6 +21,18 @@
                 "discovery": "6557"
             },
             "summary": "52485"
+        },
+        {
+            "label": "With Report Balance",
+            "pr": "https://github.com/tact-lang/jetton/pull/84",
+            "gas": {
+                "transfer": "15511",
+                "mint": "18027",
+                "burn": "12408",
+                "discovery": "6557",
+                "reportBalance": "4537"
+            },
+            "summary": "57040"
         }
     ]
 }

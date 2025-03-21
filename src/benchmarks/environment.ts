@@ -54,6 +54,7 @@ const initializeJettonEnvironment = async () => {
     }
 }
 
+// this is promise object that resolves to the async load environment function
 const loadJettonEnvironment = initializeJettonEnvironment()
 
 const lengthEqualsEither = (either: number, or: number) => (chainLength: number) =>
@@ -152,8 +153,38 @@ export const runDiscoveryBenchmark = async () => {
         toNano("0.1"),
     )
 
-    // external -> discovery -> provide
+    // external -> discovery -> take
     assertTransactionChainWasSuccessful(discoveryResult.transactions, (l: number) => l === 3)
 
     return getUsedGasInternal(discoveryResult, {type: "single"})
+}
+
+export const runReportBalanceBenchmark = async () => {
+    const {deployer, jettonMinter, getJettonWallet} = await loadJettonEnvironment.then(v => v())
+
+    const mintResult = await jettonMinter.sendMint(
+        deployer.getSender(),
+        deployer.address,
+        toNano(100000),
+        toNano("0.1"),
+        toNano("1"),
+    )
+
+    // external -> mint -> transfer internal -> excesses <could fail> + notification
+    assertTransactionChainWasSuccessful(mintResult.transactions, lengthEqualsEither(4, 5))
+
+    const deployerWallet = await getJettonWallet(deployer.address)
+    const someAddress = Address.parse("EQD__________________________________________0vo")
+
+    const reportResult = await deployerWallet.sendProvideWalletBalance(
+        deployer.getSender(),
+        toNano(1),
+        someAddress,
+        true,
+    )
+
+    // external -> report -> take + bounce
+    assertTransactionChainWasSuccessful(reportResult.transactions, lengthEqualsEither(3, 4))
+
+    return getUsedGasInternal(reportResult, {type: "single"})
 }

@@ -46,7 +46,7 @@ export type RawBenchmarkResult = {
     results: {
         label: string
         pr: string | null
-        gas: Record<string, string>
+        gas: Record<string, string | undefined>
         summary: string
     }[]
 }
@@ -132,6 +132,14 @@ function calculateChange(prev: number, curr: number): string {
     if (number === 0) {
         return chalk.gray(`same`)
     }
+
+    if (Number.isNaN(number)) {
+        if (typeof prev === "undefined" && typeof curr !== "undefined") {
+            return chalk.greenBright(`(new)`)
+        }
+        return ""
+    }
+
     return number >= 0 ? chalk.redBright(`(+${change}%)`) : chalk.green(`(${change}%)`)
 }
 
@@ -202,7 +210,7 @@ function createTable<
     results
         .map(({label, [type]: data, summary, pr: commit}, i) => [
             label,
-            ...metrics.map((metric, j) => `${data![metric]} ${changes[i]?.[j]}`),
+            ...metrics.map((metric, j) => `${data![metric] ?? "-"} ${changes[i]?.[j]}`),
             `${summary} ${summaryChanges[i]}`,
             commit
                 ? commit.substring(commit.lastIndexOf("/") + 1, commit.lastIndexOf("/") + 8)
@@ -235,7 +243,7 @@ export function printBenchmarkTable(
         return
     }
 
-    const METRICS: readonly string[] = Object.keys(results[0]!.gas)
+    const METRICS: readonly string[] = Object.keys(results.at(-1)!.gas)
     const first = results.at(0)!
     const last = results.at(-1)!
 
@@ -266,10 +274,10 @@ export function printBenchmarkTable(
         ...METRICS.map(metric => {
             const ratio = (Number(last.gas[metric]) / Number(first.gas[metric])) * 100
 
+            const metricNumber = Number.isNaN(ratio) ? "new!" : `${ratio.toFixed(2)}%`
+
             return `${metric.charAt(0).toUpperCase() + metric.slice(1)}: ${
-                ratio > 100
-                    ? chalk.redBright(`${ratio.toFixed(2)}%`)
-                    : chalk.green(`${ratio.toFixed(2)}%`)
+                ratio > 100 ? chalk.redBright(metricNumber) : chalk.green(metricNumber)
             } of ${args.implementationName} gas usage`
         }),
     )

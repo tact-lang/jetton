@@ -1,10 +1,11 @@
 import "./messages";
 import "./constants";
+import "./jetton-minter";
 
 contract JettonWallet(
     balance: Int as coins,
     owner: Address,
-    master: Address,
+    minter: Address,
 ) {
 
     receive(msg: JettonTransfer) {
@@ -36,7 +37,7 @@ contract JettonWallet(
                 forwardTonAmount: msg.forwardTonAmount,
                 forwardPayload: msg.forwardPayload
             }.toCell(),
-            init: initOf JettonWallet(0, msg.destination, self.master),
+            init: initOf JettonWallet(0, msg.destination, self.minter),
         });
     }
 
@@ -44,9 +45,9 @@ contract JettonWallet(
         self.balance += msg.amount;
 
         // This message should come only from master, or from other JettonWallet
-        let wallet: StateInit = initOf JettonWallet(0, msg.sender, self.master);
+        let wallet: StateInit = initOf JettonWallet(0, msg.sender, self.minter);
         if (!wallet.hasSameBasechainAddress(sender())) {
-            require(self.master == sender(), "Incorrect sender");
+            require(self.minter == sender(), "Incorrect sender");
         }
 
         let ctx: Context = context();
@@ -93,7 +94,7 @@ contract JettonWallet(
         require(ctx.value > (fwdFee + 2 * getComputeFee(gasForBurn, false)), "Unsufficient amount of TON attached");
 
         message(MessageParameters{
-            to: self.master,
+            to: self.minter,
             value: 0,
             mode: SendRemainingValue,
             bounce: true,
@@ -103,6 +104,29 @@ contract JettonWallet(
                 sender: self.owner,
                 responseDestination: msg.responseDestination,
             }.toCell(),
+        });
+    }
+
+    receive(msg: ProvideWalletBalance) {
+        forceBasechain(msg.receiver);
+
+        let info: VerifyInfo? = null;
+        if (msg.includeVerifyInfo) {
+            info = VerifyInfo{
+                minter: self.minter,
+                owner: self.owner,
+                code: myCode(),
+            }
+        }
+
+        message(MessageParameters {
+            body: TakeWalletBalance{
+                balance: self.balance,
+                verifyInfo: info,
+            }.toCell(),
+            to: msg.receiver,
+            value: 0,
+            mode: SendRemainingValue,
         });
     }
 
@@ -118,7 +142,7 @@ contract JettonWallet(
         return JettonWalletData{
             balance: self.balance,
             owner: self.owner,
-            master: self.master,
+            minter: self.minter,
             code: myCode()
         };
     }
