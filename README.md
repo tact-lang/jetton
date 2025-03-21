@@ -63,6 +63,7 @@ yarn read
 ```
 
 This will display:
+
 - General Jetton information (total supply, mintable status, owner)
 - Jetton metadata (name, symbol, description, image, etc.)
 - A link to view the Jetton in a blockchain explorer
