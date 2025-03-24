@@ -20,23 +20,18 @@ contract JettonMinter(
     jettonContent: Cell,
     mintable: Bool, // Should be deployed with this flag set to true
 ) {
-    receive(msg: JettonBurnNotification) {
-        let sender = parseStdAddress(sender().asSlice());
-        let wallet = getJettonBasechainWalletByOwner(msg.sender);
+    receive(msg: Mint) {
+        require(sender() == self.owner, "Incorrect sender");
+        require(self.mintable, "Mint is closed");
+        self.totalSupply += msg.mintMessage.amount;
 
-        require(sender.workchain == Workchain && sender.address == wallet.hash!!, "Unauthorized burn");
-
-        self.totalSupply -= msg.amount;
-
-        if (msg.responseDestination != null) {
-            message(MessageParameters {
-                to: msg.responseDestination!!,
-                body: JettonExcesses{ queryId: msg.queryId }.toCell(),
-                value: 0,
-                bounce: false,
-                mode: SendRemainingValue | SendIgnoreErrors, // ignore errors, because supply has already been updated
-            });
-        }
+        deploy(DeployParameters {
+            value: 0,
+            bounce: true,
+            mode: SendRemainingValue,
+            body: msg.mintMessage.toCell(),
+            init: getJettonWalletInit(msg.receiver)
+        });
     }
 
     receive(msg: ProvideWalletAddress) {
@@ -59,23 +54,28 @@ contract JettonMinter(
         });
     }
 
+    receive(msg: JettonBurnNotification) {
+        let sender = parseStdAddress(sender().asSlice());
+        let wallet = getJettonBasechainWalletByOwner(msg.sender);
+
+        require(sender.workchain == Workchain && sender.address == wallet.hash!!, "Unauthorized burn");
+
+        self.totalSupply -= msg.amount;
+
+        if (msg.responseDestination != null) {
+            message(MessageParameters {
+                to: msg.responseDestination!!,
+                body: JettonExcesses{ queryId: msg.queryId }.toCell(),
+                value: 0,
+                bounce: false,
+                mode: SendRemainingValue | SendIgnoreErrors, // ignore errors, because supply has already been updated
+            });
+        }
+    }
+
     receive(msg: JettonUpdateContent) {
         require(sender() == self.owner, "Incorrect sender");
         self.jettonContent = msg.content;
-    }
-
-    receive(msg: Mint) {
-        require(sender() == self.owner, "Incorrect sender");
-        require(self.mintable, "Mint is closed");
-        self.totalSupply += msg.mintMessage.amount;
-
-        deploy(DeployParameters{
-            value: 0,
-            bounce: true,
-            mode: SendRemainingValue,
-            body: msg.mintMessage.toCell(),
-            init: getJettonWalletInit(msg.receiver)
-        });
     }
 
     receive(msg: ChangeOwner) {
@@ -87,6 +87,18 @@ contract JettonMinter(
         require(sender() == self.owner, "Incorrect sender");
         self.mintable = false;
         cashback(sender());
+    }
+
+    receive(msg: ClaimTON) {
+        require(sender() == self.owner, "Incorrect sender");
+        nativeReserve(minTonsForStorage, ReserveExact | ReserveAddOriginalBalance | ReserveBounceIfActionFail);
+
+        // we allow bounce here and don't handle it, if claim fails we just accept the TONs back
+        message(MessageParameters {
+            to: msg.receiver,
+            value: 0,
+            mode: SendRemainingValue,
+        });
     }
 
     bounced(msg: bounced<JettonTransferInternal>) {

@@ -1,6 +1,5 @@
 import "./messages";
 import "./constants";
-import "./jetton-minter";
 
 contract JettonWallet(
     balance: Int as coins,
@@ -25,11 +24,11 @@ contract JettonWallet(
             "Insufficient amount of TON attached"
         );
 
-        deploy(DeployParameters{
+        deploy(DeployParameters {
             value: 0,
             mode: SendRemainingValue,
             bounce: true,
-            body: JettonTransferInternal{
+            body: JettonTransferInternal {
                 queryId: msg.queryId,
                 amount: msg.amount,
                 sender: self.owner,
@@ -57,7 +56,7 @@ contract JettonWallet(
         if (msg.forwardTonAmount > 0) {
             let fwdFee: Int = ctx.readForwardFee();
             msgValue -= msg.forwardTonAmount + fwdFee;
-            message(MessageParameters{
+            message(MessageParameters {
                 to: self.owner,
                 value: msg.forwardTonAmount,
                 mode: SendPayGasSeparately,
@@ -73,7 +72,7 @@ contract JettonWallet(
         nativeReserve(max(tonBalanceBeforeMsg, minTonsForStorage), ReserveAtMost);
         // 0xd53276db -- Cashback to the original Sender
         if (msg.responseDestination != null && msgValue > 0) {
-            message(MessageParameters{
+            message(MessageParameters {
                 to: msg.responseDestination!!,
                 value: msgValue,
                 mode: SendRemainingBalance + SendIgnoreErrors,
@@ -81,30 +80,6 @@ contract JettonWallet(
                 body: JettonExcesses{ queryId: msg.queryId }.toCell(),
             });
         }
-    }
-
-    receive(msg: JettonBurn) {
-        require(sender() == self.owner, "Incorrect sender");
-
-        self.balance -= msg.amount;
-        require(self.balance >= 0, "Incorrect balance after send");
-
-        let ctx = context();
-        let fwdFee: Int = ctx.readForwardFee();
-        require(ctx.value > (fwdFee + 2 * getComputeFee(gasForBurn, false)), "Unsufficient amount of TON attached");
-
-        message(MessageParameters{
-            to: self.minter,
-            value: 0,
-            mode: SendRemainingValue,
-            bounce: true,
-            body: JettonBurnNotification{
-                queryId: msg.queryId,
-                amount: msg.amount,
-                sender: self.owner,
-                responseDestination: msg.responseDestination,
-            }.toCell(),
-        });
     }
 
     receive(msg: ProvideWalletBalance) {
@@ -120,10 +95,46 @@ contract JettonWallet(
         }
 
         message(MessageParameters {
-            body: TakeWalletBalance{
+            body: TakeWalletBalance {
                 balance: self.balance,
                 verifyInfo: info,
             }.toCell(),
+            to: msg.receiver,
+            value: 0,
+            mode: SendRemainingValue,
+        });
+    }
+
+    receive(msg: JettonBurn) {
+        require(sender() == self.owner, "Incorrect sender");
+
+        self.balance -= msg.amount;
+        require(self.balance >= 0, "Incorrect balance after send");
+
+        let ctx = context();
+        let fwdFee: Int = ctx.readForwardFee();
+        require(ctx.value > (fwdFee + 2 * getComputeFee(gasForBurn, false)), "Unsufficient amount of TON attached");
+
+        message(MessageParameters {
+            to: self.minter,
+            value: 0,
+            mode: SendRemainingValue,
+            bounce: true,
+            body: JettonBurnNotification {
+                queryId: msg.queryId,
+                amount: msg.amount,
+                sender: self.owner,
+                responseDestination: msg.responseDestination,
+            }.toCell(),
+        });
+    }
+
+    receive(msg: ClaimTON) {
+        require(sender() == self.owner, "Incorrect sender");
+        nativeReserve(minTonsForStorage, ReserveExact | ReserveAddOriginalBalance | ReserveBounceIfActionFail);
+
+        // we allow bounce here and don't handle it, if claim fails we just accept the TONs back
+        message(MessageParameters {
             to: msg.receiver,
             value: 0,
             mode: SendRemainingValue,
