@@ -1,20 +1,10 @@
 //Huge thanks to Howard Peng for the original code of deploy script. https://github.com/howardpen9/jetton-implementation-in-tact
 
-import {
-    beginCell,
-    contractAddress,
-    toNano,
-    TonClient,
-    WalletContractV4,
-    internal,
-    fromNano,
-} from "@ton/ton"
+import {beginCell, toNano, TonClient, WalletContractV4, internal, fromNano} from "@ton/ton"
 import {getHttpEndpoint} from "@orbs-network/ton-access"
 import {mnemonicToPrivateKey} from "@ton/crypto"
-import {buildOnchainMetadata, validateJettonParams} from "../utils/jetton-helpers"
-
-import {JettonMinter, storeMint} from "../output/Jetton_JettonMinter"
-import {JettonWallet} from "../output/Jetton_JettonWallet"
+import {buildJettonMinterFromEnv} from "../utils/jetton-helpers"
+import {storeMint} from "../output/Jetton_JettonMinter"
 
 import {printSeparator} from "../utils/print"
 import * as dotenv from "dotenv"
@@ -35,7 +25,7 @@ dotenv.config()
     6. Run "yarn build" to compile the contract.
     7. Run this script by "yarn deploy"
  */
-;(async () => {
+const main = async () => {
     const mnemonics = (process.env.mnemonics || "").toString() // 🔴 Mnemonic should be placed in .env file
     const network = process.env.network ?? "testnet"
     if (network != "mainnet" && network != "testnet") {
@@ -50,28 +40,10 @@ dotenv.config()
     const secretKey = keyPair.secretKey
     const workchain = 0 //we are working in basechain.
     const deployer_wallet = WalletContractV4.create({workchain, publicKey: keyPair.publicKey})
-    console.log(deployer_wallet.address)
 
     const deployer_wallet_contract = client.open(deployer_wallet)
 
-    const jettonParams = {
-        name: process.env.jettonName ?? "TactJetton",
-        description:
-            process.env.jettonDescription ?? "This is description of Jetton, written in Tact-lang",
-        symbol: process.env.jettonSymbol ?? "TACT",
-        image:
-            process.env.jettonImage ??
-            "https://raw.githubusercontent.com/tact-lang/tact/refs/heads/main/docs/public/logomark-light.svg",
-    }
-
-    // Create content Cell
-    const content = buildOnchainMetadata(jettonParams)
-
-    // Compute init data for deployment
-    // NOTICE: the parameters inside the init functions were the input for the contract address
-    // which means any changes will change the smart contract address as well
-    const init = await JettonMinter.init(0n, deployer_wallet_contract.address, content, true)
-    const jettonMaster = contractAddress(workchain, init)
+    const jettonMinter = await buildJettonMinterFromEnv(deployer_wallet_contract.address)
     const deployAmount = toNano("0.15")
 
     const supply = toNano(Number(process.env.jettonSupply) ?? 1000000000)
@@ -116,41 +88,17 @@ dotenv.config()
         secretKey,
         messages: [
             internal({
-                to: jettonMaster,
+                to: jettonMinter.address,
                 value: deployAmount,
                 init: {
-                    code: init.code,
-                    data: init.data,
+                    code: jettonMinter.init?.code,
+                    data: jettonMinter.init?.data,
                 },
                 body: packed_msg,
             }),
         ],
     })
-    console.log("====== Deployment message sent to =======\n", jettonMaster)
-    if (Boolean(process.env.enableDeployVerify ?? false)) {
-        const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
+    console.log("====== Deployment message sent to =======\n", jettonMinter.address)
+}
 
-        const sleepTime = 5000
-        const maxAttempts = 10
-        let attempts = 0
-
-        while (attempts < maxAttempts) {
-            await sleep(sleepTime)
-            attempts++
-            const contractState = await client.getContractState(jettonMaster)
-            if (contractState.state !== "active") {
-                continue
-            }
-            const fullJettonParams = {
-                metadata: jettonParams,
-                totalSupply: supply,
-                owner: deployer_wallet_contract.address,
-                jettonWalletCode: (
-                    await JettonWallet.init(0n, deployer_wallet_contract.address, jettonMaster)
-                ).code,
-            }
-            await validateJettonParams(fullJettonParams, jettonMaster, client)
-        }
-        console.error("Contract was verified successfully")
-    }
-})()
+void main()

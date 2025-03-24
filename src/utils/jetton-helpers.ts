@@ -1,5 +1,5 @@
 import {Sha256} from "@aws-crypto/sha256-js"
-import {Dictionary, beginCell, Cell, Address} from "@ton/core"
+import {Dictionary, beginCell, Cell, Address, contractAddress} from "@ton/core"
 import {JettonMinter} from "../output/Jetton_JettonMinter"
 import {TonClient} from "@ton/ton"
 
@@ -68,6 +68,7 @@ export type Metadata = {
 }
 
 export type JettonParams = {
+    address: Address
     metadata: Metadata
     totalSupply: bigint
     owner: Address
@@ -96,27 +97,31 @@ export async function validateJettonParams(
     const {metadata, totalSupply, owner, jettonWalletCode} = expectedJettonParams
     const jettonContract = client.open(new JettonMinter(jettonAddress))
     const jettonData = await jettonContract.getGetJettonData()
-    if (jettonData.totalSupply !== totalSupply) {
-        throw new Error("Invalid total supply")
-    }
-    if (jettonData.adminAddress.toRaw().toString("hex") !== owner.toRaw().toString("hex")) {
-        throw new Error("Invalid owner")
-    }
-    if (
-        jettonData.jettonWalletCode.toBoc().toString("hex") !==
-        jettonWalletCode.toBoc().toString("hex")
-    ) {
-        throw new Error("Invalid jetton wallet code")
-    }
+    expect(jettonData.totalSupply).toBe(totalSupply)
+    expect(jettonData.adminAddress.toRaw().toString("hex")).toBe(owner.toRaw().toString("hex"))
+    expect(jettonData.jettonWalletCode.toBoc().toString("hex")).toBe(
+        jettonWalletCode.toBoc().toString("hex"),
+    )
 
     const realMetadata = await parseMetadataFromCell(jettonData.jettonContent)
-    if (realMetadata.name !== metadata.name) {
-        throw new Error("Invalid metadata name")
+    expect(realMetadata.name).toBe(metadata.name)
+    expect(realMetadata.description).toBe(metadata.description)
+    expect(realMetadata.image).toBe(metadata.image)
+}
+
+export async function buildJettonMinterFromEnv(deployerAddress: Address) {
+    const jettonParams = {
+        name: process.env.jettonName ?? "TactJetton",
+        description:
+            process.env.jettonDescription ?? "This is description of Jetton, written in Tact-lang",
+        symbol: process.env.jettonSymbol ?? "TACT",
+        image:
+            process.env.jettonImage ??
+            "https://raw.githubusercontent.com/tact-lang/tact/refs/heads/main/docs/public/logomark-light.svg",
     }
-    if (realMetadata.description !== metadata.description) {
-        throw new Error("Invalid metadata description")
-    }
-    if (realMetadata.image !== metadata.image) {
-        throw new Error("Invalid metadata image")
-    }
+
+    // Create content Cell
+    const content = buildOnchainMetadata(jettonParams)
+
+    return await JettonMinter.fromInit(0n, deployerAddress, content, true)
 }
