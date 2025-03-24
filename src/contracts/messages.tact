@@ -93,6 +93,7 @@ message(3) ChangeOwner {
     newOwner: Address;
 }
 
+// provide_wallet_balance#7ac8d559 receiver:address includeVerifyInfo:bool = ProvideWalletBalance
 message ProvideWalletBalance {
     receiver: Address;
     includeVerifyInfo: Bool;
@@ -104,6 +105,7 @@ struct VerifyInfo {
     code: Cell;
 }
 
+// take_wallet_balance#ca77fdc2 balance:coins verifyInfo:(Maybe VerifyInfo{owner:address,minter:address,code:^cell}) = TakeWalletBalance
 message TakeWalletBalance {
     balance: Int as coins;
     verifyInfo: VerifyInfo?;
