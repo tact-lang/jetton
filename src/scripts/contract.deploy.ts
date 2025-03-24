@@ -27,9 +27,6 @@ dotenv.config()
  */
 const main = async () => {
     let mnemonics = (process.env.mnemonics || "").toString() // 🔴 Mnemonic should be placed in .env file
-    if (process.env.TESTNET_WALLET_SEED_PHRASE) {
-        mnemonics = process.env.TESTNET_WALLET_SEED_PHRASE
-    }
     const network = process.env.network ?? "testnet"
     if (network != "mainnet" && network != "testnet") {
         throw new Error("Invalid network")
@@ -38,8 +35,9 @@ const main = async () => {
     const client = new TonClient({
         endpoint: endpoint,
     })
-
-    const keyPair = await mnemonicToPrivateKey(mnemonics.split(" "))
+    const split_mnemonics = mnemonics.split(" ")
+    console.log(split_mnemonics[0], split_mnemonics[1])
+    const keyPair = await mnemonicToPrivateKey(split_mnemonics)
     const secretKey = keyPair.secretKey
     const workchain = 0 //we are working in basechain.
     const deployer_wallet = WalletContractV4.create({workchain, publicKey: keyPair.publicKey})
