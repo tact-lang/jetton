@@ -48,7 +48,7 @@ Customize your Jetton by editing the `contract.deploy.ts` file. This file also i
 yarn deploy
 ```
 
-#### Deployment Verification
+#### 4. Deployment Verification
 
 To verify that your Jetton contract was deployed correctly, you can use the built-in verification test:
 
@@ -59,33 +59,13 @@ enableDeployVerify=true
 
 Run the verification test:
 ```bash
-yarn verify
+yarn verify-deployment
 ```
 
 This verification test will check:
 - If the contract is active
 - If the contract parameters match what you specified
 - If the contract metadata is correctly set up
-
-### 4. Read Jetton Metadata
-
-To read the metadata of a deployed Jetton, set the Jetton address in your `.env` file:
-
-```
-JETTON_ADDRESS=EQYour_Jetton_Address_Here
-```
-
-Then run:
-
-```bash
-yarn read
-```
-
-This will display:
-
-- General Jetton information (total supply, mintable status, owner)
-- Jetton metadata (name, symbol, description, image, etc.)
-- A link to view the Jetton in a blockchain explorer
 
 ### 5. Test Contracts
 
