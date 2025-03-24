@@ -19,3 +19,5 @@ tonviewer
 tonweb
 workchain
 yada
+TONCENTER
+toncenter

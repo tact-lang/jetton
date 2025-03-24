@@ -53,16 +53,19 @@ yarn deploy
 To verify that your Jetton contract was deployed correctly, you can use the built-in verification test:
 
 Enable verification in your `.env` file:
+
 ```
 enableDeployVerify=true
 ```
 
 Run the verification test:
+
 ```bash
 yarn verify-deployment
 ```
 
 This verification test will check:
+
 - If the contract is active
 - If the contract parameters match what you specified
 - If the contract metadata is correctly set up
