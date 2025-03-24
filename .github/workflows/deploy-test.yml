@@ -2,6 +2,9 @@ name: Deploy Test
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - deploy-check-in-ci
 
 jobs:
   deploy-test:
