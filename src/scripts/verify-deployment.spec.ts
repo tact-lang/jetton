@@ -14,7 +14,6 @@ describe("Contract Deployment Verification", () => {
     let jettonMinter: JettonMinter
     let deployerWalletAddress: Address
     let jettonParams: JettonParams
-    let supply: bigint = toNano(Number(process.env.jettonSupply) ?? 1000000000)
 
     beforeAll(async () => {
         const network = process.env.network ?? "testnet"
@@ -33,22 +32,18 @@ describe("Contract Deployment Verification", () => {
         }).address
 
         const metadata = {
-            name: process.env.jettonName ?? "TactJetton",
-            description:
-                process.env.jettonDescription ??
-                "This is description of Jetton, written in Tact-lang",
-            symbol: process.env.jettonSymbol ?? "TACT",
-            image:
-                process.env.jettonImage ??
-                "https://raw.githubusercontent.com/tact-lang/tact/refs/heads/main/docs/public/logomark-light.svg",
+            name: process.env.jettonName ?? "",
+            description: process.env.jettonDescription ?? "",
+            symbol: process.env.jettonSymbol ?? "",
+            image: process.env.jettonImage ?? "",
         }
 
         jettonMinter = await buildJettonMinterFromEnv(deployerWalletAddress)
-
+        console.log(process.env.jettonSupply)
         jettonParams = {
             address: jettonMinter.address,
             metadata: metadata,
-            totalSupply: supply,
+            totalSupply: toNano(Number(process.env.jettonSupply) ?? 1000000000),
             owner: deployerWalletAddress,
             jettonWalletCode: (
                 await JettonWallet.init(0n, deployerWalletAddress, jettonMinter.address)
