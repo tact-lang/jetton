@@ -22,6 +22,31 @@ This implementation is fully compatible with the following TON standards:
 
 You can use this implementation as an alternative to the reference Jetton contracts available in the [TON Blockchain repository](https://github.com/ton-blockchain/token-contract).
 
+## Improvements and additional features
+
+This implementation also includes new features, that will allow developers and users on TON to easier integrate and work with Jettons in their applications
+
+### Balance on-chain API
+
+Ths additional receiver provides functionality similar to [TEP-89](https://github.com/ton-blockchain/TEPs/blob/master/text/0089-jetton-wallet-discovery.md), but with wallet balanace. You can request and then receive balance from any Jetton wallet with possible additional info for trasncation verification
+
+#### Transaction scheme
+
+```mermaid
+sequenceDiagram
+    participant D as Any Account
+    participant C as Jetton Wallet
+
+    D ->>+ C: ProvideWalletBalance<BR />(0x7ac8d559)
+    C ->>+ D: TakeWalletBalance<BR />(0xca77fdc2)
+```
+
+#### TLB
+
+`provide_wallet_balance#7ac8d559 receiver:address includeVerifyInfo:bool = ProvideWalletBalance`
+
+`take_wallet_balance#ca77fdc2 balance:coins verifyInfo:(Maybe VerifyInfo{owner:address,minter:address,code:^cell}) = TakeWalletBalance`
+
 ## Getting Started
 
 ### 1. Install Dependencies
