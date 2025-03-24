@@ -39,11 +39,10 @@ describe("Contract Deployment Verification", () => {
         }
 
         jettonMinter = await buildJettonMinterFromEnv(deployerWalletAddress)
-        console.log(process.env.jettonSupply)
         jettonParams = {
             address: jettonMinter.address,
             metadata: metadata,
-            totalSupply: toNano(Number(process.env.jettonSupply) ?? 1000000000),
+            totalSupply: toNano(Number(process.env.jettonSupply ?? 1000000000)),
             owner: deployerWalletAddress,
             jettonWalletCode: (
                 await JettonWallet.init(0n, deployerWalletAddress, jettonMinter.address)
