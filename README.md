@@ -28,7 +28,7 @@ This implementation also includes new features, that will allow developers and u
 
 ### Balance on-chain API
 
-Ths additional receiver provides functionality similar to [TEP-89](https://github.com/ton-blockchain/TEPs/blob/master/text/0089-jetton-wallet-discovery.md), but with wallet balanace. You can request and then receive balance from any Jetton wallet with possible additional info for trasncation verification
+Ths additional receiver provides functionality similar to [TEP-89](https://github.com/ton-blockchain/TEPs/blob/master/text/0089-jetton-wallet-discovery.md), but with wallet balance. You can request and then receive balance from any Jetton wallet with possible additional info for transaction verification
 
 #### Transaction scheme
 
