@@ -26,7 +26,10 @@ dotenv.config()
     7. Run this script by "yarn deploy"
  */
 const main = async () => {
-    const mnemonics = (process.env.mnemonics || "").toString() // 🔴 Mnemonic should be placed in .env file
+    let mnemonics = (process.env.mnemonics || "").toString() // 🔴 Mnemonic should be placed in .env file
+    if (process.env.TESTNET_WALLET_SEED_PHRASE) {
+        mnemonics = process.env.TESTNET_WALLET_SEED_PHRASE
+    }
     const network = process.env.network ?? "testnet"
     if (network != "mainnet" && network != "testnet") {
         throw new Error("Invalid network")
