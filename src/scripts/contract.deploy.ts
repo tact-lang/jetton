@@ -39,8 +39,12 @@ const main = async () => {
     console.log(split_mnemonics[0], split_mnemonics[1])
     const keyPair = await mnemonicToPrivateKey(split_mnemonics)
     const secretKey = keyPair.secretKey
+    console.log(keyPair.publicKey)
     const workchain = 0 //we are working in basechain.
-    const deployer_wallet = WalletContractV4.create({workchain, publicKey: keyPair.publicKey})
+    const deployer_wallet = WalletContractV4.create({
+        workchain: workchain,
+        publicKey: keyPair.publicKey,
+    })
 
     const deployer_wallet_contract = client.open(deployer_wallet)
 
