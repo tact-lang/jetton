@@ -73,7 +73,7 @@ describe("Contract Deployment Verification", () => {
         }
 
         throw new Error("Contract deployment verification failed")
-    }, 60000) // Increased timeout for the test
+    }, 60000) // Increased timeout for the test as we need to wait for the contract to be deployed
 
     it("should be recognized by TonCenter", async () => {
         const metadata = await callGetMetadataFromTonCenter(
