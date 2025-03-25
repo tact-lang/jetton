@@ -5,7 +5,7 @@
         "lint": "yarn misti ./tact.config.json",
         "lint:es": "eslint .",
         "lint:fix": "eslint . --fix",
-        "test": "jest src/tests",
+        "test": "jest src/tests/jetton.spec.ts src/tests/extended.spec.ts",
         "deploy": "ts-node ./src/scripts/contract.deploy.ts",
         "read": "ts-node ./src/scripts/contract.read.ts",
         "verify-deployment": "jest src/tests/verify-deployment.spec.ts",
