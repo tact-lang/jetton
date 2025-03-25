@@ -33,6 +33,18 @@
                 "reportBalance": "4537"
             },
             "summary": "57040"
+        },
+        {
+            "label": "Set selector-hack flag to default value",
+            "pr": "86",
+            "gas": {
+                "transfer": "15615",
+                "mint": "18131",
+                "burn": "12512",
+                "discovery": "6609",
+                "reportBalance": "4589"
+            },
+            "summary": "57456"
         }
     ]
 }
