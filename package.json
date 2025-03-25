@@ -8,7 +8,7 @@
         "test": "jest src/tests",
         "deploy": "ts-node ./src/scripts/contract.deploy.ts",
         "read": "ts-node ./src/scripts/contract.read.ts",
-        "verify-deployment": "jest src/scripts/verify-deployment.spec.ts",
+        "verify-deployment": "jest src/tests/verify-deployment.spec.ts",
         "fmt": "yarn prettier -l -w .",
         "fmt:check": "yarn prettier --check .",
         "spell": "cspell \"**/*.{ts,js,json,md,yml}\"",
