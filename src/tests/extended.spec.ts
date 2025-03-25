@@ -1,9 +1,16 @@
 import {Address, beginCell, Cell, toNano} from "@ton/core"
-import {Blockchain, SandboxContract, TreasuryContract} from "@ton/sandbox"
+import {Blockchain, BlockchainSnapshot, SandboxContract, TreasuryContract} from "@ton/sandbox"
 import {ExtendedJettonWallet} from "../wrappers/ExtendedJettonWallet"
 import {ExtendedJettonMinter} from "../wrappers/ExtendedJettonMinter"
 
-import {JettonUpdateContent, CloseMinting, Mint, JettonMinter} from "../output/Jetton_JettonMinter"
+import {
+    JettonUpdateContent,
+    CloseMinting,
+    Mint,
+    JettonMinter,
+    TakeWalletBalance,
+    storeTakeWalletBalance,
+} from "../output/Jetton_JettonMinter"
 
 import "@ton/test-utils"
 
@@ -18,9 +25,9 @@ describe("Jetton Minter Extended", () => {
     let _minter_code = new Cell()
     let notDeployer: SandboxContract<TreasuryContract>
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     let userWallet: (address: Address) => Promise<SandboxContract<ExtendedJettonWallet>>
     let defaultContent: Cell
+    let snapshot: BlockchainSnapshot
     beforeAll(async () => {
         blockchain = await Blockchain.create()
         deployer = await blockchain.treasury("deployer")
@@ -73,6 +80,12 @@ describe("Jetton Minter Extended", () => {
                 new ExtendedJettonWallet(await jettonMinter.getGetWalletAddress(address)),
             )
         }
+
+        snapshot = blockchain.snapshot()
+    })
+
+    beforeEach(async () => {
+        await blockchain.loadFrom(snapshot)
     })
 
     it("Can close minting", async () => {
@@ -129,6 +142,75 @@ describe("Jetton Minter Extended", () => {
             to: jettonMinter.address,
             aborted: true,
             exitCode: JettonMinter.errors["Mint is closed"],
+        })
+    })
+
+    it("should report correct balance", async () => {
+        const jettonMintAmount = 100n
+        await jettonMinter.sendMint(
+            deployer.getSender(),
+            deployer.address,
+            jettonMintAmount,
+            0n,
+            toNano(1),
+        )
+        const deployerJettonWallet = await userWallet(deployer.address)
+        const jettonBalance = await deployerJettonWallet.getJettonBalance()
+
+        const provideResult = await deployerJettonWallet.sendProvideWalletBalance(
+            deployer.getSender(),
+            toNano(1),
+            notDeployer.address,
+            false,
+        )
+
+        const msg: TakeWalletBalance = {
+            $$type: "TakeWalletBalance",
+            balance: jettonBalance,
+            verifyInfo: null,
+        }
+
+        expect(provideResult.transactions).toHaveTransaction({
+            from: deployerJettonWallet.address,
+            to: notDeployer.address,
+            body: beginCell().store(storeTakeWalletBalance(msg)).endCell(),
+        })
+    })
+
+    it("should report with correct verify info", async () => {
+        const jettonMintAmount = 100n
+        await jettonMinter.sendMint(
+            deployer.getSender(),
+            deployer.address,
+            jettonMintAmount,
+            0n,
+            toNano(1),
+        )
+        const deployerJettonWallet = await userWallet(deployer.address)
+        const jettonBalance = await deployerJettonWallet.getJettonBalance()
+
+        const provideResult = await deployerJettonWallet.sendProvideWalletBalance(
+            deployer.getSender(),
+            toNano(1),
+            notDeployer.address,
+            true,
+        )
+
+        const msg: TakeWalletBalance = {
+            $$type: "TakeWalletBalance",
+            balance: jettonBalance,
+            verifyInfo: {
+                $$type: "VerifyInfo",
+                owner: deployer.address,
+                minter: jettonMinter.address,
+                code: _jwallet_code,
+            },
+        }
+
+        expect(provideResult.transactions).toHaveTransaction({
+            from: deployerJettonWallet.address,
+            to: notDeployer.address,
+            body: beginCell().store(storeTakeWalletBalance(msg)).endCell(),
         })
     })
 })
