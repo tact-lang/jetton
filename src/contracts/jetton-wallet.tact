@@ -1,6 +1,5 @@
 import "./messages";
 import "./constants";
-import "./jetton-minter";
 
 contract JettonWallet(
     balance: Int as coins,
@@ -62,7 +61,7 @@ contract JettonWallet(
                 value: msg.forwardTonAmount,
                 mode: SendPayGasSeparately,
                 bounce: false,
-                body: JettonNotification{ // 0x7362d09c -- Remind the new Owner
+                body: JettonNotification { // 0x7362d09c -- Remind the new Owner
                     queryId: msg.queryId,
                     amount: msg.amount,
                     sender: msg.sender,
@@ -88,7 +87,7 @@ contract JettonWallet(
 
         let info: VerifyInfo? = null;
         if (msg.includeVerifyInfo) {
-            info = VerifyInfo{
+            info = VerifyInfo {
                 minter: self.minter,
                 owner: self.owner,
                 code: myCode(),
@@ -143,7 +142,7 @@ contract JettonWallet(
         }
 
         message(MessageParameters {
-            body: TakeWalletBalance{
+            body: TakeWalletBalance {
                 balance: self.balance,
                 verifyInfo: info,
             }.toCell(),
