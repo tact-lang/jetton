@@ -1,5 +1,11 @@
-import {Address, beginCell, Cell, toNano} from "@ton/core"
-import {Blockchain, BlockchainSnapshot, SandboxContract, TreasuryContract} from "@ton/sandbox"
+import {Address, beginCell, Cell, fromNano, toNano} from "@ton/core"
+import {
+    Blockchain,
+    BlockchainSnapshot,
+    printTransactionFees,
+    SandboxContract,
+    TreasuryContract,
+} from "@ton/sandbox"
 import {ExtendedJettonWallet} from "../wrappers/ExtendedJettonWallet"
 import {ExtendedJettonMinter} from "../wrappers/ExtendedJettonMinter"
 
@@ -10,6 +16,7 @@ import {
     JettonMinter,
     TakeWalletBalance,
     storeTakeWalletBalance,
+    minTonsForStorage,
 } from "../output/Jetton_JettonMinter"
 
 import "@ton/test-utils"
@@ -212,5 +219,55 @@ describe("Jetton Minter Extended", () => {
             to: notDeployer.address,
             body: beginCell().store(storeTakeWalletBalance(msg)).endCell(),
         })
+    })
+
+    it("should claim all tons from minter", async () => {
+        await deployer.send({
+            to: jettonMinter.address,
+            value: toNano(5),
+            bounce: false,
+        })
+
+        const minterBalance = (await blockchain.getContract(jettonMinter.address)).balance
+        console.log(fromNano(minterBalance).toString())
+        const sendValue = toNano(1)
+        // external -> claim request -> claim take
+        const claimTonMinterResult = await jettonMinter.sendClaimTon(
+            deployer.getSender(),
+            notDeployer.address,
+            sendValue,
+        )
+
+        const fee =
+            claimTonMinterResult.transactions[1]!.totalFees.coins +
+            claimTonMinterResult.transactions[0]!.totalFees.coins
+
+        const expectedOutValue = minterBalance + sendValue - fee - minTonsForStorage
+        printTransactionFees(claimTonMinterResult.transactions)
+
+        console.log(fromNano(expectedOutValue))
+        console.log(
+            fromNano((claimTonMinterResult.transactions[2]!.inMessage?.info as any).value.coins),
+        )
+        console.log(
+            fromNano(
+                (claimTonMinterResult.transactions[1]!.outMessages.get(0)?.info as any).value
+                    .coins - expectedOutValue,
+            ),
+        )
+        console.log(
+            fromNano(
+                (claimTonMinterResult.transactions[1]!.outMessages.get(0)?.info as any).value
+                    .coins - expectedOutValue,
+            ),
+        )
+        const minterBalanceAfter = (await blockchain.getContract(jettonMinter.address)).balance
+        console.log(fromNano(minterBalanceAfter))
+
+        // expect(claimTonMinterResult.transactions).toHaveTransaction({
+        //     from: jettonMinter.address,
+        //     to: notDeployer.address,
+        //     value: expectedOutValue,
+        // })
     })
 })
