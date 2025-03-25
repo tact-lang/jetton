@@ -38,13 +38,13 @@
             "label": "Set selector-hack flag to default value",
             "pr": "86",
             "gas": {
-                "transfer": "15615",
-                "mint": "18131",
-                "burn": "12512",
-                "discovery": "6609",
-                "reportBalance": "4589"
+                "transfer": "15651",
+                "mint": "18195",
+                "burn": "12576",
+                "discovery": "6655",
+                "reportBalance": "4607"
             },
-            "summary": "57456"
+            "summary": "57684"
         }
     ]
 }
