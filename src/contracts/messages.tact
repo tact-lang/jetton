@@ -105,7 +105,8 @@ struct VerifyInfo {
     code: Cell;
 }
 
-// take_wallet_balance#ca77fdc2 balance:coins verifyInfo:(Maybe VerifyInfo{owner:address,minter:address,code:^cell}) = TakeWalletBalance
+// verify_info$_ owner:address minter:address code:^cell = VerifyInfo
+// take_wallet_balance#ca77fdc2 balance:coins verifyInfo:(Maybe VerifyInfo) = TakeWalletBalance
 message TakeWalletBalance {
     balance: Int as coins;
     verifyInfo: VerifyInfo?;
