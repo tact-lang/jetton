@@ -43,7 +43,7 @@ describe("Contract Deployment Verification", () => {
         }
 
         jettonMinter = await buildJettonMinterFromEnv(deployerWalletAddress)
-        console.log(jettonMinter.address)
+        console.log(JSON.stringify(jettonMinter))
         jettonParams = {
             address: jettonMinter.address,
             metadata: metadata,
