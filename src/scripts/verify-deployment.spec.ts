@@ -39,6 +39,7 @@ describe("Contract Deployment Verification", () => {
         }
 
         jettonMinter = await buildJettonMinterFromEnv(deployerWalletAddress)
+        console.log(jettonMinter.address)
         jettonParams = {
             address: jettonMinter.address,
             metadata: metadata,
@@ -79,7 +80,6 @@ describe("Contract Deployment Verification", () => {
         const metadata = await callGetMetadataFromTonCenter(
             jettonMinter.address.toString({urlSafe: true}),
         )
-
         await validateTonCenterResponse(metadata, jettonParams)
     })
 
@@ -87,7 +87,6 @@ describe("Contract Deployment Verification", () => {
         const metadata = await callGetMetadataFromTonApi(
             jettonMinter.address.toString({urlSafe: true}),
         )
-
         await validateTonApiResponse(metadata, jettonParams)
     })
 })

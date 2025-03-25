@@ -35,11 +35,8 @@ const main = async () => {
     const client = new TonClient({
         endpoint: endpoint,
     })
-    const split_mnemonics = mnemonics.split(" ")
-    console.log(split_mnemonics[0], split_mnemonics[1])
-    const keyPair = await mnemonicToPrivateKey(split_mnemonics)
+    const keyPair = await mnemonicToPrivateKey(mnemonics.split(" "))
     const secretKey = keyPair.secretKey
-    console.log(keyPair.publicKey.toString("hex"))
     const workchain = 0 //we are working in basechain.
     const deployer_wallet = WalletContractV4.create({
         workchain: workchain,
