@@ -84,11 +84,13 @@ describe("Contract Deployment Verification", () => {
     }, 60000) // Increased timeout for the test as we need to wait for the contract to be deployed
 
     it("should be recognized by TonCenter", async () => {
+        // This code is commented as TonCenter has an issue https://github.com/tact-lang/jetton/issues/87
+        /*
         const sleepTime = 5000
         const maxAttempts = 10
         let attempt = 0
         let metadata: TonCenterResponse | undefined
-
+        
         while (attempt < maxAttempts) {
             await sleep(sleepTime)
             attempt++
@@ -102,8 +104,10 @@ describe("Contract Deployment Verification", () => {
         if (!metadata) {
             throw new Error("Contract is not indexed by TonCenter")
         }
+        */
+        const metadata = await callGetMetadataFromTonCenter(jettonMinter.address)
         await validateTonCenterResponse(metadata, jettonParams)
-    }, 30000) // Increased as we need to wait for the contract to be indexed by TonCenter
+    }, 60000) // Increased as we need to wait for the contract to be indexed by TonCenter
 
     it("should be recognized by TonApi", async () => {
         const metadata = await callGetMetadataFromTonApi(jettonMinter.address)
