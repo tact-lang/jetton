@@ -28,7 +28,7 @@ contract JettonMinter(
             bounce: true,
             mode: SendRemainingValue,
             body: msg.mintMessage.toCell(),
-            init: getJettonWalletInit(msg.receiver)
+            init: getJettonWalletInit(msg.receiver),
         });
     }
 
@@ -39,9 +39,8 @@ contract JettonMinter(
         require(ctx.value > fwdFee + getComputeFee(gasForDiscovery, false), "Insufficient gas for discovery");
         let ownerWorkchain: Int = parseStdAddress(msg.ownerAddress.asSlice()).workchain;
 
-        let targetJettonWallet: BasechainAddress =
-            (ownerWorkchain == Workchain) ?
-            contractBasechainAddress(initOf JettonWallet(0, msg.ownerAddress, myAddress()))
+        let targetJettonWallet: BasechainAddress = (ownerWorkchain == Workchain)
+            ? contractBasechainAddress(initOf JettonWallet(0, msg.ownerAddress, myAddress()))
             : emptyBasechainAddress();
 
         message(MessageParameters {
@@ -63,7 +62,7 @@ contract JettonMinter(
         if (msg.responseDestination != null) {
             message(MessageParameters {
                 to: msg.responseDestination!!,
-                body: JettonExcesses{ queryId: msg.queryId }.toCell(),
+                body: JettonExcesses { queryId: msg.queryId }.toCell(),
                 value: 0,
                 bounce: false,
                 mode: SendRemainingValue | SendIgnoreErrors, // ignore errors, because supply has already been updated
@@ -109,7 +108,7 @@ contract JettonMinter(
             mintable: self.mintable,
             adminAddress: self.owner,
             jettonContent: self.jettonContent,
-            jettonWalletCode: codeOf JettonWallet
+            jettonWalletCode: codeOf JettonWallet,
         };
     }
 
@@ -121,8 +120,7 @@ contract JettonMinter(
 asm fun emptyAddress(): Address { b{00} PUSHSLICE }
 
 inline fun makeTakeWalletAddressMsg(targetJettonWallet: BasechainAddress, msg: ProvideWalletAddress): Cell {
-    return
-        beginCell()
+    return beginCell()
         .storeUint(TakeWalletAddressOpcode, 32)
         .storeUint(msg.queryId, 64)
         .storeBasechainAddress(targetJettonWallet)

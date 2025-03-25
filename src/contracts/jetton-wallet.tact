@@ -129,29 +129,6 @@ contract JettonWallet(
         });
     }
 
-    receive(msg: ProvideWalletBalance) {
-        forceBasechain(msg.receiver);
-
-        let info: VerifyInfo? = null;
-        if (msg.includeVerifyInfo) {
-            info = VerifyInfo{
-                minter: self.minter,
-                owner: self.owner,
-                code: myCode(),
-            }
-        }
-
-        message(MessageParameters {
-            body: TakeWalletBalance {
-                balance: self.balance,
-                verifyInfo: info,
-            }.toCell(),
-            to: msg.receiver,
-            value: 0,
-            mode: SendRemainingValue,
-        });
-    }
-
     receive(msg: ClaimTON) {
         require(sender() == self.owner, "Incorrect sender");
         nativeReserve(minTonsForStorage, ReserveExact | ReserveBounceIfActionFail);

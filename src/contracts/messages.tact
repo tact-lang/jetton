@@ -111,3 +111,7 @@ message TakeWalletBalance {
     balance: Int as coins;
     verifyInfo: VerifyInfo?;
 }
+
+message ClaimTON {
+    receiver: Address;
+}
