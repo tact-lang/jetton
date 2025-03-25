@@ -79,6 +79,7 @@ describe("Contract Deployment Verification", () => {
         const metadata = await callGetMetadataFromTonCenter(
             jettonMinter.address.toString({urlSafe: true}),
         )
+
         await validateTonCenterResponse(metadata, jettonParams)
     })
 
@@ -86,6 +87,7 @@ describe("Contract Deployment Verification", () => {
         const metadata = await callGetMetadataFromTonApi(
             jettonMinter.address.toString({urlSafe: true}),
         )
+
         await validateTonApiResponse(metadata, jettonParams)
     })
 })
