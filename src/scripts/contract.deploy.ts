@@ -46,7 +46,6 @@ const main = async () => {
     const deployer_wallet_contract = client.open(deployer_wallet)
 
     const jettonMinter = await buildJettonMinterFromEnv(deployer_wallet_contract.address)
-    console.log(JSON.stringify(jettonMinter))
     const deployAmount = toNano("0.15")
 
     const supply = toNano(Number(process.env.jettonSupply) ?? 1000000000)

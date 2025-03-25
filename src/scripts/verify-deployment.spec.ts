@@ -23,7 +23,7 @@ describe("Contract Deployment Verification", () => {
         const endpoint = await getHttpEndpoint({network: network as "testnet" | "mainnet"})
         client = new TonClient({endpoint})
 
-        const mnemonics = (process.env.TESTNET_WALLET_SEED_PHRASE || "").toString()
+        const mnemonics = (process.env.mnemonics || "").toString()
         const keyPair = await mnemonicToPrivateKey(mnemonics.split(" "))
         const workchain = 0
         deployerWalletAddress = WalletContractV4.create({
@@ -43,7 +43,6 @@ describe("Contract Deployment Verification", () => {
         }
 
         jettonMinter = await buildJettonMinterFromEnv(deployerWalletAddress)
-        console.log(JSON.stringify(jettonMinter))
         jettonParams = {
             address: jettonMinter.address,
             metadata: metadata,
