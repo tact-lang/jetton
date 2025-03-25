@@ -31,7 +31,7 @@ jobs:
           network: testnet
           jettonName: TactJetton
           jettonSymbol: TACT
-          jettonDescription: "This is description of Jetton #${{ github.run_number }} (Run at ${{ github.run_id }})"
+          jettonDescription: "This is description of Jetton #${{ github.run_number }} (Run at ${{ github.run_id }} - ${{ github.run_attempt }})"
           jettonImage: https://raw.githubusercontent.com/tact-lang/tact/refs/heads/main/docs/public/logomark-light.svg
           jettonSupply: 1000000000
           enableDeployVerify: true
