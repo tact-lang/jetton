@@ -44,10 +44,10 @@ sequenceDiagram
 #### TLB
 
 ```tlb
-provide_wallet_balance#7ac8d559 receiver:address includeVerifyInfo:bool = ProvideWalletBalance;
+provide_wallet_balance#7ac8d559 receiver:MsgAddress include_verify_info:Bool = InternalMsgBody;
 
-verify_info$_ owner:address minter:address code:^cell = VerifyInfo;
-take_wallet_balance#ca77fdc2 balance:coins verifyInfo:(Maybe VerifyInfo) = TakeWalletBalance;
+verify_info$_ owner:MsgAddress minter:MsgAddress code:^Cell = VerifyInfo;
+take_wallet_balance#ca77fdc2 balance:Coins verify_info:(Maybe VerifyInfo) = InternalMsgBody;
 ```
 
 ## Getting Started

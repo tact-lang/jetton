@@ -93,7 +93,7 @@ message(3) ChangeOwner {
     newOwner: Address;
 }
 
-// provide_wallet_balance#7ac8d559 receiver:address includeVerifyInfo:bool = ProvideWalletBalance
+// provide_wallet_balance#7ac8d559 receiver:MsgAddress include_verify_info:Bool = InternalMsgBody
 message ProvideWalletBalance {
     receiver: Address;
     includeVerifyInfo: Bool;
@@ -105,8 +105,8 @@ struct VerifyInfo {
     code: Cell;
 }
 
-// verify_info$_ owner:address minter:address code:^cell = VerifyInfo
-// take_wallet_balance#ca77fdc2 balance:coins verifyInfo:(Maybe VerifyInfo) = TakeWalletBalance
+// verify_info$_ owner:MsgAddress minter:MsgAddress code:^Cell = VerifyInfo
+// take_wallet_balance#ca77fdc2 balance:Coins verify_info:(Maybe VerifyInfo) = InternalMsgBody
 message TakeWalletBalance {
     balance: Int as coins;
     verifyInfo: VerifyInfo?;
