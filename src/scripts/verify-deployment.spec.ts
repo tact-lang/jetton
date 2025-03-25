@@ -67,7 +67,7 @@ describe("Contract Deployment Verification", () => {
 
             const contractState = await client.getContractState(jettonMinter.address)
             if (contractState.state !== "active") {
-                console.log(`Contract not active yet, attempt ${attempts}/${maxAttempts}`)
+                console.log(`Contract is not active yet, attempt ${attempts}/${maxAttempts}`)
                 continue
             }
 
