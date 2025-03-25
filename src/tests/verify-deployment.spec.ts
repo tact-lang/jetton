@@ -84,7 +84,7 @@ describe("Contract Deployment Verification", () => {
     }, 60000) // Increased timeout for the test as we need to wait for the contract to be deployed
 
     it("should be recognized by TonCenter", async () => {
-        const sleepTime = 1000
+        const sleepTime = 5000
         const maxAttempts = 10
         let attempt = 0
         let metadata: TonCenterResponse | undefined
@@ -97,6 +97,7 @@ describe("Contract Deployment Verification", () => {
                 console.log(`Contract is indexed by TonCenter, attempt ${attempt}/${maxAttempts}`)
                 break
             }
+            console.log(`Contract is not indexed by TonCenter, attempt ${attempt}/${maxAttempts}`)
         }
         if (!metadata) {
             throw new Error("Contract is not indexed by TonCenter")
