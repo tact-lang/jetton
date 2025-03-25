@@ -1,11 +1,5 @@
-import {Address, beginCell, Cell, fromNano, toNano} from "@ton/core"
-import {
-    Blockchain,
-    BlockchainSnapshot,
-    printTransactionFees,
-    SandboxContract,
-    TreasuryContract,
-} from "@ton/sandbox"
+import {Address, beginCell, Cell, toNano} from "@ton/core"
+import {Blockchain, BlockchainSnapshot, SandboxContract, TreasuryContract} from "@ton/sandbox"
 import {ExtendedJettonWallet} from "../wrappers/ExtendedJettonWallet"
 import {ExtendedJettonMinter} from "../wrappers/ExtendedJettonMinter"
 
@@ -229,45 +223,49 @@ describe("Jetton Minter Extended", () => {
         })
 
         const minterBalance = (await blockchain.getContract(jettonMinter.address)).balance
-        console.log(fromNano(minterBalance).toString())
-        const sendValue = toNano(1)
+
         // external -> claim request -> claim take
         const claimTonMinterResult = await jettonMinter.sendClaimTon(
             deployer.getSender(),
             notDeployer.address,
-            sendValue,
+            toNano(1),
         )
 
-        const fee =
-            claimTonMinterResult.transactions[1]!.totalFees.coins +
-            claimTonMinterResult.transactions[0]!.totalFees.coins
+        const claimTxTotalFees = claimTonMinterResult.transactions[1]!.totalFees.coins
 
-        const expectedOutValue = minterBalance + sendValue - fee - minTonsForStorage
-        printTransactionFees(claimTonMinterResult.transactions)
+        const claimInMsg = claimTonMinterResult.transactions[0]!.outMessages.get(0)!
 
-        console.log(fromNano(expectedOutValue))
-        console.log(
-            fromNano((claimTonMinterResult.transactions[2]!.inMessage?.info as any).value.coins),
-        )
-        console.log(
-            fromNano(
-                (claimTonMinterResult.transactions[1]!.outMessages.get(0)?.info as any).value
-                    .coins - expectedOutValue,
-            ),
-        )
-        console.log(
-            fromNano(
-                (claimTonMinterResult.transactions[1]!.outMessages.get(0)?.info as any).value
-                    .coins - expectedOutValue,
-            ),
-        )
+        if (claimInMsg.info.type !== "internal") {
+            // fail with expect
+            fail("Expected the message type to not be 'internal")
+        }
+
+        const claimInMsgValue = claimInMsg.info.value.coins
+
+        const claimOutMsg = claimTonMinterResult.transactions[1]!.outMessages.get(0)!
+
+        if (claimOutMsg.info.type !== "internal") {
+            // fail with expect
+            fail("Expected the message type to not be 'internal")
+        }
+
+        const claimOutMsgFwdFee = claimOutMsg.info.forwardFee
+
+        const expectedOutValue =
+            minterBalance +
+            claimInMsgValue -
+            claimTxTotalFees -
+            minTonsForStorage -
+            claimOutMsgFwdFee
+
         const minterBalanceAfter = (await blockchain.getContract(jettonMinter.address)).balance
-        console.log(fromNano(minterBalanceAfter))
+        expect(minterBalanceAfter).toEqual(minTonsForStorage)
 
-        // expect(claimTonMinterResult.transactions).toHaveTransaction({
-        //     from: jettonMinter.address,
-        //     to: notDeployer.address,
-        //     value: expectedOutValue,
-        // })
+        expect(claimTonMinterResult.transactions).toHaveTransaction({
+            from: jettonMinter.address,
+            to: notDeployer.address,
+            value: expectedOutValue,
+            success: true,
+        })
     })
 })
