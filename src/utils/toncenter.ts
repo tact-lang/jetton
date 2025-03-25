@@ -1,5 +1,6 @@
 import {z} from "zod"
 import {JettonParams} from "./jetton-helpers"
+import {Address} from "@ton/ton"
 import {expect} from "@jest/globals"
 
 const tokenSchema = z.object({
@@ -19,10 +20,12 @@ const tonCenterResponseSchema = z.record(tokenMetadataSchema)
 
 export type TonCenterResponse = z.infer<typeof tonCenterResponseSchema>
 
-export const callGetMetadataFromTonCenter = async (address: string): Promise<TonCenterResponse> => {
+export const callGetMetadataFromTonCenter = async (
+    address: Address,
+): Promise<TonCenterResponse> => {
     const network = process.env.network ?? "testnet"
     const url = new URL(`https://${network}.toncenter.com/api/v3/metadata`)
-    url.searchParams.append("address", address)
+    url.searchParams.append("address", address.toString({urlSafe: true}))
 
     const TONCENTER_KEY = process.env[`TONCENTER_${network.toUpperCase()}_KEY`]
     if (!TONCENTER_KEY) {

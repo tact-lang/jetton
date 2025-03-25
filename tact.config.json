@@ -12,9 +12,6 @@
                 "interfacesGetter": false,
                 "experimental": {
                     "inline": true
-                },
-                "optimizations": {
-                    "internalExternalReceiversOutsideMethodsMap": true
                 }
             }
         }

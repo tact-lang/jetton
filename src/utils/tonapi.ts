@@ -1,5 +1,6 @@
 import {z} from "zod"
 import {JettonParams} from "./jetton-helpers"
+import {Address} from "@ton/core"
 
 const tonapiResponseSchema = z.object({
     mintable: z.boolean(),
@@ -22,9 +23,11 @@ const tonapiResponseSchema = z.object({
 
 export type TonApiResponse = z.infer<typeof tonapiResponseSchema>
 
-export const callGetMetadataFromTonApi = async (address: string): Promise<TonApiResponse> => {
+export const callGetMetadataFromTonApi = async (address: Address): Promise<TonApiResponse> => {
     const network = process.env.network ?? "testnet"
-    const url = new URL(`https://${network}.tonapi.io/v2/jettons/${address}`)
+    const url = new URL(
+        `https://${network}.tonapi.io/v2/jettons/${address.toString({urlSafe: true})}`,
+    )
 
     const TONAPI_KEY = process.env.TONAPI_KEY
     if (!TONAPI_KEY) {

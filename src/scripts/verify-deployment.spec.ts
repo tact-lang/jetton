@@ -80,16 +80,12 @@ describe("Contract Deployment Verification", () => {
     }, 60000) // Increased timeout for the test as we need to wait for the contract to be deployed
 
     it("should be recognized by TonCenter", async () => {
-        const metadata = await callGetMetadataFromTonCenter(
-            jettonMinter.address.toString({urlSafe: true}),
-        )
+        const metadata = await callGetMetadataFromTonCenter(jettonMinter.address)
         await validateTonCenterResponse(metadata, jettonParams)
     })
 
     it("should be recognized by TonApi", async () => {
-        const metadata = await callGetMetadataFromTonApi(
-            jettonMinter.address.toString({urlSafe: true}),
-        )
+        const metadata = await callGetMetadataFromTonApi(jettonMinter.address)
         await validateTonApiResponse(metadata, jettonParams)
     })
 })
