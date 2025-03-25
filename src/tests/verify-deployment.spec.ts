@@ -2,11 +2,7 @@ import {TonClient, WalletContractV4, Address, toNano} from "@ton/ton"
 import {getHttpEndpoint} from "@orbs-network/ton-access"
 import {JettonWallet} from "../output/Jetton_JettonWallet"
 import {validateJettonParams, JettonParams, buildJettonMinterFromEnv} from "../utils/jetton-helpers"
-import {
-    callGetMetadataFromTonCenter,
-    TonCenterResponse,
-    validateTonCenterResponse,
-} from "../utils/toncenter"
+import {callGetMetadataFromTonCenter, validateTonCenterResponse} from "../utils/toncenter"
 import {mnemonicToPrivateKey} from "@ton/crypto"
 import * as dotenv from "dotenv"
 import {JettonMinter} from "../output/Jetton_JettonMinter"
