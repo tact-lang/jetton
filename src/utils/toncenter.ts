@@ -56,11 +56,8 @@ export const validateTonCenterResponse = async (
     const resultParams = response[expectedJettonParams.address.toRawString().toUpperCase()]
     expect(resultParams).toBeDefined()
     expect(resultParams.token_info[0].type).toBe("jetton_masters")
-    if (resultParams.is_indexed) {
-        expect(resultParams.token_info[0].name).toBe(expectedJettonParams.metadata.name)
-        expect(resultParams.token_info[0].description).toBe(
-            expectedJettonParams.metadata.description,
-        )
-        expect(resultParams.token_info[0].image).toBe(expectedJettonParams.metadata.image)
-    }
+    expect(resultParams.is_indexed).toBe(true)
+    expect(resultParams.token_info[0].name).toBe(expectedJettonParams.metadata.name)
+    expect(resultParams.token_info[0].description).toBe(expectedJettonParams.metadata.description)
+    expect(resultParams.token_info[0].image).toBe(expectedJettonParams.metadata.image)
 }

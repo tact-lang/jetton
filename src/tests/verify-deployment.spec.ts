@@ -2,7 +2,11 @@ import {TonClient, WalletContractV4, Address, toNano} from "@ton/ton"
 import {getHttpEndpoint} from "@orbs-network/ton-access"
 import {JettonWallet} from "../output/Jetton_JettonWallet"
 import {validateJettonParams, JettonParams, buildJettonMinterFromEnv} from "../utils/jetton-helpers"
-import {callGetMetadataFromTonCenter, validateTonCenterResponse} from "../utils/toncenter"
+import {
+    callGetMetadataFromTonCenter,
+    TonCenterResponse,
+    validateTonCenterResponse,
+} from "../utils/toncenter"
 import {mnemonicToPrivateKey} from "@ton/crypto"
 import * as dotenv from "dotenv"
 import {JettonMinter} from "../output/Jetton_JettonMinter"
@@ -80,9 +84,24 @@ describe("Contract Deployment Verification", () => {
     }, 60000) // Increased timeout for the test as we need to wait for the contract to be deployed
 
     it("should be recognized by TonCenter", async () => {
-        const metadata = await callGetMetadataFromTonCenter(jettonMinter.address)
+        const sleepTime = 1000
+        const maxAttempts = 10
+        let attempts = 0
+        let metadata: TonCenterResponse | undefined
+
+        while (attempts < maxAttempts) {
+            await sleep(sleepTime)
+            attempts++
+            metadata = await callGetMetadataFromTonCenter(jettonMinter.address)
+            if (metadata.is_indexed) {
+                break
+            }
+        }
+        if (!metadata) {
+            throw new Error("Contract is not indexed by TonCenter")
+        }
         await validateTonCenterResponse(metadata, jettonParams)
-    })
+    }, 30000) // Increased as we need to wait for the contract to be indexed by TonCenter
 
     it("should be recognized by TonApi", async () => {
         const metadata = await callGetMetadataFromTonApi(jettonMinter.address)
