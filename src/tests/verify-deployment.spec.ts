@@ -86,14 +86,15 @@ describe("Contract Deployment Verification", () => {
     it("should be recognized by TonCenter", async () => {
         const sleepTime = 1000
         const maxAttempts = 10
-        let attempts = 0
+        let attempt = 0
         let metadata: TonCenterResponse | undefined
 
-        while (attempts < maxAttempts) {
+        while (attempt < maxAttempts) {
             await sleep(sleepTime)
-            attempts++
+            attempt++
             metadata = await callGetMetadataFromTonCenter(jettonMinter.address)
             if (metadata.is_indexed) {
+                console.log(`Contract is indexed by TonCenter, attempt ${attempt}/${maxAttempts}`)
                 break
             }
         }
