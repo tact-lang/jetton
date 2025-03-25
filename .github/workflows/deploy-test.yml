@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - main
+      - deploy-check-in-ci
 
 jobs:
   deploy-test:
