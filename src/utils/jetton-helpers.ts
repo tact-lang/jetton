@@ -119,7 +119,7 @@ export async function buildJettonMinterFromEnv(deployerAddress: Address) {
             process.env.jettonImage ??
             "https://raw.githubusercontent.com/tact-lang/tact/refs/heads/main/docs/public/logomark-light.svg",
     }
-
+    console.log(jettonParams)
     // Create content Cell
     const content = buildOnchainMetadata(jettonParams)
 

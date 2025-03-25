@@ -32,10 +32,14 @@ describe("Contract Deployment Verification", () => {
         }).address
 
         const metadata = {
-            name: process.env.jettonName ?? "",
-            description: process.env.jettonDescription ?? "",
-            symbol: process.env.jettonSymbol ?? "",
-            image: process.env.jettonImage ?? "",
+            name: process.env.jettonName ?? "TactJetton",
+            description:
+                process.env.jettonDescription ??
+                "This is description of Jetton, written in Tact-lang",
+            symbol: process.env.jettonSymbol ?? "TACT",
+            image:
+                process.env.jettonImage ??
+                "https://raw.githubusercontent.com/tact-lang/tact/refs/heads/main/docs/public/logomark-light.svg",
         }
 
         jettonMinter = await buildJettonMinterFromEnv(deployerWalletAddress)
