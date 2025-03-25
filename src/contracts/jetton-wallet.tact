@@ -131,13 +131,13 @@ contract JettonWallet(
 
     receive(msg: ClaimTON) {
         require(sender() == self.owner, "Incorrect sender");
-        nativeReserve(minTonsForStorage, ReserveExact | ReserveAddOriginalBalance | ReserveBounceIfActionFail);
+        nativeReserve(minTonsForStorage, ReserveExact | ReserveBounceIfActionFail);
 
         // we allow bounce here and don't handle it, if claim fails we just accept the TONs back
         message(MessageParameters {
             to: msg.receiver,
             value: 0,
-            mode: SendRemainingValue,
+            mode: SendRemainingBalance,
         });
     }
 

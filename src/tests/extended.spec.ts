@@ -268,4 +268,94 @@ describe("Jetton Minter Extended", () => {
             success: true,
         })
     })
+
+    it("should claim all tons from wallet", async () => {
+        // mint to deploy wallet with correct state init
+        await jettonMinter.sendMint(deployer.getSender(), deployer.address, 1000n, 0n, toNano(1))
+        const deployerJettonWallet = await userWallet(deployer.address)
+
+        await deployer.send({
+            to: deployerJettonWallet.address,
+            value: toNano(5),
+            bounce: false,
+        })
+
+        const walletBalance = (await blockchain.getContract(deployerJettonWallet.address)).balance
+
+        // external -> claim request -> claim take
+        const claimTonJettonWalletResult = await deployerJettonWallet.sendClaimTon(
+            deployer.getSender(),
+            notDeployer.address,
+            toNano(1),
+        )
+
+        const claimTxTotalFees = claimTonJettonWalletResult.transactions[1]!.totalFees.coins
+
+        const claimInMsg = claimTonJettonWalletResult.transactions[0]!.outMessages.get(0)!
+
+        if (claimInMsg.info.type !== "internal") {
+            fail("Expected the message type to not be 'internal")
+        }
+
+        const claimInMsgValue = claimInMsg.info.value.coins
+
+        const claimOutMsg = claimTonJettonWalletResult.transactions[1]!.outMessages.get(0)!
+
+        if (claimOutMsg.info.type !== "internal") {
+            fail("Expected the message type to not be 'internal")
+        }
+
+        const claimOutMsgFwdFee = claimOutMsg.info.forwardFee
+
+        const expectedOutValue =
+            walletBalance +
+            claimInMsgValue -
+            claimTxTotalFees -
+            minTonsForStorage -
+            claimOutMsgFwdFee
+
+        const jettonWalletBalanceAfter = (
+            await blockchain.getContract(deployerJettonWallet.address)
+        ).balance
+        expect(jettonWalletBalanceAfter).toEqual(minTonsForStorage)
+
+        expect(claimTonJettonWalletResult.transactions).toHaveTransaction({
+            from: deployerJettonWallet.address,
+            to: notDeployer.address,
+            value: expectedOutValue,
+            success: true,
+        })
+    })
+
+    it("should bounce claim with low balance", async () => {
+        const jwState = (await blockchain.getContract(jettonMinter.address)).account
+        jwState.account!.storage.balance.coins = 1n
+        await blockchain.setShardAccount(jettonMinter.address, jwState)
+
+        const minterBalance = (await blockchain.getContract(jettonMinter.address)).balance
+
+        const sendValue = toNano(0.009)
+        expect(minterBalance + sendValue).toBeLessThan(minTonsForStorage)
+
+        // external -> claim request -> bounce back
+        const claimTonMinterResult = await jettonMinter.sendClaimTon(
+            deployer.getSender(),
+            notDeployer.address,
+            sendValue,
+        )
+
+        expect(claimTonMinterResult.transactions).toHaveTransaction({
+            from: deployer.address,
+            to: jettonMinter.address,
+            success: false,
+            // https://github.com/ton-blockchain/ton/blob/303e92b7750dc443ae6c282fb478d2114079d216/crypto/block/transaction.cpp#L2866
+            actionResultCode: JettonMinter.errors["Not enough Toncoin"],
+        })
+
+        expect(claimTonMinterResult.transactions).toHaveTransaction({
+            from: jettonMinter.address,
+            to: deployer.address,
+            inMessageBounced: true,
+        })
+    })
 })
