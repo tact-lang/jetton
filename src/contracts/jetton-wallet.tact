@@ -1,5 +1,6 @@
 import "./messages";
 import "./constants";
+import "./jetton-minter";
 
 contract JettonWallet(
     balance: Int as coins,
@@ -126,6 +127,29 @@ contract JettonWallet(
                 sender: self.owner,
                 responseDestination: msg.responseDestination,
             }.toCell(),
+        });
+    }
+
+    receive(msg: ProvideWalletBalance) {
+        forceBasechain(msg.receiver);
+
+        let info: VerifyInfo? = null;
+        if (msg.includeVerifyInfo) {
+            info = VerifyInfo{
+                minter: self.minter,
+                owner: self.owner,
+                code: myCode(),
+            }
+        }
+
+        message(MessageParameters {
+            body: TakeWalletBalance{
+                balance: self.balance,
+                verifyInfo: info,
+            }.toCell(),
+            to: msg.receiver,
+            value: 0,
+            mode: SendRemainingValue,
         });
     }
 

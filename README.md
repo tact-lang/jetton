@@ -43,9 +43,12 @@ sequenceDiagram
 
 #### TLB
 
-`provide_wallet_balance#7ac8d559 receiver:address includeVerifyInfo:bool = ProvideWalletBalance`
+```tlb
+provide_wallet_balance#7ac8d559 receiver:MsgAddress include_verify_info:Bool = InternalMsgBody;
 
-`take_wallet_balance#ca77fdc2 balance:coins verifyInfo:(Maybe VerifyInfo{owner:address,minter:address,code:^cell}) = TakeWalletBalance`
+verify_info$_ owner:MsgAddress minter:MsgAddress code:^Cell = VerifyInfo;
+take_wallet_balance#ca77fdc2 balance:Coins verify_info:(Maybe VerifyInfo) = InternalMsgBody;
+```
 
 ## Getting Started
 
