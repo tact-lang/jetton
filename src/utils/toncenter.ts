@@ -53,6 +53,7 @@ export const validateTonCenterResponse = async (
     response: TonCenterResponse,
     expectedJettonParams: JettonParams,
 ) => {
+    console.log(response)
     const resultParams = response[expectedJettonParams.address.toRawString().toUpperCase()]
     expect(resultParams).toBeDefined()
     expect(resultParams.token_info[0].type).toBe("jetton_masters")
