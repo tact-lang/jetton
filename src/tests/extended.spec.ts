@@ -348,7 +348,7 @@ describe("Jetton Minter Extended", () => {
             from: deployer.address,
             to: jettonMinter.address,
             success: false,
-            // https://github.com/ton-blockchain/ton/blob/303e92b7750dc443ae6c282fb478d2114079d216/crypto/block/transaction.cpp#L2866
+            // https://github.com/ton-blockchain/ton/blob/303e92b7750dc443ae6c282fb478d2114079d216/crypto/block/transaction.cpp#L2860
             actionResultCode: JettonMinter.errors["Not enough Toncoin"],
         })
 
