@@ -111,12 +111,12 @@ export async function validateJettonParams(
 
 export async function buildJettonMinterFromEnv(deployerAddress: Address) {
     const jettonParams = {
-        name: process.env.jettonName ?? "TactJetton",
+        name: process.env.JETTON_NAME ?? "TactJetton",
         description:
-            process.env.jettonDescription ?? "This is description of Jetton, written in Tact-lang",
-        symbol: process.env.jettonSymbol ?? "TACT",
+            process.env.JETTON_DESCRIPTION ?? "This is description of Jetton, written in Tact-lang",
+        symbol: process.env.JETTON_SYMBOL ?? "TACT",
         image:
-            process.env.jettonImage ??
+            process.env.JETTON_IMAGE ??
             "https://raw.githubusercontent.com/tact-lang/tact/refs/heads/main/docs/public/logomark-light.svg",
     }
     console.log(jettonParams)

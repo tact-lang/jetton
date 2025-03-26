@@ -34,7 +34,6 @@ jobs:
           jettonDescription: "This is description of Jetton #${{ github.run_number }} (Run at ${{ github.run_id }} - ${{ github.run_attempt }})"
           jettonImage: https://raw.githubusercontent.com/tact-lang/tact/refs/heads/main/docs/public/logomark-light.svg
           jettonSupply: 1000000000
-          enableDeployVerify: true
           TONAPI_KEY: ${{ secrets.TONAPI_KEY }}
           TONCENTER_TESTNET_KEY: ${{ secrets.TONCENTER_TESTNET_KEY }}
         run: yarn deploy && yarn verify-deployment

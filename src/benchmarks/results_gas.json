@@ -36,7 +36,7 @@
         },
         {
             "label": "Set selector-hack flag to default value",
-            "pr": "86",
+            "pr": "https://github.com/tact-lang/jetton/pull/86",
             "gas": {
                 "transfer": "15651",
                 "mint": "18195",

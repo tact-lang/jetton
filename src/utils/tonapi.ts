@@ -1,5 +1,4 @@
 import {z} from "zod"
-import {JettonParams} from "./jetton-helpers"
 import {Address} from "@ton/core"
 
 const tonapiResponseSchema = z.object({
@@ -24,7 +23,7 @@ const tonapiResponseSchema = z.object({
 export type TonApiResponse = z.infer<typeof tonapiResponseSchema>
 
 export const callGetMetadataFromTonApi = async (address: Address): Promise<TonApiResponse> => {
-    const network = process.env.network ?? "testnet"
+    const network = process.env.NETWORK ?? "testnet"
     const url = new URL(
         `https://${network}.tonapi.io/v2/jettons/${address.toString({urlSafe: true})}`,
     )
@@ -41,20 +40,4 @@ export const callGetMetadataFromTonApi = async (address: Address): Promise<TonAp
     })
     const data = await response.json()
     return tonapiResponseSchema.parse(data)
-}
-
-export const validateTonApiResponse = async (
-    response: TonApiResponse,
-    expectedJettonParams: JettonParams,
-) => {
-    expect(response.admin.address.toUpperCase()).toBe(
-        expectedJettonParams.owner.toRawString().toUpperCase(),
-    )
-    expect(response.metadata.address.toUpperCase()).toBe(
-        expectedJettonParams.address.toRawString().toUpperCase(),
-    )
-    expect(response.metadata.name).toBe(expectedJettonParams.metadata.name)
-    expect(response.metadata.symbol).toBe(expectedJettonParams.metadata.symbol)
-    expect(response.metadata.image).toBe(expectedJettonParams.metadata.image)
-    expect(response.metadata.description).toBe(expectedJettonParams.metadata.description)
 }

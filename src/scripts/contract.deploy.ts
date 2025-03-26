@@ -7,8 +7,7 @@ import {buildJettonMinterFromEnv} from "../utils/jetton-helpers"
 import {storeMint} from "../output/Jetton_JettonMinter"
 
 import {printSeparator} from "../utils/print"
-import * as dotenv from "dotenv"
-dotenv.config()
+import "dotenv/config"
 
 /*
     (Remember to install dependencies by running "yarn install" in the terminal)
@@ -26,9 +25,18 @@ dotenv.config()
     7. Run this script by "yarn deploy"
  */
 const main = async () => {
-    let mnemonics = (process.env.mnemonics || "").toString() // 🔴 Mnemonic should be placed in .env file
-    const network = process.env.network ?? "testnet"
-    if (network != "mainnet" && network != "testnet") {
+    const mnemonics = process.env.MNEMOMICS
+    if (mnemonics === undefined) {
+        console.error("Mnemonics is not provided, please add it to .env file")
+        throw new Error("Mnemonics is not provided")
+    }
+    if (mnemonics.split(" ").length !== 24) {
+        console.error("Invalid mnemonics, it should be 24 words")
+        throw new Error("Invalid mnemonics, it should be 24 words")
+    }
+    const network = process.env.NETWORK ?? "testnet"
+    if (network !== "mainnet" && network !== "testnet") {
+        console.error("Invalid network, should be mainnet or testnet, got ", network)
         throw new Error("Invalid network")
     }
     const endpoint = await getHttpEndpoint({network: network})
@@ -38,17 +46,17 @@ const main = async () => {
     const keyPair = await mnemonicToPrivateKey(mnemonics.split(" "))
     const secretKey = keyPair.secretKey
     const workchain = 0 //we are working in basechain.
-    const deployer_wallet = WalletContractV4.create({
+    const deployerWallet = WalletContractV4.create({
         workchain: workchain,
         publicKey: keyPair.publicKey,
     })
 
-    const deployer_wallet_contract = client.open(deployer_wallet)
+    const deployerWalletContract = client.open(deployerWallet)
 
-    const jettonMinter = await buildJettonMinterFromEnv(deployer_wallet_contract.address)
+    const jettonMinter = await buildJettonMinterFromEnv(deployerWalletContract.address)
     const deployAmount = toNano("0.15")
 
-    const supply = toNano(Number(process.env.jettonSupply) ?? 1000000000)
+    const supply = toNano(Number(process.env.JETTON_SUPPLY ?? 1000000000)) // 1_000_000_000 jettons
     const packed_msg = beginCell()
         .store(
             storeMint({
@@ -57,35 +65,35 @@ const main = async () => {
                 mintMessage: {
                     $$type: "JettonTransferInternal",
                     amount: supply,
-                    sender: deployer_wallet_contract.address,
-                    responseDestination: deployer_wallet_contract.address,
+                    sender: deployerWalletContract.address,
+                    responseDestination: deployerWalletContract.address,
                     queryId: 0n,
                     forwardTonAmount: 0n,
                     forwardPayload: beginCell().storeUint(0, 1).asSlice(),
                 },
-                receiver: deployer_wallet_contract.address,
+                receiver: deployerWalletContract.address,
                 tonAmount: supply,
             }),
         )
         .endCell()
 
     // send a message on new address contract to deploy it
-    const seqno: number = await deployer_wallet_contract.getSeqno()
+    const seqno: number = await deployerWalletContract.getSeqno()
     console.log(
         "🛠️Preparing new outgoing massage from deployment wallet. \n" +
-            deployer_wallet_contract.address,
+            deployerWalletContract.address,
     )
     console.log("Seqno: ", seqno + "\n")
     printSeparator()
 
     // Get deployment wallet balance
-    const balance: bigint = await deployer_wallet_contract.getBalance()
+    const balance: bigint = await deployerWalletContract.getBalance()
 
     console.log("Current deployment wallet balance = ", fromNano(balance).toString(), "💎TON")
     console.log("Minting:: ", fromNano(supply))
     printSeparator()
 
-    await deployer_wallet_contract.sendTransfer({
+    await deployerWalletContract.sendTransfer({
         seqno,
         secretKey,
         messages: [
@@ -101,6 +109,9 @@ const main = async () => {
         ],
     })
     console.log("====== Deployment message sent to =======\n", jettonMinter.address)
+    console.log(
+        `You can soon check your deployed contract at https://${network}.tonviewer.com/${jettonMinter.address.toString({urlSafe: true})}`,
+    )
 }
 
 void main()

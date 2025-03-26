@@ -10,14 +10,14 @@ misti
 nowarp
 Resolve
 seqno
+TONCENTER
 tact
 tock
 tonapi
 tonhub
 tonscan
+toncenter
 tonviewer
 tonweb
 workchain
 yada
-TONCENTER
-toncenter
