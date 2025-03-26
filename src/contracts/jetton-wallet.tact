@@ -6,7 +6,6 @@ contract JettonWallet(
     owner: Address,
     minter: Address,
 ) {
-
     receive(msg: JettonTransfer) {
         forceBasechain(msg.destination);
         require(sender() == self.owner, "Incorrect sender");
@@ -17,11 +16,12 @@ contract JettonWallet(
 
         let ctx = context();
         let fwdCount = 1 + sign(msg.forwardTonAmount); // msg.forwardTonAmount is coins, so it's positive
-        require(ctx.value >
+        require(
+            ctx.value >
             msg.forwardTonAmount +
             fwdCount * ctx.readForwardFee() +
             (2 * getComputeFee(gasForTransfer, false) + minTonsForStorage),
-            "Insufficient amount of TON attached"
+            "Insufficient amount of TON attached",
         );
 
         deploy(DeployParameters {
@@ -34,7 +34,7 @@ contract JettonWallet(
                 sender: self.owner,
                 responseDestination: msg.responseDestination,
                 forwardTonAmount: msg.forwardTonAmount,
-                forwardPayload: msg.forwardPayload
+                forwardPayload: msg.forwardPayload,
             }.toCell(),
             init: initOf JettonWallet(0, msg.destination, self.minter),
         });
@@ -77,7 +77,7 @@ contract JettonWallet(
                 value: msgValue,
                 mode: SendRemainingBalance + SendIgnoreErrors,
                 bounce: false,
-                body: JettonExcesses{ queryId: msg.queryId }.toCell(),
+                body: JettonExcesses { queryId: msg.queryId }.toCell(),
             });
         }
     }
@@ -91,7 +91,7 @@ contract JettonWallet(
                 minter: self.minter,
                 owner: self.owner,
                 code: myCode(),
-            }
+            };
         }
 
         message(MessageParameters {
@@ -150,11 +150,11 @@ contract JettonWallet(
     }
 
     get fun get_wallet_data(): JettonWalletData {
-        return JettonWalletData{
+        return JettonWalletData {
             balance: self.balance,
             owner: self.owner,
             minter: self.minter,
-            code: myCode()
+            code: myCode(),
         };
     }
 }

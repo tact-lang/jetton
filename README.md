@@ -28,7 +28,7 @@ This implementation also includes new features, that will allow developers and u
 
 ### Balance on-chain API
 
-Ths additional receiver provides functionality similar to [TEP-89](https://github.com/ton-blockchain/TEPs/blob/master/text/0089-jetton-wallet-discovery.md), but with wallet balance. You can request and then receive balance from any Jetton wallet with possible additional info for transaction verification
+This additional receiver provides functionality similar to [TEP-89](https://github.com/ton-blockchain/TEPs/blob/master/text/0089-jetton-wallet-discovery.md), but with wallet balance. You can request and then receive balance from any Jetton wallet with possible additional info for transaction verification
 
 #### Transaction scheme
 
@@ -48,6 +48,28 @@ provide_wallet_balance#7ac8d559 receiver:MsgAddress include_verify_info:Bool = I
 
 verify_info$_ owner:MsgAddress minter:MsgAddress code:^Cell = VerifyInfo;
 take_wallet_balance#ca77fdc2 balance:Coins verify_info:(Maybe VerifyInfo) = InternalMsgBody;
+```
+
+### Claim TON from Jetton Wallet/Minter
+
+These receivers both on Jetton Wallet and Jetton Minter allow to claim stale TON coins from contracts, leaving just enough balance for them to not freeze and function properly. Message body includes `receiver` field, that allows to specify funds receiver
+
+#### Transaction scheme
+
+```mermaid
+sequenceDiagram
+    participant D as Owner
+    participant C as Jetton Wallet/Minter
+    participant F as msg.receiver
+
+    D ->>+ C: ClaimTON<BR />(0x0393b1ce)
+    C ->>+ F: TON's<BR />(empty body)
+```
+
+#### TLB
+
+```tlb
+claim_ton#0393b1ce receiver:MsgAddress = InternalMsgBody;
 ```
 
 ## Getting Started

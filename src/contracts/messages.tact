@@ -112,6 +112,7 @@ message TakeWalletBalance {
     verifyInfo: VerifyInfo?;
 }
 
+// claim_ton#0393b1ce receiver:MsgAddress = InternalMsgBody
 message ClaimTON {
     receiver: Address;
 }
