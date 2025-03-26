@@ -13,6 +13,7 @@ seqno
 tact
 tock
 tonapi
+Toncoin
 tonhub
 tonscan
 tonviewer
