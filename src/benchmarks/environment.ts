@@ -189,11 +189,13 @@ export const runReportBalanceBenchmark = async () => {
     return getUsedGasInternal(reportResult, {type: "single"})
 }
 
+// benchmark for claiming from wallet because it's more often used
 export const runClaimTonBenchmark = async () => {
     const {deployer, jettonMinter, getJettonWallet, notDeployer} = await loadJettonEnvironment.then(
         v => v(),
     )
 
+    // mint as jetton wallet deploy
     const mintResult = await jettonMinter.sendMint(
         deployer.getSender(),
         deployer.address,
@@ -206,11 +208,6 @@ export const runClaimTonBenchmark = async () => {
     assertTransactionChainWasSuccessful(mintResult.transactions, lengthEqualsEither(4, 5))
 
     const deployerWallet = await getJettonWallet(deployer.address)
-
-    await deployer.send({
-        to: deployerWallet.address,
-        value: toNano(3),
-    })
 
     const reportResult = await deployerWallet.sendClaimTon(
         deployer.getSender(),
