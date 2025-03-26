@@ -36,7 +36,7 @@
         },
         {
             "label": "With Ton Claim",
-            "pr": "https://github.com/tact-lang/jetton/pull/87",
+            "pr": "https://github.com/tact-lang/jetton/pull/90",
             "gas": {
                 "transfer": "15511",
                 "mint": "17659",
