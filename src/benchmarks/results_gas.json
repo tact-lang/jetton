@@ -33,6 +33,18 @@
                 "reportBalance": "4537"
             },
             "summary": "57040"
+        },
+        {
+            "label": "Set selector-hack flag to default value",
+            "pr": "https://github.com/tact-lang/jetton/pull/86",
+            "gas": {
+                "transfer": "15651",
+                "mint": "18195",
+                "burn": "12576",
+                "discovery": "6655",
+                "reportBalance": "4607"
+            },
+            "summary": "57684"
         }
     ]
 }
