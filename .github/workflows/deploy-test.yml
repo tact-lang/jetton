@@ -27,13 +27,13 @@ jobs:
 
       - name: Test deploy
         env:
-          mnemonics: ${{ secrets.TESTNET_WALLET_SEED_PHRASE }}
-          network: testnet
-          jettonName: TactJetton
-          jettonSymbol: TACT
-          jettonDescription: "This is description of Jetton #${{ github.run_number }} (Run at ${{ github.run_id }} - ${{ github.run_attempt }})"
-          jettonImage: https://raw.githubusercontent.com/tact-lang/tact/refs/heads/main/docs/public/logomark-light.svg
-          jettonSupply: 1000000000
+          MNEMONICS: ${{ secrets.TESTNET_WALLET_SEED_PHRASE }}
+          NETWORK: TESTNET
+          JETTON_NAME: TACTJETTON
+          JETTON_SYMBOL: TACT
+          JETTON_DESCRIPTION: "This is description of Jetton #${{ github.run_number }} (Run at ${{ github.run_id }} - ${{ github.run_attempt }})"
+          JETTON_IMAGE: https://raw.githubusercontent.com/tact-lang/tact/refs/heads/main/docs/public/logomark-light.svg
+          JETTON_SUPPLY: 1000000000
           TONAPI_KEY: ${{ secrets.TONAPI_KEY }}
           TONCENTER_TESTNET_KEY: ${{ secrets.TONCENTER_TESTNET_KEY }}
         run: yarn deploy && yarn verify-deployment
