@@ -1,5 +1,7 @@
 import {Sha256} from "@aws-crypto/sha256-js"
-import {Dictionary, beginCell, Cell} from "@ton/core"
+import {Dictionary, beginCell, Cell, Address} from "@ton/core"
+import {JettonMinter} from "../output/Jetton_JettonMinter"
+import {TonClient} from "@ton/ton"
 
 const ONCHAIN_CONTENT_PREFIX = 0x00
 const SNAKE_PREFIX = 0x00
@@ -56,4 +58,70 @@ function bufferToChunks(buff: Buffer, chunkSize: number) {
         buff = buff.slice(chunkSize)
     }
     return chunks
+}
+
+export type Metadata = {
+    name: string
+    symbol: string
+    description: string
+    image: string
+}
+
+export type JettonParams = {
+    address: Address
+    metadata: Metadata
+    totalSupply: bigint
+    owner: Address
+    jettonWalletCode: Cell
+}
+
+async function parseMetadataFromCell(metadataCell: Cell) {
+    const cs = metadataCell.beginParse()
+    const prefix = cs.loadInt(8)
+    if (prefix !== ONCHAIN_CONTENT_PREFIX) {
+        throw new Error("Invalid metadata prefix")
+    }
+    const dict = cs.loadDict(Dictionary.Keys.BigUint(256), Dictionary.Values.Cell())
+    // In each key we need to skip 8 bits - size of snake prefix.
+    const name = dict.get(toKey("name"))?.beginParse().skip(8).loadStringTail()
+    const description = dict.get(toKey("description"))?.beginParse().skip(8).loadStringTail()
+    const image = dict.get(toKey("image"))?.beginParse().skip(8).loadStringTail()
+    return {name, description, image}
+}
+
+export async function validateJettonParams(
+    expectedJettonParams: JettonParams,
+    jettonAddress: Address,
+    client: TonClient,
+) {
+    const {metadata, totalSupply, owner, jettonWalletCode} = expectedJettonParams
+    const jettonContract = client.open(new JettonMinter(jettonAddress))
+    const jettonData = await jettonContract.getGetJettonData()
+    expect(jettonData.totalSupply).toBe(totalSupply)
+    expect(jettonData.adminAddress.toRaw().toString("hex")).toBe(owner.toRaw().toString("hex"))
+    expect(jettonData.jettonWalletCode.toBoc().toString("hex")).toBe(
+        jettonWalletCode.toBoc().toString("hex"),
+    )
+
+    const realMetadata = await parseMetadataFromCell(jettonData.jettonContent)
+    expect(realMetadata.name).toBe(metadata.name)
+    expect(realMetadata.description).toBe(metadata.description)
+    expect(realMetadata.image).toBe(metadata.image)
+}
+
+export async function buildJettonMinterFromEnv(deployerAddress: Address) {
+    const jettonParams = {
+        name: process.env.JETTON_NAME ?? "TactJetton",
+        description:
+            process.env.JETTON_DESCRIPTION ?? "This is description of Jetton, written in Tact-lang",
+        symbol: process.env.JETTON_SYMBOL ?? "TACT",
+        image:
+            process.env.JETTON_IMAGE ??
+            "https://raw.githubusercontent.com/tact-lang/tact/refs/heads/main/docs/public/logomark-light.svg",
+    }
+    console.log(jettonParams)
+    // Create content Cell
+    const content = buildOnchainMetadata(jettonParams)
+
+    return await JettonMinter.fromInit(0n, deployerAddress, content, true)
 }

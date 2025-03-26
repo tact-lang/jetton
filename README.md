@@ -22,6 +22,34 @@ This implementation is fully compatible with the following TON standards:
 
 You can use this implementation as an alternative to the reference Jetton contracts available in the [TON Blockchain repository](https://github.com/ton-blockchain/token-contract).
 
+## Improvements and additional features
+
+This implementation also includes new features, that will allow developers and users on TON to easier integrate and work with Jettons in their applications
+
+### Balance on-chain API
+
+Ths additional receiver provides functionality similar to [TEP-89](https://github.com/ton-blockchain/TEPs/blob/master/text/0089-jetton-wallet-discovery.md), but with wallet balance. You can request and then receive balance from any Jetton wallet with possible additional info for transaction verification
+
+#### Transaction scheme
+
+```mermaid
+sequenceDiagram
+    participant D as Any Account
+    participant C as Jetton Wallet
+
+    D ->>+ C: ProvideWalletBalance<BR />(0x7ac8d559)
+    C ->>+ D: TakeWalletBalance<BR />(0xca77fdc2)
+```
+
+#### TLB
+
+```tlb
+provide_wallet_balance#7ac8d559 receiver:MsgAddress include_verify_info:Bool = InternalMsgBody;
+
+verify_info$_ owner:MsgAddress minter:MsgAddress code:^Cell = VerifyInfo;
+take_wallet_balance#ca77fdc2 balance:Coins verify_info:(Maybe VerifyInfo) = InternalMsgBody;
+```
+
 ## Getting Started
 
 ### 1. Install Dependencies
@@ -48,7 +76,23 @@ Customize your Jetton by editing the `contract.deploy.ts` file. This file also i
 yarn deploy
 ```
 
-### 4. Test Contracts
+#### 4. Deployment Verification
+
+To verify that your Jetton contract was deployed correctly, you can use the built-in verification test:
+
+Run the verification test:
+
+```bash
+yarn verify-deployment
+```
+
+This verification test will check:
+
+- If the contract is active
+- If the contract parameters match what you specified
+- If the contract metadata is correctly set up
+
+### 5. Test Contracts
 
 Run tests in the `@ton/sandbox` environment:
 
@@ -58,7 +102,7 @@ yarn test
 
 ## Jetton Architecture
 
-If you’re new to Jettons, read the [TON Jettons Processing](https://docs.ton.org/develop/dapps/asset-processing/jettons).
+If you're new to Jettons, read the [TON Jettons Processing](https://docs.ton.org/develop/dapps/asset-processing/jettons).
 
 ## Project Structure
 

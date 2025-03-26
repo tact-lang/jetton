@@ -5,6 +5,7 @@ import {
     runMintBenchmark,
     runBurnBenchmark,
     runDiscoveryBenchmark,
+    runReportBalanceBenchmark,
 } from "./environment"
 import {writeFile} from "fs/promises"
 import {join} from "path"
@@ -35,12 +36,10 @@ const main = async () => {
         : await readInput()
 
     const gasUsedForTransfer = await runTransferBenchmark()
-
     const gasUsedForMint = await runMintBenchmark()
-
     const gasUsedForBurn = await runBurnBenchmark()
-
     const gasUsedForDiscovery = await runDiscoveryBenchmark()
+    const gasUsedForReportBalance = await runReportBalanceBenchmark()
 
     const newBenchmarkResult = {
         label: data.label,
@@ -50,8 +49,15 @@ const main = async () => {
             mint: gasUsedForMint.toString(),
             burn: gasUsedForBurn.toString(),
             discovery: gasUsedForDiscovery.toString(),
+            reportBalance: gasUsedForReportBalance.toString(),
         },
-        summary: String(gasUsedForTransfer + gasUsedForMint + gasUsedForBurn + gasUsedForDiscovery),
+        summary: String(
+            gasUsedForTransfer +
+                gasUsedForMint +
+                gasUsedForBurn +
+                gasUsedForDiscovery +
+                gasUsedForReportBalance,
+        ),
     }
 
     if (isUpdate) {
