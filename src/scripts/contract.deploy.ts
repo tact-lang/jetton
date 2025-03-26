@@ -25,7 +25,7 @@ import "dotenv/config"
     7. Run this script by "yarn deploy"
  */
 const main = async () => {
-    const mnemonics = process.env.MNEMOMICS
+    const mnemonics = process.env.MNEMONICS
     if (mnemonics === undefined) {
         console.error("Mnemonics is not provided, please add it to .env file")
         throw new Error("Mnemonics is not provided")

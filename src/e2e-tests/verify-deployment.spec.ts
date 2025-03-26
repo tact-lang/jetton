@@ -23,7 +23,7 @@ describe("Contract Deployment Verification", () => {
         const endpoint = await getHttpEndpoint({network: network as "testnet" | "mainnet"})
         client = new TonClient({endpoint})
 
-        const mnemonics = process.env.MNEMOMICS
+        const mnemonics = process.env.MNEMONICS
         if (mnemonics === undefined) {
             console.error("Mnemonics is not provided, please add it to .env file")
             throw new Error("Mnemonics is not provided")
