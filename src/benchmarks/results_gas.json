@@ -33,6 +33,19 @@
                 "reportBalance": "4537"
             },
             "summary": "57040"
+        },
+        {
+            "label": "With Ton Claim",
+            "pr": "https://github.com/tact-lang/jetton/pull/87",
+            "gas": {
+                "transfer": "15511",
+                "mint": "17659",
+                "burn": "12804",
+                "discovery": "6542",
+                "reportBalance": "4370",
+                "claimWallet": "3960"
+            },
+            "summary": "60846"
         }
     ]
 }

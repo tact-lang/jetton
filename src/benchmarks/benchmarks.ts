@@ -8,6 +8,7 @@ import {
     runBurnBenchmark,
     runDiscoveryBenchmark,
     runReportBalanceBenchmark,
+    runClaimTonBenchmark,
 } from "./environment"
 
 const main = async () => {
@@ -29,12 +30,16 @@ const main = async () => {
     const gasUsedForReportBalance = await runReportBalanceBenchmark()
     assert.equal(gasUsedForReportBalance, expectedResult.gas["reportBalance"])
 
+    const gasUsedForTonClaim = await runClaimTonBenchmark()
+    assert.equal(gasUsedForTonClaim, expectedResult.gas["claimWallet"])
+
     assert.equal(
         gasUsedForTransfer +
             gasUsedForMint +
             gasUsedForBurn +
             gasUsedForDiscovery +
-            gasUsedForReportBalance,
+            gasUsedForReportBalance +
+            gasUsedForTonClaim,
         expectedResult.summary,
     )
 

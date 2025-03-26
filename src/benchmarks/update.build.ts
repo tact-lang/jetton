@@ -6,6 +6,7 @@ import {
     runBurnBenchmark,
     runDiscoveryBenchmark,
     runReportBalanceBenchmark,
+    runClaimTonBenchmark,
 } from "./environment"
 import {writeFile} from "fs/promises"
 import {join} from "path"
@@ -40,6 +41,7 @@ const main = async () => {
     const gasUsedForBurn = await runBurnBenchmark()
     const gasUsedForDiscovery = await runDiscoveryBenchmark()
     const gasUsedForReportBalance = await runReportBalanceBenchmark()
+    const gasUsedForClaimTon = await runClaimTonBenchmark()
 
     const newBenchmarkResult = {
         label: data.label,
@@ -50,13 +52,15 @@ const main = async () => {
             burn: gasUsedForBurn.toString(),
             discovery: gasUsedForDiscovery.toString(),
             reportBalance: gasUsedForReportBalance.toString(),
+            claimWallet: gasUsedForClaimTon.toString(),
         },
         summary: String(
             gasUsedForTransfer +
                 gasUsedForMint +
                 gasUsedForBurn +
                 gasUsedForDiscovery +
-                gasUsedForReportBalance,
+                gasUsedForReportBalance +
+                gasUsedForClaimTon,
         ),
     }
 
