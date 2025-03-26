@@ -28,8 +28,8 @@ jobs:
       - name: Test deploy
         env:
           MNEMONICS: ${{ secrets.TESTNET_WALLET_SEED_PHRASE }}
-          NETWORK: TESTNET
-          JETTON_NAME: TACTJETTON
+          NETWORK: testnet
+          JETTON_NAME: TactJetton
           JETTON_SYMBOL: TACT
           JETTON_DESCRIPTION: "This is description of Jetton #${{ github.run_number }} (Run at ${{ github.run_id }} - ${{ github.run_attempt }})"
           JETTON_IMAGE: https://raw.githubusercontent.com/tact-lang/tact/refs/heads/main/docs/public/logomark-light.svg
