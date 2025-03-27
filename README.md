@@ -98,7 +98,23 @@ Customize your Jetton by editing the `contract.deploy.ts` file. This file also i
 yarn deploy
 ```
 
-### 4. Test Contracts
+#### 4. Deployment Verification
+
+To verify that your Jetton contract was deployed correctly, you can use the built-in verification test:
+
+Run the verification test:
+
+```bash
+yarn verify-deployment
+```
+
+This verification test will check:
+
+- If the contract is active
+- If the contract parameters match what you specified
+- If the contract metadata is correctly set up
+
+### 5. Test Contracts
 
 Run tests in the `@ton/sandbox` environment:
 
@@ -108,7 +124,7 @@ yarn test
 
 ## Jetton Architecture
 
-If you’re new to Jettons, read the [TON Jettons Processing](https://docs.ton.org/develop/dapps/asset-processing/jettons).
+If you're new to Jettons, read the [TON Jettons Processing](https://docs.ton.org/develop/dapps/asset-processing/jettons).
 
 ## Project Structure
 
