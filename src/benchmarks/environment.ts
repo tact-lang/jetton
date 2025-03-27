@@ -154,7 +154,10 @@ export const runDiscoveryBenchmark = async () => {
     )
 
     // external -> discovery -> take
-    assertTransactionChainWasSuccessful(discoveryResult.transactions, (l: number) => l === 3)
+    assertTransactionChainWasSuccessful(
+        discoveryResult.transactions,
+        (length: number) => length === 3,
+    )
 
     return getUsedGasInternal(discoveryResult, {type: "single"})
 }
@@ -216,7 +219,7 @@ export const runClaimTonBenchmark = async () => {
     )
 
     // external -> claim -> take
-    assertTransactionChainWasSuccessful(reportResult.transactions, l => l === 3)
+    assertTransactionChainWasSuccessful(reportResult.transactions, (length: number) => length === 3)
 
     return getUsedGasInternal(reportResult, {type: "single"})
 }
