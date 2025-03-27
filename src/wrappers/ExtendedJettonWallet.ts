@@ -1,5 +1,5 @@
-import {JettonTransfer, JettonWallet} from "../output/Jetton_JettonWallet"
-import {Address, Builder, Cell, ContractProvider, Sender} from "@ton/core"
+import {ClaimTON, JettonTransfer, JettonWallet} from "../output/Jetton_JettonWallet"
+import {Address, Builder, Cell, ContractProvider, Sender, toNano} from "@ton/core"
 import {JettonBurn, ProvideWalletBalance} from "../output/Jetton_JettonMinter"
 
 export class ExtendedJettonWallet extends JettonWallet {
@@ -86,6 +86,19 @@ export class ExtendedJettonWallet extends JettonWallet {
         }
 
         await this.send(provider, via, {value}, msg)
+    }
+
+    async sendClaimTon(
+        provider: ContractProvider,
+        via: Sender,
+        address: Address,
+        value: bigint = toNano("0.1"),
+    ): Promise<void> {
+        const msg: ClaimTON = {
+            $$type: "ClaimTON",
+            receiver: address,
+        }
+        return this.send(provider, via, {value: value}, msg)
     }
 
     sendWithdrawTons = async (_provider: ContractProvider, _via: Sender): Promise<void> => {
