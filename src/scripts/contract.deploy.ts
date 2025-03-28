@@ -34,7 +34,7 @@ const main = async () => {
         console.error("Invalid mnemonics, it should be 24 words")
         throw new Error("Invalid mnemonics, it should be 24 words")
     }
-    const network = process.env.NETWORK ?? "testnet"
+    const network = process.env.NETWORK ?? "mainnet"
     if (network !== "mainnet" && network !== "testnet") {
         console.error("Invalid network, should be mainnet or testnet, got ", network)
         throw new Error("Invalid network")
@@ -110,7 +110,7 @@ const main = async () => {
     })
     console.log("====== Deployment message sent to =======\n", jettonMinter.address)
     console.log(
-        `You can soon check your deployed contract at https://${network}.tonviewer.com/${jettonMinter.address.toString({urlSafe: true})}`,
+        `You can soon check your deployed contract at https://${network === "mainnet" ? "" : network + "."}tonviewer.com/${jettonMinter.address.toString({urlSafe: true})}`,
     )
 }
 
