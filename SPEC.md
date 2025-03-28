@@ -1,21 +1,21 @@
 # Tact-Native Jetton Implementation
 
-This documents disscusses design choises and differences between this and other jetton implementations
+This documents discusses design choices and differences between this and other jetton implementations
 
 ## Gas assertions
 
 There are a few ways to deal with TEP-74 defined gas constraints and storage fees:
 
 - Precalculated in emulation gas constants
-- Hardcoded raw nanotons amount
-- Runtime calculations using latest blockchain configuaraton
+- Hardcoded raw tons amount
+- Runtime calculations using latest blockchain configuration
 - Original forward fee approximations
 
 We decided to use a mixed approach:
 
 #### Hardcoded ton amount with `nativeReserve` and SendMode `SendRemainingBalance` for storage phase assertions
 
-We moved away from using `myStorageDue()` or `getStorageFee()` to work with storage fees since big enought constant to not allow contract freezing together with the ability to [claim TON](#claim-ton-from-jetton-walletminter) from both Minter and Wallet contracts are good solution that will work in all production use-cases
+We moved away from using `myStorageDue()` or `getStorageFee()` to work with storage fees since big enough constant to not allow contract freezing together with the ability to [claim TON](#claim-ton-from-jetton-walletminter) from both Minter and Wallet contracts are good solution that will work in all production use-cases
 
 ```tact
 const minTonsForStorage: Int = ton("0.01");
@@ -33,7 +33,7 @@ message(MessageParameters {
 
 This is combination of two techniques:
 
-- Using gas constants with `getComputeFee()` to always get precise compute fees in nanotons
+- Using gas constants with `getComputeFee()` to always get precise compute fees in tons
 - Using `ctx.readForwardFee()` for approximation when the outgoing message size is always smaller or the same compared to the incoming
 
 ```tact
@@ -57,7 +57,7 @@ We have added additional receivers, not specified by TEP, but long awaited by de
 
 ### Balance on-chain API
 
-Not being able to know the balance of other address implies sertain obstacles in the implementation of complex DeFi.
+Not being able to know the balance of other address implies certain obstacles in the implementation of complex DeFi.
 This additional receiver provides functionality similar to [TEP-89](https://github.com/ton-blockchain/TEPs/blob/master/text/0089-jetton-wallet-discovery.md), but with wallet balance. You can request and then receive balance from any Jetton wallet with possible additional info for transaction verification
 
 #### Transaction scheme
