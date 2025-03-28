@@ -11,6 +11,7 @@ This project includes a complete setup for working with Tact-based Jetton smart 
 - A pre-configured Tact compiler.
 - Smart contracts written in the Tact language.
 - TypeScript + Jest testing environment with `@ton/sandbox`.
+- Gas usage benchmarks throughout different versions
 
 ## Goals
 
@@ -114,13 +115,40 @@ This verification test will check:
 - If the contract parameters match what you specified
 - If the contract metadata is correctly set up
 
-### 5. Test Contracts
+### 5. Read Contract Data
+
+You can read on-chain data for the minter from its address using script `src/scripts/contract.read.ts`
+
+```bash
+yarn read
+```
+
+### 6. Test Contracts
 
 Run tests in the `@ton/sandbox` environment:
 
 ```bash
 yarn test
 ```
+
+### 6. Benchmark Contracts
+
+To run gas usage benchmarks and get them printed in the table, use
+
+```bash
+yarn bench
+```
+
+If you want to modify the contracts and benchmark your implementation, you can run
+
+```bash
+# add to add new entry
+yarn bench:add
+# or update to replace latest
+yarn bench:update
+```
+
+After that, use `yarn bench` to pretty-print the difference table with your results in it
 
 ## Jetton Architecture
 
@@ -142,6 +170,7 @@ src/
 │
 │   # Tests
 ├── tests/
+│   ├── extended.spec.ts
 │   └── jetton.spec.ts
 │
 │   # Deployment script
@@ -159,31 +188,21 @@ The configuration for the Tact compiler is in `tact.config.json` in the root of 
 
 ## Smart Contracts Structure
 
-The main smart contract is `jetton_minter.tact`, it imports `messages.tact` and `jetton_wallet.tact`. With the default configuration of `tact.config.json` targeting `jetton_minter.tact`, they're all compiled automatically.
+The main smart contract is `jetton-minter.tact`, it imports `messages.tact`, `constants.tact` and `jetton-wallet.tact`. With the default configuration of `tact.config.json` targeting `jetton-minter.tact`, they're all compiled automatically.
 
-### Inherited traits
-
-Jetton Minter uses only _OwnableTransferable_, which is inherited from the _Ownable_ trait. Jetton Wallet only uses the _Ownable_ trait. All these traits come from the Tact's [standard libraries](https://docs.tact-lang.org/ref/standard-libraries/).
-
-Schemes of inheritance and imports:
+Scheme of imports:
 
 ```mermaid
 graph LR
-    B[jetton_minter.tact] -->|import| A[messages.tact]
-    C[jetton_wallet.tact] -->|import| A[messages.tact]
-    B[jetton_minter.tact] -->|import| C[jetton_wallet.tact]
+    B[jetton-minter.tact] -->|import| A[messages.tact]
+    C[jetton-wallet.tact] -->|import| A[messages.tact]
+    B[jetton-minter.tact] -->|import| C[jetton-wallet.tact]
 
-    C[jetton_wallet.tact] -->|uses| E[ownable]
-    B[jetton_minter.tact] -->|uses| F[ownableTransferable]
-    F[ownableTransferable] -->|inherits| E[ownable]
-
-    class E,F ownableStyle;
-
-    classDef ownableStyle stroke-width:2,rx:25,ry:25;
-
+    C[jetton-wallet.tact] -->|import| E[constants.tact]
+    B[jetton-minter.tact] -->|import| E[constants.tact]
 ```
 
-Read more about those traits in the [Tact standard library](https://docs.tact-lang.org/ref/standard-libraries/).
+Read more about imports in the [Tact standard library](https://docs.tact-lang.org/ref/standard-libraries/).
 
 ## Best Practices
 
