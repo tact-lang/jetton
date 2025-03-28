@@ -8,6 +8,7 @@ import "dotenv/config"
 import {JettonMinter} from "../output/Jetton_JettonMinter"
 import {callGetMetadataFromTonApi} from "../utils/tonapi"
 import {expect} from "@jest/globals"
+import {uploadDeployResultToGist} from "../utils/gist"
 
 describe("Contract Deployment Verification", () => {
     let client: TonClient
@@ -60,6 +61,10 @@ describe("Contract Deployment Verification", () => {
                 await JettonWallet.init(0n, deployerWalletAddress, jettonMinter.address)
             ).code,
         }
+    })
+
+    afterAll(async () => {
+        await uploadDeployResultToGist(jettonMinter.address)
     })
 
     const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))

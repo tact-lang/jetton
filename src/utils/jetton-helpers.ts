@@ -2,6 +2,7 @@ import {Sha256} from "@aws-crypto/sha256-js"
 import {Dictionary, beginCell, Cell, Address} from "@ton/core"
 import {JettonMinter} from "../output/Jetton_JettonMinter"
 import {TonClient} from "@ton/ton"
+import chalk from "chalk"
 
 const ONCHAIN_CONTENT_PREFIX = 0x00
 const SNAKE_PREFIX = 0x00
@@ -87,6 +88,17 @@ async function parseMetadataFromCell(metadataCell: Cell) {
     const description = dict.get(toKey("description"))?.beginParse().skip(8).loadStringTail()
     const image = dict.get(toKey("image"))?.beginParse().skip(8).loadStringTail()
     return {name, description, image}
+}
+
+export const displayContentCell = async (content: Cell) => {
+    try {
+        const result = await parseMetadataFromCell(content)
+        console.log(`Token name: ${result.name}`)
+        console.log(`Description: ${result.description}`)
+        console.log(`Image: ${chalk.underline(result.image)}`)
+    } catch (e) {
+        console.error("Failed to parse metadata from cell")
+    }
 }
 
 export async function validateJettonParams(

@@ -55,7 +55,7 @@ contract JettonWallet(
 
         if (msg.forwardTonAmount > 0) {
             let fwdFee: Int = ctx.readForwardFee();
-            msgValue -= msg.forwardTonAmount + fwdFee;
+            msgValue -= (msg.forwardTonAmount + fwdFee);
             message(MessageParameters {
                 to: self.owner,
                 value: msg.forwardTonAmount,
