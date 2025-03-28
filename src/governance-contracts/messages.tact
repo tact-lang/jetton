@@ -9,7 +9,7 @@ struct JettonData {
 struct JettonWalletData {
     balance: Int;
     owner: Address;
-    master: Address;
+    minter: Address;
     code: Cell;
 }
 
@@ -17,10 +17,9 @@ struct MaybeAddress {
     address: Address?;
 }
 
-message(4) JettonUpdateContent {
-    queryId: Int as uint64;
-    content: Cell;
-}
+//=======================================================================
+// TEP - 74
+// https://github.com/ton-blockchain/TEPs/blob/master/text/0074-jettons-standard.md
 
 message(0xf8a7ea5) JettonTransfer {
     queryId: Int as uint64;
@@ -32,13 +31,12 @@ message(0xf8a7ea5) JettonTransfer {
     forwardPayload: Slice as remaining;
 }
 
-message(0x178d4519) JettonTransferInternal {
+const JettonBurnOpcode: Int = 0x595f07bc;
+message(JettonBurnOpcode) JettonBurn {
     queryId: Int as uint64;
     amount: Int as coins;
-    sender: Address;
     responseDestination: Address?;
-    forwardTonAmount: Int as coins;
-    forwardPayload: Slice as remaining;
+    customPayload: Cell?;
 }
 
 message(0x7362d09c) JettonNotification {
@@ -48,11 +46,18 @@ message(0x7362d09c) JettonNotification {
     forwardPayload: Slice as remaining;
 }
 
-message(0x595f07bc) JettonBurn {
+message(0xd53276db) JettonExcesses {
+    queryId: Int as uint64;
+}
+
+const JettonTransferInternalOpcode: Int = 0x178d4519;
+message(JettonTransferInternalOpcode) JettonTransferInternal {
     queryId: Int as uint64;
     amount: Int as coins;
+    sender: Address;
     responseDestination: Address?;
-    customPayload: Cell?;
+    forwardTonAmount: Int as coins;
+    forwardPayload: Slice as remaining;
 }
 
 message(0x7bdd97de) JettonBurnNotification {
@@ -62,9 +67,8 @@ message(0x7bdd97de) JettonBurnNotification {
     responseDestination: Address?;
 }
 
-message(0xd53276db) JettonExcesses {
-    queryId: Int as uint64;
-}
+// ============== TEP-89: Jetton Wallet Discovery ==============
+// https://github.com/ton-blockchain/TEPs/blob/master/text/0089-jetton-wallet-discovery.md
 
 message(0x2c76b973) ProvideWalletAddress {
     queryId: Int as uint64;
@@ -76,19 +80,78 @@ const TakeWalletAddressOpcode: Int = 0xd1735400;
 message(TakeWalletAddressOpcode) TakeWalletAddress {
     queryId: Int as uint64;
     walletAddress: Address;
-    ownerAddress: Cell?; //It is Maybe ^Address, just encoded it like this
+    ownerAddress: Cell?; // It is Maybe ^Address, just encoded it like this
 }
 
-message(21) Mint {
+//=======================================================================
+// Stable
+
+message(0xd372158c) TopUp {
     queryId: Int as uint64;
-    receiver: Address;
+}
+
+const SetStatusOpcode: Int = 0xeed236d3;
+message(SetStatusOpcode) SetStatus {
+    queryId: Int as uint64;
+    status: Int as uint4;
+}
+
+message(0x642b7d07) Mint {
+    queryId: Int as uint64;
+    toAddress: Address;
     tonAmount: Int as coins;
-    mintMessage: JettonTransferInternal;
+    masterMsg: JettonTransferInternal;
 }
 
-message(22) CloseMinting {}
-
-message(3) ChangeOwner {
+message(0x6501f354) ChangeAdmin {
     queryId: Int as uint64;
-    newOwner: Address;
+    newAdminAddress: Address;
+}
+
+message(0xfb88e119) ClaimAdmin {
+    queryId: Int as uint64;
+}
+
+message(0x235caf52) CallTo {
+    queryId: Int as uint64;
+    toAddress: Address;
+    tonAmount: Int as coins;
+    masterMsg: Cell;
+}
+
+message(0x2508d66a) Upgrade {
+    queryId: Int as uint64;
+    newData: Cell;
+    newCode: Cell;
+}
+
+message(0xcb862902) ChangeMetadataUri {
+    queryId: Int as uint64;
+    metadata: Slice as remaining;
+}
+
+message(4) JettonUpdateContent {
+    queryId: Int as uint64;
+    content: Cell;
+}
+
+// ============== Additional messages ==============
+
+// provide_wallet_balance#7ac8d559 receiver:MsgAddress include_verify_info:Bool = InternalMsgBody
+message ProvideWalletBalance {
+    receiver: Address;
+    includeVerifyInfo: Bool;
+}
+
+struct VerifyInfo {
+    owner: Address;
+    minter: Address;
+    code: Cell;
+}
+
+// verify_info$_ owner:MsgAddress minter:MsgAddress code:^Cell = VerifyInfo
+// take_wallet_balance#ca77fdc2 balance:Coins verify_info:(Maybe VerifyInfo) = InternalMsgBody
+message TakeWalletBalance {
+    balance: Int as coins;
+    verifyInfo: VerifyInfo?;
 }

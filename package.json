@@ -1,11 +1,13 @@
 {
     "private": true,
     "scripts": {
-        "build": "tact --config ./tact.config.json",
+        "build": "tact --config ./tact.config.json --project Jetton",
+        "build:governance": "tact --config ./tact.config.json --project Governance",
         "lint": "yarn misti ./tact.config.json",
         "lint:es": "eslint .",
         "lint:fix": "eslint . --fix",
         "test": "jest src/tests",
+        "test:governance": "jest src/governance-tests",
         "deploy": "ts-node ./src/scripts/contract.deploy.ts",
         "read": "ts-node ./src/scripts/contract.read.ts",
         "verify-deployment": "jest src/e2e-tests/verify-deployment.spec.ts",

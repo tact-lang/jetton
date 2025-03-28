@@ -16,10 +16,43 @@ struct JettonMinterState {
 
 contract JettonMinter(
     totalSupply: Int as coins,
-    owner: Address,
+    adminAddress: Address,
+    nextAdminAddress: Address?,
     jettonContent: Cell,
     mintable: Bool, // Should be deployed with this flag set to true
 ) {
+    receive(msg: Mint) {
+        require(sender() == self.adminAddress, "Incorrect sender");
+        require(parseStdAddress(msg.toAddress.asSlice()).workchain == Workchain, "Wrong workchain");
+
+        // No need to check the opcode here, as Tact will check it automatically
+        // throw_unless(error::invalid_op, master_msg_slice~load_op() == op::internal_transfer);
+
+        checkEitherForwardPayload(msg.masterMsg.forwardPayload);
+
+        let fwdCount = 1 + sign(msg.masterMsg.forwardTonAmount);
+        let ctx = context();
+        require(
+            ctx.value >
+            fwdCount * ctx.readForwardFee() +
+            forwardInitStateOverhead() +
+            getComputeFee(SendTransferGasConsumption, MyWorkchain) +
+            getComputeFee(ReceiveTransferGasConsumption, MyWorkchain) +
+            calculateJettonWalletMinStorageFee(),
+            "Insufficient balance",
+        );
+
+        self.totalSupply += msg.masterMsg.amount;
+
+        deploy(DeployParameters {
+            value: 0,
+            bounce: true,
+            mode: SendRemainingValue | SendBounceIfActionFail,
+            body: msg.masterMsg.toCell(),
+            init: getJettonWalletInit(msg.toAddress),
+        });
+    }
+
     receive(msg: JettonBurnNotification) {
         let sender = parseStdAddress(sender().asSlice());
         let wallet = getJettonBasechainWalletByOwner(msg.sender);
@@ -31,7 +64,7 @@ contract JettonMinter(
         if (msg.responseDestination != null) {
             message(MessageParameters {
                 to: msg.responseDestination!!,
-                body: JettonExcesses{ queryId: msg.queryId }.toCell(),
+                body: JettonExcesses { queryId: msg.queryId }.toCell(),
                 value: 0,
                 bounce: false,
                 mode: SendRemainingValue | SendIgnoreErrors, // ignore errors, because supply has already been updated
@@ -40,54 +73,118 @@ contract JettonMinter(
     }
 
     receive(msg: ProvideWalletAddress) {
-        // we use message fwdFee for estimation of forward_payload costs
-        let ctx = context();
-        let fwdFee = ctx.readForwardFee();
-        require(ctx.value > fwdFee + getComputeFee(gasForDiscovery, false), "Insufficient gas for discovery");
         let ownerWorkchain: Int = parseStdAddress(msg.ownerAddress.asSlice()).workchain;
 
-        let targetJettonWallet: BasechainAddress =
-            (ownerWorkchain == Workchain) ?
-            contractBasechainAddress(initOf JettonWallet(0, msg.ownerAddress, myAddress()))
+        let targetJettonWallet: BasechainAddress = (ownerWorkchain == Workchain)
+            ? contractBasechainAddress(initOf JettonWallet(0, 0, msg.ownerAddress, myAddress()))
             : emptyBasechainAddress();
 
         message(MessageParameters {
+            bounce: false,
             body: makeTakeWalletAddressMsg(targetJettonWallet, msg),
             to: sender(),
             value: 0,
-            mode: SendRemainingValue,
+            mode: SendRemainingValue | SendBounceIfActionFail,
         });
     }
 
     receive(msg: JettonUpdateContent) {
-        require(sender() == self.owner, "Incorrect sender");
+        require(sender() == self.adminAddress, "Incorrect sender");
         self.jettonContent = msg.content;
     }
 
-    receive(msg: Mint) {
-        require(sender() == self.owner, "Incorrect sender");
-        require(self.mintable, "Mint is closed");
-        self.totalSupply += msg.mintMessage.amount;
-
-        deploy(DeployParameters{
-            value: 0,
-            bounce: true,
-            mode: SendRemainingValue,
-            body: msg.mintMessage.toCell(),
-            init: getJettonWalletInit(msg.receiver)
-        });
+    receive(msg: ChangeAdmin) {
+        require(sender() == self.adminAddress, "Incorrect sender");
+        self.nextAdminAddress = msg.newAdminAddress;
     }
 
-    receive(msg: ChangeOwner) {
-        require(sender() == self.owner, "Incorrect sender");
-        self.owner = msg.newOwner;
+    receive(msg: ClaimAdmin) {
+        require(sender() == self.nextAdminAddress, "Not next admin");
+        self.adminAddress = sender();
+        self.nextAdminAddress = null;
     }
 
-    receive(msg: CloseMinting) {
-        require(sender() == self.owner, "Incorrect sender");
-        self.mintable = false;
-        cashback(sender());
+    // can be used to lock, unlock or reedem funds
+    receive(msg: CallTo) {
+        require(sender() == self.adminAddress, "Incorrect sender");
+        let masterMsgSlice = msg.masterMsg.beginParse();
+        let op = masterMsgSlice.loadUint(32);
+        masterMsgSlice.skipBits(64); // skip queryId
+
+        if (op == JettonTransferInternalOpcode) {
+            masterMsgSlice.loadCoins();
+            masterMsgSlice.loadAddress();
+            masterMsgSlice.loadAddress();
+            masterMsgSlice.skipMaybeRef();
+            let forwardTonAmount = masterMsgSlice.loadCoins();
+
+            checkEitherForwardPayload(masterMsgSlice);
+
+            let ctx = context();
+            let fwdCount = 1 + sign(forwardTonAmount);
+            require(
+                ctx.value >
+                fwdCount * ctx.readForwardFee() +
+                getComputeFee(SendTransferGasConsumption, MyWorkchain) +
+                getComputeFee(ReceiveTransferGasConsumption, MyWorkchain) +
+                calculateJettonWalletMinStorageFee(),
+                "Insufficient balance",
+            );
+
+            message(MessageParameters {
+                bounce: false,
+                to: msg.toAddress,
+                value: msg.tonAmount,
+                mode: SendRemainingValue | SendIgnoreErrors,
+                body: msg.masterMsg,
+            });
+        } else if (op == JettonBurnOpcode) { // JettonBurnNotification opcode
+            masterMsgSlice.loadCoins();
+            masterMsgSlice.loadAddress();
+            masterMsgSlice.skipMaybeRef(); // customPayload
+            masterMsgSlice.endParse();
+
+            require(msg.tonAmount >=
+                    getForwardFee(BurnNotificationCells, BurnNotificationBits, MyWorkchain) +
+                    getComputeFee(SendBurnGasConsumption, MyWorkchain) +
+                    getComputeFee(ReceiveBurnGasConsumption, MyWorkchain), "Insufficient funds for burn");
+
+            message(MessageParameters {
+                bounce: false,
+                to: msg.toAddress,
+                value: msg.tonAmount,
+                mode: SendRemainingValue | SendIgnoreErrors,
+                body: msg.masterMsg,
+            });
+        } else if (op == SetStatusOpcode) { // SetStatus opcode
+            masterMsgSlice.loadUint(4); // STATUS_SIZE = 4
+            masterMsgSlice.endParse();
+
+            message(MessageParameters {
+                bounce: false,
+                to: msg.toAddress,
+                value: msg.tonAmount,
+                mode: SendRemainingValue | SendIgnoreErrors,
+                body: msg.masterMsg,
+            });
+        } else {
+            throw(0xffff); // error::invalid_op
+        }
     }
+
+    receive(msg: ChangeMetadataUri) {
+        require(sender() == self.adminAddress, "Incorrect sender");
+        self.jettonContent = msg.metadata.asCell();
+    }
+
+    receive(msg: Upgrade) {
+        require(sender() == self.adminAddress, "Incorrect sender");
+        setData(msg.newData);
+        setCode(msg.newCode);
+        throw(0); // To avoid Tact storage saving
+    }
+
+    receive(_: TopUp) {}
 
     bounced(msg: bounced<JettonTransferInternal>) {
         self.totalSupply -= msg.amount;
@@ -97,9 +194,9 @@ contract JettonMinter(
         return JettonMinterState {
             totalSupply: self.totalSupply,
             mintable: self.mintable,
-            adminAddress: self.owner,
+            adminAddress: self.adminAddress,
             jettonContent: self.jettonContent,
-            jettonWalletCode: codeOf JettonWallet
+            jettonWalletCode: codeOf JettonWallet,
         };
     }
 
@@ -111,8 +208,7 @@ contract JettonMinter(
 asm fun emptyAddress(): Address { b{00} PUSHSLICE }
 
 inline fun makeTakeWalletAddressMsg(targetJettonWallet: BasechainAddress, msg: ProvideWalletAddress): Cell {
-    return
-        beginCell()
+    return beginCell()
         .storeUint(TakeWalletAddressOpcode, 32)
         .storeUint(msg.queryId, 64)
         .storeBasechainAddress(targetJettonWallet)
@@ -121,7 +217,7 @@ inline fun makeTakeWalletAddressMsg(targetJettonWallet: BasechainAddress, msg: P
 }
 
 inline fun getJettonWalletInit(address: Address): StateInit {
-    return initOf JettonWallet(0, address, myAddress());
+    return initOf JettonWallet(0, 0, address, myAddress());
 }
 
 inline fun getJettonWalletByOwner(jettonWalletOwner: Address): Address {
@@ -130,4 +226,12 @@ inline fun getJettonWalletByOwner(jettonWalletOwner: Address): Address {
 
 inline fun getJettonBasechainWalletByOwner(jettonWalletOwner: Address): BasechainAddress {
     return contractBasechainAddress(getJettonWalletInit(jettonWalletOwner));
+}
+
+asm fun setData(newData: Cell) {
+    c4 POP
+}
+
+asm fun setCode(newCode: Cell) {
+    SETCODE
 }
