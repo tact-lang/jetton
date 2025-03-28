@@ -1,5 +1,6 @@
 import {Address} from "@ton/core"
 import {callGetMetadataFromTonCenter} from "./toncenter"
+import {callGetMetadataFromTonApi} from "./tonapi"
 
 export const uploadDeployResultToGist = async (jettonMinterAddress: Address) => {
     const isUploadEnabled = process.env.GIST_UPLOAD_ENABLED === "true"
@@ -21,10 +22,20 @@ export const uploadDeployResultToGist = async (jettonMinterAddress: Address) => 
         return
     }
 
-    try {
-        const response = await callGetMetadataFromTonCenter(jettonMinterAddress)
+    const network = process.env.NETWORK ?? "testnet"
 
-        const gistContent = JSON.stringify(response, null, 2)
+    try {
+        const toncenterResponse = await callGetMetadataFromTonCenter(jettonMinterAddress)
+        const tonapiResponse = await callGetMetadataFromTonApi(jettonMinterAddress)
+
+        const content = {
+            tonviewer: `https://${network}.tonviewer.com/${jettonMinterAddress.toString({urlSafe: true})}`,
+            tonscan: `https://${network}.tonscan.org/address/${jettonMinterAddress.toString({urlSafe: true})}`,
+            toncenterMetadata: toncenterResponse,
+            tonapiMetadata: tonapiResponse,
+        }
+
+        const gistContent = JSON.stringify(content, null, 2)
 
         const updateResponse = await fetch(`https://api.github.com/gists/${GIST_ID}`, {
             method: "PATCH",

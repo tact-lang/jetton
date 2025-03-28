@@ -1,5 +1,7 @@
 # Jetton (Fungible Token) Implementation in Tact
 
+[![Testnet Deploy](https://img.shields.io/github/actions/workflow/status/tact-lang/jetton/deploy-test.yml?branch=main&style=for-the-badge&logo=stackblitz&label=Testnet%20Deploy)](https://gist.github.com/Kaladin13/3d2f2d0b3e2f5a81f77d8e490e3b2807#file-deploy-result-json)
+
 ## Overview
 
 This project includes a complete setup for working with Tact-based Jetton smart contracts. It provides:
