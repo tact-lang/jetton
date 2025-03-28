@@ -1,9 +1,5 @@
 # Jetton (Fungible Token) Implementation in Tact
 
-![Work in Progress](https://img.shields.io/badge/Work_In_Progress-Do%20not%20use%20in%20production%20yet-red?style=for-the-badge)
-
-# **This will definitely be a stable version of Jettons, but not for now. Please, do not use this code in production. It might have some bugs.**
-
 ## Overview
 
 This project includes a complete setup for working with Tact-based Jetton smart contracts. It provides:
@@ -22,6 +18,8 @@ This implementation is fully compatible with the following TON standards:
 - [TEP-89](https://github.com/ton-blockchain/TEPs/blob/master/text/0089-jetton-wallet-discovery.md).
 
 You can use this implementation as an alternative to the reference Jetton contracts available in the [TON Blockchain repository](https://github.com/ton-blockchain/token-contract).
+
+You can read [Specification](./SPEC.md), that goes into the design choices and differences between this and other implementations
 
 ## Improvements and additional features
 
@@ -209,6 +207,7 @@ Read more about imports in the [Tact standard library](https://docs.tact-lang.or
 - For guidance on interacting with Jettons using Tact, read the [Jetton cookbook](https://docs.tact-lang.org/cookbook/jettons/).
 - Be cautious of fake messages sent by scammers. Read [security best practices](https://docs.tact-lang.org/book/security-best-practices/) to protect yourself from fraudulent activities.
 - Always consult the [official Tact documentation](https://docs.tact-lang.org/) for additional resources and support.
+- Check [Specification](./SPEC.md) for more in-depth dive into implementation details
 
 ## License
 
