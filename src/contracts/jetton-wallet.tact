@@ -91,7 +91,7 @@ contract JettonWallet(
 
         let ctx = context();
         let fwdFee: Int = ctx.readForwardFee();
-        require(ctx.value > (fwdFee + 2 * getComputeFee(gasForBurn, false)), "Unsufficient amount of TON attached");
+        require(ctx.value > (fwdFee + 2 * getComputeFee(gasForBurn, false)), "Insufficient amount of TON attached");
 
         message(MessageParameters{
             to: self.minter,

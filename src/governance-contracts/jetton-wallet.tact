@@ -59,8 +59,8 @@ contract JettonWallet(
     }
 
     receive(msg: JettonTransferInternal) {
-        let incomingTransfersUnlocked = ((self.status & 2) == 2);
-        require(incomingTransfersUnlocked, "Incoming transfers are locked");
+        let incomingTransfersLocked = ((self.status & 2) == 2);
+        require(!incomingTransfersLocked, "Incoming transfers are locked");
         self.balance += msg.amount;
 
         // This message should come only from master, or from other JettonWallet
@@ -113,7 +113,7 @@ contract JettonWallet(
         getForwardFee(BurnNotificationCells, BurnNotificationBits, MyWorkchain) +
         getComputeFee(jettonWalletGasConsumption, MyWorkchain) +
         getComputeFee(ReceiveBurnGasConsumption, MyWorkchain),
-        "Unsufficient amount of TON attached");
+        "Insufficient amount of TON attached");
 
         message(MessageParameters {
             to: self.master,
@@ -128,6 +128,15 @@ contract JettonWallet(
             }.toCell(),
         });
     }
+
+    receive(msg: SetStatus) {
+        mydump();
+        require(sender() == self.master, "Incorrect sender");
+        self.status = msg.status;
+        dump(msg.status);
+    }
+
+    receive(_: TopUp) {}
 
     bounced(msg: bounced<JettonTransferInternal>) {
         self.balance += msg.amount;
@@ -145,7 +154,17 @@ contract JettonWallet(
             code: myCode(),
         };
     }
+    get fun get_status(): Int {
+        return self.status;
+    }
 }
+
+asm fun mydump() {
+    0 PUSHINT
+    s0 DUMP
+    DROP
+}
+
 
 inline fun checkEitherForwardPayload(forwardPayload: Slice) {
     if (forwardPayload.preloadUint(1) == 1) {

@@ -2,8 +2,8 @@
 const SendTransferGasConsumption: Int = 9255;
 const ReceiveTransferGasConsumption: Int = 10355;
 
-const SendBurnGasConsumption: Int = 6000;
-const ReceiveBurnGasConsumption: Int = 6000;
+const SendBurnGasConsumption: Int = 6187;
+const ReceiveBurnGasConsumption: Int = 6960;
 
 
 const MyWorkchain: Bool = false;

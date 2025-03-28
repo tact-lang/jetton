@@ -17,17 +17,3 @@ export abstract class Op {
     static change_metadata_url = 0xcb862902
     static set_status = 0xeed236d3
 }
-
-export abstract class Errors {
-    static invalid_op = 72
-    static wrong_op = 0xffff
-    static not_owner = 73
-    static not_valid_wallet = 74
-    static wrong_workchain = 333
-
-    static contract_locked = 45
-    static balance_error = 47
-    static not_enough_gas = 48
-    static invalid_mesage = 49
-    static discovery_fee_not_matched = 75
-}

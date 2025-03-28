@@ -21,7 +21,8 @@ struct MaybeAddress {
 // TEP - 74
 // https://github.com/ton-blockchain/TEPs/blob/master/text/0074-jettons-standard.md
 
-message(0xf8a7ea5) JettonTransfer {
+const JettonTransferOpcode: Int = 0xf8a7ea5;
+message(JettonTransferOpcode) JettonTransfer {
     queryId: Int as uint64;
     amount: Int as coins;
     destination: Address;
@@ -130,15 +131,11 @@ message(0xcb862902) ChangeMetadataUri {
     metadata: Slice as remaining;
 }
 
-message(4) JettonUpdateContent {
-    queryId: Int as uint64;
-    content: Cell;
-}
 
 // ============== Additional messages ==============
 
 // provide_wallet_balance#7ac8d559 receiver:MsgAddress include_verify_info:Bool = InternalMsgBody
-message ProvideWalletBalance {
+message(0x7ac8d559) ProvideWalletBalance {
     receiver: Address;
     includeVerifyInfo: Bool;
 }
@@ -151,7 +148,7 @@ struct VerifyInfo {
 
 // verify_info$_ owner:MsgAddress minter:MsgAddress code:^Cell = VerifyInfo
 // take_wallet_balance#ca77fdc2 balance:Coins verify_info:(Maybe VerifyInfo) = InternalMsgBody
-message TakeWalletBalance {
+message(0xca77fdc2) TakeWalletBalance {
     balance: Int as coins;
     verifyInfo: VerifyInfo?;
 }

@@ -88,11 +88,6 @@ contract JettonMinter(
         });
     }
 
-    receive(msg: JettonUpdateContent) {
-        require(sender() == self.adminAddress, "Incorrect sender");
-        self.jettonContent = msg.content;
-    }
-
     receive(msg: ChangeAdmin) {
         require(sender() == self.adminAddress, "Incorrect sender");
         self.nextAdminAddress = msg.newAdminAddress;
@@ -111,7 +106,7 @@ contract JettonMinter(
         let op = masterMsgSlice.loadUint(32);
         masterMsgSlice.skipBits(64); // skip queryId
 
-        if (op == JettonTransferInternalOpcode) {
+        if (op == JettonTransferOpcode) {
             masterMsgSlice.loadCoins();
             masterMsgSlice.loadAddress();
             masterMsgSlice.loadAddress();
@@ -203,6 +198,10 @@ contract JettonMinter(
     get fun get_wallet_address(ownerAddress: Address): Address {
         return getJettonWalletByOwner(ownerAddress);
     }
+
+    get fun get_next_admin_address(): Address? {
+        return self.nextAdminAddress;
+    }
 }
 
 asm fun emptyAddress(): Address { b{00} PUSHSLICE }
@@ -235,3 +234,4 @@ asm fun setData(newData: Cell) {
 asm fun setCode(newCode: Cell) {
     SETCODE
 }
+

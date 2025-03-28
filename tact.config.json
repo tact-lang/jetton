@@ -7,7 +7,7 @@
             "mode": "full",
             "options": {
                 "external": false,
-                "debug": false,
+                "debug": true,
                 "ipfsAbiGetter": false,
                 "interfacesGetter": false,
                 "experimental": {
@@ -22,9 +22,12 @@
             "mode": "full",
             "options": {
                 "external": false,
-                "debug": false,
+                "debug": true,
                 "ipfsAbiGetter": false,
-                "interfacesGetter": false
+                "interfacesGetter": false,
+                "optimizations": {
+                    "alwaysSaveContractData": true
+                }
             }
         }
     ]

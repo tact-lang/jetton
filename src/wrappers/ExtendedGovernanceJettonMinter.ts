@@ -131,12 +131,14 @@ export class ExtendedGovernanceJettonMinter extends GovernanceJettonMinter {
     static async fromInit(
         totalSupply: bigint,
         owner: Address,
+        nextAdmin: Address | null,
         jettonContent: Cell,
         mintable: boolean,
     ) {
         const base = await GovernanceJettonMinter.fromInit(
             totalSupply,
             owner,
+            nextAdmin,
             jettonContent,
             mintable,
         )
@@ -154,7 +156,7 @@ export class ExtendedGovernanceJettonMinter extends GovernanceJettonMinter {
             config.jetton_content instanceof Cell
                 ? config.jetton_content
                 : jettonContentToCell(config.jetton_content)
-        return await this.fromInit(0n, config.admin, content, true)
+        return await this.fromInit(0n, config.admin, null, content, true)
     }
 
     async sendDeploy(provider: ContractProvider, via: Sender, value: bigint) {

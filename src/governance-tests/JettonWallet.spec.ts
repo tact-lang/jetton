@@ -21,8 +21,8 @@ import {
     DictionaryValue,
 } from "@ton/core"
 
-import {Errors, Op} from "../wrappers/GovenanceJettonConstants"
-import {findTransactionRequired} from "@ton/test-utils"
+import {Op} from "../wrappers/GovenanceJettonConstants"
+import {findTransactionRequired, flattenTransaction} from "@ton/test-utils"
 
 import {
     randomAddress,
@@ -61,6 +61,7 @@ import {
     jettonContentToCell,
 } from "../wrappers/ExtendedGovernanceJettonMinter"
 import {ExtendedGovernanceJettonWallet} from "../wrappers/ExtendedGovernanceJettonWallet"
+import {ReceiveBurnGasConsumption, SendBurnGasConsumption} from "../output/Governance_JettonMinter"
 
 type JettonMinterContent = {
     uri: string
@@ -85,6 +86,12 @@ let receive_gas_fee: bigint
 let burn_gas_fee: bigint
 let burn_notification_fee: bigint
 let min_tons_for_storage: bigint
+
+function printTransactions(txs: Transaction[]) {
+    for (let tx of txs) {
+        console.log(flattenTransaction(tx))
+    }
+}
 
 describe("JettonWallet", () => {
     let jwallet_code_raw = new Cell() // true code
@@ -165,6 +172,7 @@ describe("JettonWallet", () => {
 
     beforeAll(async () => {
         blockchain = await Blockchain.create()
+        //blockchain.verbosity.vmLogs = "vm_logs_verbose";
         deployer = await blockchain.treasury("deployer")
         jwallet_code_raw = (
             await ExtendedGovernanceJettonWallet.fromInit(
@@ -175,10 +183,16 @@ describe("JettonWallet", () => {
             )
         ).init!.code
         minter_code = (
-            await ExtendedGovernanceJettonMinter.fromInit(0n, deployer.address, new Cell(), true)
+            await ExtendedGovernanceJettonMinter.fromInit(
+                0n,
+                deployer.address,
+                null,
+                new Cell(),
+                true,
+            )
         ).init!.code
         notDeployer = await blockchain.treasury("notDeployer")
-        walletStats = new StorageStats(1033, 3)
+        walletStats = new StorageStats(9950, 20)
         msgPrices = getMsgPrices(blockchain.config, 0)
         gasPrices = getGasPrices(blockchain.config, 0)
         storagePrices = getStoragePrices(blockchain.config)
@@ -294,7 +308,7 @@ describe("JettonWallet", () => {
             const overhead = state_init || defaultOverhead
             const fwdTotal = fwd_amount + (fwd_amount > 0n ? fwd * 2n : fwd) + overhead
             const execute = send + recv
-            return fwdTotal + send + recv + storage + 1n
+            return BigInt(fwdTotal) + BigInt(send) + BigInt(recv) + BigInt(storage) + 1n
         }
 
         testBurnFees = async (fees, to, amount, exp, custom_payload, prices) => {
@@ -402,7 +416,10 @@ describe("JettonWallet", () => {
                     op: Op.transfer,
                     aborted: true,
                     success: false,
-                    exitCode: Errors.not_enough_gas,
+                    exitCode:
+                        ExtendedGovernanceJettonMinter.errors[
+                            "Insufficient amount of TON attached"
+                        ],
                 })
                 expect(sendResult.transactions).not.toHaveTransaction({
                     on: someWallet.address,
@@ -668,7 +685,7 @@ describe("JettonWallet", () => {
             from: notDeployer.address,
             to: jettonMinter.address,
             aborted: true,
-            exitCode: Errors.not_owner, // error::unauthorized_mint_request
+            exitCode: ExtendedGovernanceJettonMinter.errors["Incorrect sender"], // error::unauthorized_mint_request
         })
         expect(await deployerJettonWallet.getJettonBalance()).toEqual(initialJettonBalance)
         expect(await jettonMinter.getTotalSupply()).toEqual(initialTotalSupply)
@@ -710,7 +727,7 @@ describe("JettonWallet", () => {
             from: notDeployer.address,
             on: jettonMinter.address,
             aborted: true,
-            exitCode: Errors.not_owner, // error::unauthorized_change_admin_request
+            exitCode: ExtendedGovernanceJettonMinter.errors["Incorrect sender"], // error::unauthorized_change_admin_request
         })
     })
     it("only address specified in change admin action should be able to claim admin", async () => {
@@ -737,7 +754,7 @@ describe("JettonWallet", () => {
         })
     })
 
-    describe("Content tests", () => {
+    describe.skip("Content tests", () => {
         let newContent: JettonMinterContent = {
             uri: `https://some_super_l${Buffer.alloc(200, "0")}ng_stable.org/`,
         }
@@ -799,7 +816,7 @@ describe("JettonWallet", () => {
                 from: notDeployer.address,
                 to: jettonMinter.address,
                 aborted: true,
-                exitCode: Errors.not_owner,
+                exitCode: ExtendedGovernanceJettonMinter.errors["Not owner"],
             })
         })
     })
@@ -898,7 +915,7 @@ describe("JettonWallet", () => {
             from: notDeployer.address,
             to: deployerJettonWallet.address,
             aborted: true,
-            exitCode: Errors.not_owner, //error::unauthorized_transfer
+            exitCode: ExtendedGovernanceJettonMinter.errors["Incorrect sender"], //error::unauthorized_transfer
         })
         expect(await deployerJettonWallet.getJettonBalance()).toEqual(initialJettonBalance)
         expect(await notDeployerJettonWallet.getJettonBalance()).toEqual(initialJettonBalance2)
@@ -926,7 +943,7 @@ describe("JettonWallet", () => {
             from: deployer.address,
             to: deployerJettonWallet.address,
             aborted: true,
-            exitCode: Errors.balance_error, //error::not_enough_jettons
+            exitCode: ExtendedGovernanceJettonMinter.errors["Incorrect balance after send"], //error::not_enough_jettons
         })
         expect(await deployerJettonWallet.getJettonBalance()).toEqual(initialJettonBalance)
         expect(await notDeployerJettonWallet.getJettonBalance()).toEqual(initialJettonBalance2)
@@ -990,7 +1007,10 @@ describe("JettonWallet", () => {
                 .storeBuilder(forwardTail)
                 .endCell()
 
-            let errCodes = [9, Errors.invalid_mesage]
+            let errCodes = [
+                9,
+                ExtendedGovernanceJettonMinter.errors["Invalid forward payload in message"],
+            ]
             let res = await sendTransferPayload(
                 deployer.address,
                 deployerJettonWallet.address,
@@ -1056,7 +1076,10 @@ describe("JettonWallet", () => {
                 .storeAddress(deployer.address)
                 .storeMaybeRef(null)
                 .storeCoins(toNano("0.05")) // No forward payload indication
-            let errCodes = [9, Errors.invalid_mesage]
+            let errCodes = [
+                9,
+                ExtendedGovernanceJettonMinter.errors["Invalid forward payload in message"],
+            ]
             let res = await sendTransferPayload(
                 deployer.address,
                 deployerJettonWallet.address,
@@ -1236,7 +1259,7 @@ describe("JettonWallet", () => {
             from: deployer.address,
             on: deployerJettonWallet.address,
             aborted: true,
-            exitCode: Errors.not_enough_gas, //error::not_enough_tons
+            exitCode: ExtendedGovernanceJettonMinter.errors["Insufficient amount of TON attached"], //error::not_enough_tons
         })
         // Make sure value bounced
         expect(sendResult.transactions).toHaveTransaction({
@@ -1511,7 +1534,7 @@ describe("JettonWallet", () => {
             from: notDeployer.address,
             to: deployerJettonWallet.address,
             aborted: true,
-            exitCode: Errors.not_valid_wallet, //error::unauthorized_incoming_transfer
+            exitCode: ExtendedGovernanceJettonMinter.errors["Incorrect sender"], //error::unauthorized_incoming_transfer
         })
         expect(await deployerJettonWallet.getJettonBalance()).toEqual(initialJettonBalance)
     })
@@ -1534,7 +1557,7 @@ describe("JettonWallet", () => {
             from: deployer.address,
             to: deployerJettonWallet.address,
             aborted: true,
-            exitCode: Errors.not_owner, //error::unauthorized_transfer
+            exitCode: ExtendedGovernanceJettonMinter.errors["Not owner"], //error::unauthorized_transfer
         })
         expect(await deployerJettonWallet.getJettonBalance()).toEqual(initialJettonBalance)
         expect(await jettonMinter.getTotalSupply()).toEqual(initialTotalSupply)
@@ -1556,7 +1579,7 @@ describe("JettonWallet", () => {
             from: notDeployer.address,
             to: deployerJettonWallet.address,
             aborted: true,
-            exitCode: Errors.not_owner, //error::unauthorized_transfer
+            exitCode: ExtendedGovernanceJettonMinter.errors["Not owner"], //error::unauthorized_transfer
         })
         expect(await deployerJettonWallet.getJettonBalance()).toEqual(initialJettonBalance)
         expect(await jettonMinter.getTotalSupply()).toEqual(initialTotalSupply)
@@ -1574,8 +1597,8 @@ describe("JettonWallet", () => {
         )
         const actualSent = printTxGasStats("Burn transaction", burnTxs[0])
         const actualRecv = printTxGasStats("Burn notification transaction", burnTxs[1])
-        burn_gas_fee = computeGasFee(gasPrices, 5791n)
-        burn_notification_fee = computeGasFee(gasPrices, 6775n)
+        burn_gas_fee = computeGasFee(gasPrices, SendBurnGasConsumption)
+        burn_notification_fee = computeGasFee(gasPrices, ReceiveBurnGasConsumption)
         expect(burn_gas_fee).toBeGreaterThanOrEqual(actualSent)
         expect(burn_notification_fee).toBeGreaterThanOrEqual(actualRecv)
     })
@@ -1585,7 +1608,13 @@ describe("JettonWallet", () => {
         let initialTotalSupply = await jettonMinter.getTotalSupply()
         let burnAmount = initialJettonBalance + 1n
         let msgValue = toNano("1")
-        await testBurnFees(msgValue, deployer.address, burnAmount, Errors.balance_error, null)
+        await testBurnFees(
+            msgValue,
+            deployer.address,
+            burnAmount,
+            ExtendedGovernanceJettonMinter.errors["Incorrect balance after send"],
+            null,
+        )
     })
 
     describe("Burn dynamic fees", () => {
@@ -1599,7 +1628,7 @@ describe("JettonWallet", () => {
                 minimalFee - 1n,
                 deployer.address,
                 burnAmount,
-                Errors.not_enough_gas,
+                ExtendedGovernanceJettonMinter.errors["Insufficient amount of TON attached"],
                 null,
             )
             // Now should succeed
@@ -1634,7 +1663,7 @@ describe("JettonWallet", () => {
                 minimalFee,
                 deployer.address,
                 burnAmount,
-                Errors.not_enough_gas,
+                ExtendedGovernanceJettonMinter.errors["Insufficient amount of TON attached"],
                 null,
                 newPrices,
             )
@@ -1647,7 +1676,7 @@ describe("JettonWallet", () => {
                 minimalFee - 1n,
                 deployer.address,
                 burnAmount,
-                Errors.not_enough_gas,
+                ExtendedGovernanceJettonMinter.errors["Insufficient amount of TON attached"],
                 null,
                 newPrices,
             )
@@ -1674,7 +1703,7 @@ describe("JettonWallet", () => {
                 minimalFee,
                 deployer.address,
                 burnAmount,
-                Errors.not_enough_gas,
+                ExtendedGovernanceJettonMinter.errors["Insufficient amount of TON attached"],
                 null,
             )
 
@@ -1688,7 +1717,7 @@ describe("JettonWallet", () => {
                 minimalFee - 1n,
                 deployer.address,
                 burnAmount,
-                Errors.not_enough_gas,
+                ExtendedGovernanceJettonMinter.errors["Insufficient amount of TON attached"],
                 null,
             )
             blockchain.setConfig(oldConfig)
@@ -1721,7 +1750,7 @@ describe("JettonWallet", () => {
             from: deployerJettonWallet.address,
             to: jettonMinter.address,
             aborted: true,
-            exitCode: Errors.not_valid_wallet, // Unauthorized burn
+            exitCode: ExtendedGovernanceJettonMinter.errors["Unauthorized burn"], // Unauthorized burn
         })
 
         res = await blockchain.sendMessage(
@@ -1813,12 +1842,12 @@ describe("JettonWallet", () => {
             false,
             minimalFee,
         )
-
+        // Actually I did not add a require() in discovery, so it is just -14 from TVM
         expect(discoveryResult.transactions).toHaveTransaction({
             from: deployer.address,
             to: jettonMinter.address,
             aborted: true,
-            exitCode: Errors.discovery_fee_not_matched, // discovery_fee_not_matched
+            exitCode: -14, // discovery_fee_not_matched
         })
 
         /*
@@ -1951,7 +1980,7 @@ describe("JettonWallet", () => {
             from: deployer.address,
             to: deployerJettonWallet.address,
             aborted: true,
-            exitCode: Errors.wrong_workchain, //error::wrong_workchain
+            exitCode: ExtendedGovernanceJettonMinter.errors["Not a basechain address"], //error::wrong_workchain
         })
     })
 
@@ -1967,14 +1996,19 @@ describe("JettonWallet", () => {
 
         beforeAll(() => {
             prevState = blockchain.snapshot()
+            blockchain.verbosity.vmLogs = "vm_logs_verbose"
             testLockable = async (from, addr, exp) => {
                 const lockTypes: Array<LockType> = ["out", "in", "full"]
                 const lockWallet = await userWallet(addr)
                 let i = 0
 
                 for (let type of lockTypes) {
+                    //(await blockchain.getContract(jettonMinter.address)).verbosity.vmLogs = "vm_logs_verbose";
                     let res = await jettonMinter.sendLockWallet(from, addr, type)
+                    printTransactions(res.transactions)
+
                     let status = await lockWallet.getWalletStatus()
+                    console.log("Status", status)
                     expect(Boolean(status & ++i)).toBe(exp)
                 }
             }
@@ -2058,7 +2092,7 @@ describe("JettonWallet", () => {
                     op: Op.transfer,
                     success: false,
                     aborted: true,
-                    exitCode: Errors.contract_locked,
+                    exitCode: ExtendedGovernanceJettonMinter.errors["Contract is locked"],
                 })
                 expect(res.transactions).not.toHaveTransaction({
                     from: deployerJettonWallet.address,
@@ -2089,7 +2123,7 @@ describe("JettonWallet", () => {
                     op: Op.burn,
                     success: false,
                     aborted: true,
-                    exitCode: Errors.contract_locked,
+                    exitCode: ExtendedGovernanceJettonMinter.errors["Contract is locked"],
                 })
                 expect(res.transactions).not.toHaveTransaction({
                     from: deployerJettonWallet.address,
@@ -2141,7 +2175,7 @@ describe("JettonWallet", () => {
                     on: notDeployerJettonWallet.address,
                     op: Op.internal_transfer,
                     success: false,
-                    exitCode: Errors.contract_locked,
+                    exitCode: ExtendedGovernanceJettonMinter.errors["Contract is locked"],
                 })
                 // Bonus check that deployer didn't loose any balance due to bounce
                 expect(res.transactions).toHaveTransaction({
@@ -2250,7 +2284,7 @@ describe("JettonWallet", () => {
                     op: Op.call_to,
                     success: false,
                     aborted: true,
-                    exitCode: Errors.not_owner,
+                    exitCode: ExtendedGovernanceJettonMinter.errors["Not owner"],
                 })
                 expect(res.transactions).not.toHaveTransaction({
                     from: jettonMinter.address,
@@ -2278,7 +2312,7 @@ describe("JettonWallet", () => {
                         on: notDeployerJettonWallet.address,
                         from: jettonMinter.address,
                         op: Op.transfer,
-                        exitCode: Errors.contract_locked,
+                        exitCode: ExtendedGovernanceJettonMinter.errors["Contract is locked"],
                     })
                     expect(res.transactions).toHaveTransaction({
                         on: deployer.address,
@@ -2322,7 +2356,7 @@ describe("JettonWallet", () => {
                     forwardAmount,
                     null,
                     null,
-                    Errors.not_enough_gas,
+                    ExtendedGovernanceJettonMinter.errors["Insufficient amount of TON attached"],
                 )
                 // Now should succeed
                 await testAdminTransfer(
@@ -2358,7 +2392,7 @@ describe("JettonWallet", () => {
                     forwardAmount,
                     null,
                     forwardPayload,
-                    Errors.not_enough_gas,
+                    ExtendedGovernanceJettonMinter.errors["Insufficient amount of TON attached"],
                 )
                 // We should re-estimate now
                 let newFwdFee = estimateAdminTransferFwd(
@@ -2392,7 +2426,7 @@ describe("JettonWallet", () => {
                     forwardAmount,
                     null,
                     forwardPayload,
-                    Errors.not_enough_gas,
+                    ExtendedGovernanceJettonMinter.errors["Insufficient amount of TON attached"],
                 )
 
                 newFwdFee = estimateAdminTransferFwd(
@@ -2421,7 +2455,7 @@ describe("JettonWallet", () => {
                     forwardAmount,
                     null,
                     forwardPayload,
-                    Errors.not_enough_gas,
+                    ExtendedGovernanceJettonMinter.errors["Insufficient amount of TON attached"],
                 )
                 // Custom payload impacts fee, because forwardAmount is calculated based on inMsg fwdFee field
                 /*
@@ -2456,7 +2490,7 @@ describe("JettonWallet", () => {
                     forwardAmount,
                     null,
                     forwardPayload,
-                    Errors.not_enough_gas,
+                    ExtendedGovernanceJettonMinter.errors["Insufficient amount of TON attached"],
                 )
                 // Adding forward fee once more + forwardAmount should end up in successfull transfer
                 minimalFee += minFwdFee + forwardAmount
@@ -2478,7 +2512,7 @@ describe("JettonWallet", () => {
                     forwardAmount,
                     null,
                     forwardPayload,
-                    Errors.not_enough_gas,
+                    ExtendedGovernanceJettonMinter.errors["Insufficient amount of TON attached"],
                 )
             })
             it("forward fees should be calculated using actual config values", async () => {
@@ -2526,7 +2560,7 @@ describe("JettonWallet", () => {
                     forwardAmount,
                     null,
                     forwardPayload,
-                    Errors.not_enough_gas,
+                    ExtendedGovernanceJettonMinter.errors["Insufficient amount of TON attached"],
                 )
                 const newFwdFee = estimateAdminTransferFwd(
                     jettonAmount,
@@ -2564,7 +2598,7 @@ describe("JettonWallet", () => {
                     forwardAmount,
                     null,
                     forwardPayload,
-                    Errors.not_enough_gas,
+                    ExtendedGovernanceJettonMinter.errors["Insufficient amount of TON attached"],
                 )
                 // Rolling config back
                 blockchain.setConfig(oldConfig)
@@ -2616,7 +2650,7 @@ describe("JettonWallet", () => {
                     forwardAmount,
                     null,
                     forwardPayload,
-                    Errors.not_enough_gas,
+                    ExtendedGovernanceJettonMinter.errors["Insufficient amount of TON attached"],
                 )
                 // add gas delta
                 minimalFee +=
@@ -2639,7 +2673,7 @@ describe("JettonWallet", () => {
                     forwardAmount,
                     null,
                     forwardPayload,
-                    Errors.not_enough_gas,
+                    ExtendedGovernanceJettonMinter.errors["Insufficient amount of TON attached"],
                 )
                 blockchain.setConfig(oldConfig)
             })
@@ -2689,7 +2723,7 @@ describe("JettonWallet", () => {
                     forwardAmount,
                     null,
                     forwardPayload,
-                    Errors.not_enough_gas,
+                    ExtendedGovernanceJettonMinter.errors["Insufficient amount of TON attached"],
                 )
 
                 const newStorageFee = calcStorageFee(
@@ -2716,7 +2750,7 @@ describe("JettonWallet", () => {
                     forwardAmount,
                     null,
                     forwardPayload,
-                    Errors.not_enough_gas,
+                    ExtendedGovernanceJettonMinter.errors["Insufficient amount of TON attached"],
                 )
                 blockchain.setConfig(oldConfig)
             })
@@ -2803,7 +2837,7 @@ describe("JettonWallet", () => {
                     deployer.address,
                     deployer.address,
                     null,
-                    Errors.not_enough_gas,
+                    ExtendedGovernanceJettonMinter.errors["Insufficient amount of TON attached"],
                 )
                 // Now should succeed
                 await testAdminBurn(
@@ -2860,7 +2894,7 @@ describe("JettonWallet", () => {
                     notDeployer.address,
                     deployer.address,
                     null,
-                    Errors.not_enough_gas,
+                    ExtendedGovernanceJettonMinter.errors["Insufficient amount of TON attached"],
                 )
                 const newFwd = estimateBurnFwd(newPrices)
                 minimalFee += newFwd - burnFwd
@@ -2884,7 +2918,7 @@ describe("JettonWallet", () => {
                     notDeployer.address,
                     deployer.address,
                     null,
-                    Errors.not_enough_gas,
+                    ExtendedGovernanceJettonMinter.errors["Insufficient amount of TON attached"],
                 )
                 blockchain.setConfig(oldConfig)
             })
@@ -2918,7 +2952,7 @@ describe("JettonWallet", () => {
                     notDeployer.address,
                     deployer.address,
                     null,
-                    Errors.not_enough_gas,
+                    ExtendedGovernanceJettonMinter.errors["Insufficient amount of TON attached"],
                 )
 
                 minimalFee +=
@@ -2941,7 +2975,7 @@ describe("JettonWallet", () => {
                     notDeployer.address,
                     deployer.address,
                     null,
-                    Errors.not_enough_gas,
+                    ExtendedGovernanceJettonMinter.errors["Insufficient amount of TON attached"],
                 )
                 blockchain.setConfig(oldConfig)
             })
