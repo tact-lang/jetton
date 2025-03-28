@@ -110,7 +110,7 @@ const main = async () => {
     })
     console.log("====== Deployment message sent to =======\n", jettonMinter.address)
     console.log(
-        `You can soon check your deployed contract at https://${network}.tonviewer.com/${jettonMinter.address.toString({urlSafe: true})}`,
+        `You can soon check your deployed contract at https://${network === 'mainnet' ? '' : network + '.'}tonviewer.com/${jettonMinter.address.toString({urlSafe: true})}`,
     )
 }
 
