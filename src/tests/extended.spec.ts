@@ -122,7 +122,7 @@ describe("Jetton Minter Extended", () => {
             $$type: "Mint",
             queryId: 0n,
             receiver: deployer.address,
-            tonAmount: toNano("0.1"),
+            jettonAmount: toNano("0.1"),
             mintMessage: {
                 $$type: "JettonTransferInternal",
                 queryId: 0n,

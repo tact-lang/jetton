@@ -82,7 +82,7 @@ message(TakeWalletAddressOpcode) TakeWalletAddress {
 message(21) Mint {
     queryId: Int as uint64;
     receiver: Address;
-    tonAmount: Int as coins;
+    jettonAmount: Int as coins;
     mintMessage: JettonTransferInternal;
 }
 

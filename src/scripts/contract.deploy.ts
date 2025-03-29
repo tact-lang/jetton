@@ -34,7 +34,7 @@ const main = async () => {
         console.error("Invalid mnemonics, it should be 24 words")
         throw new Error("Invalid mnemonics, it should be 24 words")
     }
-    const network = process.env.NETWORK ?? "mainnet"
+    const network = process.env.NETWORK ?? "testnet"
     if (network !== "mainnet" && network !== "testnet") {
         console.error("Invalid network, should be mainnet or testnet, got ", network)
         throw new Error("Invalid network")
@@ -72,7 +72,7 @@ const main = async () => {
                     forwardPayload: beginCell().storeUint(0, 1).asSlice(),
                 },
                 receiver: deployerWalletContract.address,
-                tonAmount: supply,
+                jettonAmount: supply,
             }),
         )
         .endCell()
