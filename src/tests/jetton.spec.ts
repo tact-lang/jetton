@@ -534,7 +534,7 @@ describe("Jetton Minter", () => {
                         },
                         queryId: 0n,
                         receiver: deployer.address,
-                        tonAmount: mintAmount,
+                        jettonAmount: mintAmount,
                     }),
                 )
                 .endCell()

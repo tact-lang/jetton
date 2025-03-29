@@ -55,7 +55,7 @@ export class ExtendedJettonMinter extends JettonMinter {
             $$type: "Mint",
             queryId: 0n,
             receiver: to,
-            tonAmount: total_ton_amount,
+            jettonAmount: total_ton_amount,
             mintMessage: {
                 $$type: "JettonTransferInternal",
                 queryId: 0n,
