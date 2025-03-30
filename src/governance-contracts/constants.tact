@@ -1,16 +1,22 @@
 // Gas constants
-const SendTransferGasConsumption: Int = 9255;
-const ReceiveTransferGasConsumption: Int = 10355;
+const SendTransferGasConsumption: Int = 9536;
+const ReceiveTransferGasConsumption: Int = 10242;
 
-const SendBurnGasConsumption: Int = 6187;
+const SendBurnGasConsumption: Int = 6205;
 const ReceiveBurnGasConsumption: Int = 6960;
 
 
 const MyWorkchain: Bool = false;
 // Storage constants
-const WalletStateInitSizeCells: Int = 16;
-const WalletStateInitSizeBits: Int = 10000;
+const WalletSizeCells: Int = 3;
+const WalletSizeBits: Int = 1033;
+
+const WalletStateInitSizeCells: Int = 3;
+const WalletStateInitSizeBits: Int = 931;
+
+const RealWalletStateInitSizeCells: Int = 24;
+const RealWalletStateInitSizeBits: Int = 10899;
 const MinStorageDuration: Int = 5 * 365 * 24 * 3600; // 5 years
 
 const BurnNotificationCells: Int = 1;
-const BurnNotificationBits: Int = 800;
+const BurnNotificationBits: Int = 754;

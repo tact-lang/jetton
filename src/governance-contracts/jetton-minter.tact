@@ -126,12 +126,12 @@ contract JettonMinter(
                 "Insufficient balance",
             );
 
-            message(MessageParameters {
+            deploy(DeployParameters{
                 bounce: false,
-                to: msg.toAddress,
                 value: msg.tonAmount,
-                mode: SendRemainingValue | SendIgnoreErrors,
+                mode: SendRemainingValue,
                 body: msg.masterMsg,
+                init: getJettonWalletInit(msg.toAddress),
             });
         } else if (op == JettonBurnOpcode) { // JettonBurnNotification opcode
             masterMsgSlice.loadCoins();
@@ -143,24 +143,25 @@ contract JettonMinter(
                     getForwardFee(BurnNotificationCells, BurnNotificationBits, MyWorkchain) +
                     getComputeFee(SendBurnGasConsumption, MyWorkchain) +
                     getComputeFee(ReceiveBurnGasConsumption, MyWorkchain), "Insufficient funds for burn");
-
-            message(MessageParameters {
+            
+            deploy(DeployParameters{
                 bounce: false,
-                to: msg.toAddress,
                 value: msg.tonAmount,
                 mode: SendRemainingValue | SendIgnoreErrors,
                 body: msg.masterMsg,
+                init: getJettonWalletInit(msg.toAddress),
             });
+
         } else if (op == SetStatusOpcode) { // SetStatus opcode
             masterMsgSlice.loadUint(4); // STATUS_SIZE = 4
             masterMsgSlice.endParse();
 
-            message(MessageParameters {
+            deploy(DeployParameters{
                 bounce: false,
-                to: msg.toAddress,
                 value: msg.tonAmount,
                 mode: SendRemainingValue | SendIgnoreErrors,
                 body: msg.masterMsg,
+                init: getJettonWalletInit(msg.toAddress),
             });
         } else {
             throw(0xffff); // error::invalid_op

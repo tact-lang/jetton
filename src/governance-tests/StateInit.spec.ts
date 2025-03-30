@@ -32,7 +32,7 @@ import {ExtendedGovernanceJettonWallet} from "../wrappers/ExtendedGovernanceJett
 
 import "@ton/test-utils"
 import {collectCellStats} from "./gasUtils"
-import {Op, Errors} from "../wrappers/GovenanceJettonConstants"
+import {Op} from "../wrappers/GovenanceJettonConstants"
 
 let blockchain: Blockchain
 let deployer: SandboxContract<TreasuryContract>
@@ -52,11 +52,17 @@ describe("State init tests", () => {
                 0n,
                 0n,
                 deployer.address,
-                jettonMinter.address,
+                deployer.address,
             )
         ).init!.code
         minter_code = (
-            await ExtendedGovernanceJettonMinter.fromInit(0n, deployer.address, new Cell(), true)
+            await ExtendedGovernanceJettonMinter.fromInit(
+                0n,
+                deployer.address,
+                null,
+                new Cell(),
+                true,
+            )
         ).init!.code
 
         //jwallet_code is library

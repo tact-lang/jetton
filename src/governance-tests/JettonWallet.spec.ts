@@ -61,7 +61,16 @@ import {
     jettonContentToCell,
 } from "../wrappers/ExtendedGovernanceJettonMinter"
 import {ExtendedGovernanceJettonWallet} from "../wrappers/ExtendedGovernanceJettonWallet"
-import {ReceiveBurnGasConsumption, SendBurnGasConsumption} from "../output/Governance_JettonMinter"
+import {
+    RealWalletStateInitSizeBits,
+    RealWalletStateInitSizeCells,
+    ReceiveBurnGasConsumption,
+    ReceiveTransferGasConsumption,
+    SendBurnGasConsumption,
+    SendTransferGasConsumption,
+    WalletStateInitSizeBits,
+    WalletStateInitSizeCells,
+} from "../output/Governance_JettonMinter"
 
 type JettonMinterContent = {
     uri: string
@@ -192,12 +201,12 @@ describe("JettonWallet", () => {
             )
         ).init!.code
         notDeployer = await blockchain.treasury("notDeployer")
-        walletStats = new StorageStats(9950, 20)
+        walletStats = new StorageStats(RealWalletStateInitSizeBits, RealWalletStateInitSizeCells)
         msgPrices = getMsgPrices(blockchain.config, 0)
         gasPrices = getGasPrices(blockchain.config, 0)
         storagePrices = getStoragePrices(blockchain.config)
         storageDuration = 5 * 365 * 24 * 3600
-        stateInitStats = new StorageStats(931, 3)
+        stateInitStats = new StorageStats(WalletStateInitSizeBits, WalletStateInitSizeCells)
         defaultContent = {
             uri: "https://some_stablecoin.org/meta.json",
         }
@@ -1182,7 +1191,7 @@ describe("JettonWallet", () => {
             success: true,
         })
         send_gas_fee = printTxGasStats("Jetton transfer", transferTx)
-        send_gas_fee = computeGasFee(gasPrices, 9255n)
+        send_gas_fee = computeGasFee(gasPrices, SendTransferGasConsumption)
 
         const receiveTx = findTransactionRequired(sendResult.transactions, {
             on: notDeployerJettonWallet.address,
@@ -1191,7 +1200,7 @@ describe("JettonWallet", () => {
             success: true,
         })
         receive_gas_fee = printTxGasStats("Receive jetton", receiveTx)
-        receive_gas_fee = computeGasFee(gasPrices, 10355n)
+        receive_gas_fee = computeGasFee(gasPrices, ReceiveTransferGasConsumption)
 
         expect(await deployerJettonWallet.getJettonBalance()).toEqual(
             initialJettonBalance - sentAmount,
@@ -1996,7 +2005,7 @@ describe("JettonWallet", () => {
 
         beforeAll(() => {
             prevState = blockchain.snapshot()
-            blockchain.verbosity.vmLogs = "vm_logs_verbose"
+            //blockchain.verbosity.vmLogs = "vm_logs_verbose"
             testLockable = async (from, addr, exp) => {
                 const lockTypes: Array<LockType> = ["out", "in", "full"]
                 const lockWallet = await userWallet(addr)
@@ -2048,6 +2057,22 @@ describe("JettonWallet", () => {
                     }
                 }
             }
+        })
+        it("Test status change", async () => {
+            const deployerJettonWallet = await userWallet(deployer.address)
+            const statusBefore = await deployerJettonWallet.getWalletStatus()
+            expect(statusBefore).toEqual(0)
+            const res = await jettonMinter.sendLockWallet(
+                deployer.getSender(),
+                deployer.address,
+                "out",
+            )
+            printTransactions(res.transactions)
+            expect(await deployerJettonWallet.getWalletStatus()).toEqual(1)
+            await jettonMinter.sendLockWallet(deployer.getSender(), deployer.address, "unlock")
+            expect(await deployerJettonWallet.getWalletStatus()).toEqual(0)
+            await jettonMinter.sendLockWallet(deployer.getSender(), deployer.address, "in")
+            expect(await deployerJettonWallet.getWalletStatus()).toEqual(2)
         })
         afterEach(async () => await blockchain.loadFrom(prevState))
         it("admin should be able to lock arbitrary jetton wallet", async () => {
@@ -2175,7 +2200,8 @@ describe("JettonWallet", () => {
                     on: notDeployerJettonWallet.address,
                     op: Op.internal_transfer,
                     success: false,
-                    exitCode: ExtendedGovernanceJettonMinter.errors["Contract is locked"],
+                    exitCode:
+                        ExtendedGovernanceJettonMinter.errors["Incoming transfers are locked"],
                 })
                 // Bonus check that deployer didn't loose any balance due to bounce
                 expect(res.transactions).toHaveTransaction({

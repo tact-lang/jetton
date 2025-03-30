@@ -22,7 +22,7 @@ contract JettonWallet(
         checkEitherForwardPayload(msg.forwardPayload);
 
         let ctx = context();
-        let fwdCount = 1 + sign(msg.forwardTonAmount); // msg.forwardTonAmount is coins, so it's positive
+        let fwdCount = 1 + sign(msg.forwardTonAmount); // msg.forwardTonAmount is coins, so it's non-negative
         let jettonWalletGasConsumption = getPrecompiledGasConsumption();
         let sendTransferGasConsumption = SendTransferGasConsumption;
         let receiveTransferGasConsumption = ReceiveTransferGasConsumption;
@@ -130,10 +130,8 @@ contract JettonWallet(
     }
 
     receive(msg: SetStatus) {
-        mydump();
         require(sender() == self.master, "Incorrect sender");
         self.status = msg.status;
-        dump(msg.status);
     }
 
     receive(_: TopUp) {}
@@ -157,12 +155,6 @@ contract JettonWallet(
     get fun get_status(): Int {
         return self.status;
     }
-}
-
-asm fun mydump() {
-    0 PUSHINT
-    s0 DUMP
-    DROP
 }
 
 
