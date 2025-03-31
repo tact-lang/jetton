@@ -23,23 +23,12 @@ contract JettonWallet(
 
         let ctx = context();
         let fwdCount = 1 + sign(msg.forwardTonAmount); // msg.forwardTonAmount is coins, so it's non-negative
-        let jettonWalletGasConsumption = getPrecompiledGasConsumption();
-        let sendTransferGasConsumption = SendTransferGasConsumption;
-        let receiveTransferGasConsumption = ReceiveTransferGasConsumption;
-        if (jettonWalletGasConsumption != null) {
-            sendTransferGasConsumption = jettonWalletGasConsumption!!;
-            receiveTransferGasConsumption = jettonWalletGasConsumption!!;
-        }
 
-        require(
-            ctx.value >
+        require(ctx.value >
             msg.forwardTonAmount +
             fwdCount * ctx.readForwardFee() +
-            forwardInitStateOverhead() + 
-            getComputeFee(sendTransferGasConsumption, MyWorkchain) +
-            getComputeFee(receiveTransferGasConsumption, MyWorkchain) +
-            calculateJettonWalletMinStorageFee(),
-            "Insufficient amount of TON attached",
+            (2 * getComputeFee(gasForTransfer, false) + minTonsForStorage),
+            "Insufficient amount of TON attached"
         );
 
         deploy(DeployParameters {
@@ -87,7 +76,7 @@ contract JettonWallet(
         if (msg.responseDestination != null) {
             let msgValue = context().value;
             let toLeaveOnBalance = myBalance() - msgValue + myStorageDue();
-            nativeReserve(max(toLeaveOnBalance, calculateJettonWalletMinStorageFee()), ReserveAtMost);
+            nativeReserve(max(toLeaveOnBalance, minTonsForStorage), ReserveAtMost);
             message(MessageParameters {
                 to: msg.responseDestination!!,
                 value: msgValue,
@@ -105,15 +94,8 @@ contract JettonWallet(
         self.balance -= msg.amount;
         require(self.balance >= 0, "Incorrect balance after send");
 
-        let jettonWalletGasConsumption = SendBurnGasConsumption;
-        if(getPrecompiledGasConsumption() != null) {
-            jettonWalletGasConsumption = getPrecompiledGasConsumption()!!;
-        }
-        require(context().value > 
-        getForwardFee(BurnNotificationCells, BurnNotificationBits, MyWorkchain) +
-        getComputeFee(jettonWalletGasConsumption, MyWorkchain) +
-        getComputeFee(ReceiveBurnGasConsumption, MyWorkchain),
-        "Insufficient amount of TON attached");
+        let ctx = context();
+        require(ctx.value > (ctx.readForwardFee() + 2 * getComputeFee(gasForBurn, false)), "Insufficient amount of TON attached");
 
         message(MessageParameters {
             to: self.master,
@@ -176,12 +158,4 @@ asm fun caclulateSliceBitsAndRefs(slice: Slice): SliceBitsAndRefs {
 
 asm fun getPrecompiledGasConsumption(): Int? {
     GETPRECOMPILEDGAS
-}
-
-fun forwardInitStateOverhead(): Int {
-    return getSimpleForwardFee(WalletStateInitSizeCells, WalletStateInitSizeBits, MyWorkchain);
-}
-
-inline fun calculateJettonWalletMinStorageFee(): Int {
-    return getStorageFee(WalletStateInitSizeCells, WalletStateInitSizeBits, MinStorageDuration, MyWorkchain);
 }

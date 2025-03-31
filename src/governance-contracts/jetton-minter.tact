@@ -32,14 +32,11 @@ contract JettonMinter(
 
         let fwdCount = 1 + sign(msg.masterMsg.forwardTonAmount);
         let ctx = context();
-        require(
-            ctx.value >
+        require(ctx.value >
+            msg.masterMsg.forwardTonAmount +
             fwdCount * ctx.readForwardFee() +
-            forwardInitStateOverhead() +
-            getComputeFee(SendTransferGasConsumption, MyWorkchain) +
-            getComputeFee(ReceiveTransferGasConsumption, MyWorkchain) +
-            calculateJettonWalletMinStorageFee(),
-            "Insufficient balance",
+            (2 * getComputeFee(gasForTransfer, false) + minTonsForStorage),
+            "Insufficient amount of TON attached"
         );
 
         self.totalSupply += msg.masterMsg.amount;
@@ -107,9 +104,9 @@ contract JettonMinter(
         masterMsgSlice.skipBits(64); // skip queryId
 
         if (op == JettonTransferOpcode) {
-            masterMsgSlice.loadCoins();
-            masterMsgSlice.loadAddress();
-            masterMsgSlice.loadAddress();
+            masterMsgSlice.skipCoins();
+            masterMsgSlice.skipAddress();
+            masterMsgSlice.skipAddress();
             masterMsgSlice.skipMaybeRef();
             let forwardTonAmount = masterMsgSlice.loadCoins();
 
@@ -117,49 +114,46 @@ contract JettonMinter(
 
             let ctx = context();
             let fwdCount = 1 + sign(forwardTonAmount);
-            require(
-                ctx.value >
+            require(ctx.value >
+                forwardTonAmount +
                 fwdCount * ctx.readForwardFee() +
-                getComputeFee(SendTransferGasConsumption, MyWorkchain) +
-                getComputeFee(ReceiveTransferGasConsumption, MyWorkchain) +
-                calculateJettonWalletMinStorageFee(),
-                "Insufficient balance",
+                (2 * getComputeFee(gasForTransfer, false) + minTonsForStorage),
+                "Insufficient amount of TON attached"
             );
 
             deploy(DeployParameters{
                 bounce: false,
                 value: msg.tonAmount,
-                mode: SendRemainingValue,
+                mode: SendPayGasSeparately | SendBounceIfActionFail,
                 body: msg.masterMsg,
                 init: getJettonWalletInit(msg.toAddress),
             });
         } else if (op == JettonBurnOpcode) { // JettonBurnNotification opcode
-            masterMsgSlice.loadCoins();
-            masterMsgSlice.loadAddress();
+            masterMsgSlice.skipCoins();
+            masterMsgSlice.skipAddress();
             masterMsgSlice.skipMaybeRef(); // customPayload
             masterMsgSlice.endParse();
 
-            require(msg.tonAmount >=
-                    getForwardFee(BurnNotificationCells, BurnNotificationBits, MyWorkchain) +
-                    getComputeFee(SendBurnGasConsumption, MyWorkchain) +
-                    getComputeFee(ReceiveBurnGasConsumption, MyWorkchain), "Insufficient funds for burn");
+            let ctx = context();
+            require(ctx.value > (ctx.readForwardFee() + 2 * getComputeFee(gasForBurn, false)), 
+            "Insufficient amount of TON attached");
             
             deploy(DeployParameters{
                 bounce: false,
                 value: msg.tonAmount,
-                mode: SendRemainingValue | SendIgnoreErrors,
+                mode: SendPayGasSeparately | SendBounceIfActionFail,
                 body: msg.masterMsg,
                 init: getJettonWalletInit(msg.toAddress),
             });
 
         } else if (op == SetStatusOpcode) { // SetStatus opcode
-            masterMsgSlice.loadUint(4); // STATUS_SIZE = 4
+            masterMsgSlice.skipBits(4); // STATUS_SIZE = 4
             masterMsgSlice.endParse();
 
             deploy(DeployParameters{
                 bounce: false,
                 value: msg.tonAmount,
-                mode: SendRemainingValue | SendIgnoreErrors,
+                mode: SendPayGasSeparately | SendBounceIfActionFail,
                 body: msg.masterMsg,
                 init: getJettonWalletInit(msg.toAddress),
             });

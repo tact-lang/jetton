@@ -1,4 +1,5 @@
-import {Address, toNano, Cell} from "@ton/core"
+import {Address, toNano, Cell, Builder, beginCell} from "@ton/core"
+import {randomBytes} from "crypto"
 
 export const randomAddress = (wc: number = 0) => {
     const buf = Buffer.alloc(32)
@@ -86,4 +87,25 @@ export const parseBurnNotification = (body: Cell) => {
     }
 
     return res
+}
+
+export const storeBigPayload = (curBuilder: Builder, maxDepth: number = 5) => {
+    let rootBuilder = curBuilder
+
+    function dfs(builder: Builder, currentDepth: number) {
+        if (currentDepth >= maxDepth) {
+            return
+        }
+        // Cell has a capacity of 1023 bits, so we can store 127 bytes max
+        builder.storeBuffer(randomBytes(127))
+        // Store all 4 references
+        for (let i = 0; i < 4; i++) {
+            let newBuilder = beginCell()
+            dfs(newBuilder, currentDepth + 1)
+            builder.storeRef(newBuilder.endCell())
+        }
+    }
+
+    dfs(rootBuilder, 0) // Start DFS with depth 0
+    return rootBuilder
 }

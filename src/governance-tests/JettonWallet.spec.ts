@@ -6,6 +6,7 @@ import {
     BlockchainSnapshot,
     SendMessageResult,
     BlockchainTransaction,
+    printTransactionFees,
 } from "@ton/sandbox"
 import {
     Cell,
@@ -19,6 +20,8 @@ import {
     storeMessage,
     fromNano,
     DictionaryValue,
+    TransactionDescriptionGeneric,
+    TransactionComputeVm,
 } from "@ton/core"
 
 import {Op} from "../wrappers/GovenanceJettonConstants"
@@ -61,16 +64,8 @@ import {
     jettonContentToCell,
 } from "../wrappers/ExtendedGovernanceJettonMinter"
 import {ExtendedGovernanceJettonWallet} from "../wrappers/ExtendedGovernanceJettonWallet"
-import {
-    RealWalletStateInitSizeBits,
-    RealWalletStateInitSizeCells,
-    ReceiveBurnGasConsumption,
-    ReceiveTransferGasConsumption,
-    SendBurnGasConsumption,
-    SendTransferGasConsumption,
-    WalletStateInitSizeBits,
-    WalletStateInitSizeCells,
-} from "../output/Governance_JettonMinter"
+import {gasForBurn, gasForTransfer} from "../output/Governance_JettonMinter"
+import {storeBigPayload} from "../utils/utils"
 
 type JettonMinterContent = {
     uri: string
@@ -201,12 +196,12 @@ describe("JettonWallet", () => {
             )
         ).init!.code
         notDeployer = await blockchain.treasury("notDeployer")
-        walletStats = new StorageStats(RealWalletStateInitSizeBits, RealWalletStateInitSizeCells)
+        walletStats = new StorageStats(11000, 24)
         msgPrices = getMsgPrices(blockchain.config, 0)
         gasPrices = getGasPrices(blockchain.config, 0)
         storagePrices = getStoragePrices(blockchain.config)
         storageDuration = 5 * 365 * 24 * 3600
-        stateInitStats = new StorageStats(WalletStateInitSizeBits, WalletStateInitSizeCells)
+        stateInitStats = new StorageStats(931, 3)
         defaultContent = {
             uri: "https://some_stablecoin.org/meta.json",
         }
@@ -1191,7 +1186,7 @@ describe("JettonWallet", () => {
             success: true,
         })
         send_gas_fee = printTxGasStats("Jetton transfer", transferTx)
-        send_gas_fee = computeGasFee(gasPrices, SendTransferGasConsumption)
+        send_gas_fee = computeGasFee(gasPrices, gasForTransfer)
 
         const receiveTx = findTransactionRequired(sendResult.transactions, {
             on: notDeployerJettonWallet.address,
@@ -1200,7 +1195,7 @@ describe("JettonWallet", () => {
             success: true,
         })
         receive_gas_fee = printTxGasStats("Receive jetton", receiveTx)
-        receive_gas_fee = computeGasFee(gasPrices, ReceiveTransferGasConsumption)
+        receive_gas_fee = computeGasFee(gasPrices, gasForTransfer)
 
         expect(await deployerJettonWallet.getJettonBalance()).toEqual(
             initialJettonBalance - sentAmount,
@@ -1280,8 +1275,13 @@ describe("JettonWallet", () => {
 
         expect(await deployerJettonWallet.getJettonBalance()).toEqual(initialJettonBalance)
     })
+    /*
+    This tests suit is skipped, as minimal fees are calculated in a different way.
+    You can read more about this in dev-docs in this repository.
 
-    describe("Transfer dynamic fees", () => {
+    As an alternative, other test suit below is provided.
+     */
+    describe.skip("Transfer dynamic fees", () => {
         // implementation detail
         it("works with minimal ton amount", async () => {
             // No forward_amount and forward_
@@ -1511,6 +1511,56 @@ describe("JettonWallet", () => {
         })
     })
 
+    describe("Tact-way fees", () => {
+        function getComputeGasForTx(tx: BlockchainTransaction) {
+            return (
+                (tx.description as TransactionDescriptionGeneric)
+                    .computePhase as TransactionComputeVm
+            ).gasUsed
+        }
+
+        it("transfers with specified gas", async () => {
+            const deployerJettonWallet = await userWallet(deployer.address)
+            const randomNewReceiver = randomAddress(0)
+            const sendResult = await deployerJettonWallet.sendTransfer(
+                deployer.getSender(),
+                toNano("0.1"), //tons
+                0n, //Transfer 0 jettons, it doesn't affect the fee
+                randomNewReceiver,
+                deployer.address,
+                null,
+                toNano("0.05"),
+                null,
+            )
+            // From sender to jw
+            console.log("Gas for send transfer", getComputeGasForTx(sendResult.transactions[1]!))
+            expect(getComputeGasForTx(sendResult.transactions[1]!)).toBeLessThanOrEqual(
+                gasForTransfer,
+            )
+            // From jw to jw
+            console.log("Gas for receive transfer", getComputeGasForTx(sendResult.transactions[2]))
+            expect(getComputeGasForTx(sendResult.transactions[2])).toBeLessThanOrEqual(
+                gasForTransfer,
+            )
+        })
+        it("Burns with specified gas", async () => {
+            const sendResult = await jettonMinter.sendForceBurn(
+                deployer.getSender(),
+                0n, //Burn 0 jettons, it doesn't affect the fee
+                deployer.address,
+                deployer.address,
+                toNano(0.1),
+            )
+
+            // Remember, that it is governance Jettons
+            // From jettonMaster to jw
+            console.log("Gas for send burn", getComputeGasForTx(sendResult.transactions[1]!))
+            expect(getComputeGasForTx(sendResult.transactions[2]!)).toBeLessThanOrEqual(gasForBurn)
+            // From jw to jetton_master
+            console.log("Gas for receive burn", getComputeGasForTx(sendResult.transactions[2]))
+            expect(getComputeGasForTx(sendResult.transactions[3])).toBeLessThanOrEqual(gasForBurn)
+        })
+    })
     // implementation detail
     it("wallet does not accept internal_transfer not from wallet", async () => {
         const deployerJettonWallet = await userWallet(deployer.address)
@@ -1606,8 +1656,8 @@ describe("JettonWallet", () => {
         )
         const actualSent = printTxGasStats("Burn transaction", burnTxs[0])
         const actualRecv = printTxGasStats("Burn notification transaction", burnTxs[1])
-        burn_gas_fee = computeGasFee(gasPrices, SendBurnGasConsumption)
-        burn_notification_fee = computeGasFee(gasPrices, ReceiveBurnGasConsumption)
+        burn_gas_fee = computeGasFee(gasPrices, gasForBurn)
+        burn_notification_fee = computeGasFee(gasPrices, gasForBurn)
         expect(burn_gas_fee).toBeGreaterThanOrEqual(actualSent)
         expect(burn_notification_fee).toBeGreaterThanOrEqual(actualRecv)
     })
@@ -1626,7 +1676,13 @@ describe("JettonWallet", () => {
         )
     })
 
-    describe("Burn dynamic fees", () => {
+    /*
+    This tests suit is skipped, as minimal fees are calculated in a different way.
+    You can read more about this in dev-docs in this repository.
+
+    `Tact-way fees` test-suit is provided as an alternative.
+     */
+    describe.skip("Burn dynamic fees", () => {
         it("minimal burn message fee", async () => {
             let burnAmount = toNano("0.01")
             const burnFwd = estimateBurnFwd()
@@ -2013,11 +2069,9 @@ describe("JettonWallet", () => {
 
                 for (let type of lockTypes) {
                     //(await blockchain.getContract(jettonMinter.address)).verbosity.vmLogs = "vm_logs_verbose";
-                    let res = await jettonMinter.sendLockWallet(from, addr, type)
-                    printTransactions(res.transactions)
+                    await jettonMinter.sendLockWallet(from, addr, type)
 
                     let status = await lockWallet.getWalletStatus()
-                    console.log("Status", status)
                     expect(Boolean(status & ++i)).toBe(exp)
                 }
             }
@@ -2067,7 +2121,6 @@ describe("JettonWallet", () => {
                 deployer.address,
                 "out",
             )
-            printTransactions(res.transactions)
             expect(await deployerJettonWallet.getWalletStatus()).toEqual(1)
             await jettonMinter.sendLockWallet(deployer.getSender(), deployer.address, "unlock")
             expect(await deployerJettonWallet.getWalletStatus()).toEqual(0)
@@ -2310,7 +2363,7 @@ describe("JettonWallet", () => {
                     op: Op.call_to,
                     success: false,
                     aborted: true,
-                    exitCode: ExtendedGovernanceJettonMinter.errors["Not owner"],
+                    exitCode: ExtendedGovernanceJettonMinter.errors["Incorrect sender"],
                 })
                 expect(res.transactions).not.toHaveTransaction({
                     from: jettonMinter.address,
@@ -2355,430 +2408,462 @@ describe("JettonWallet", () => {
                     )
                 })
             })
-            it("force transfer works with minimal ton amount", async () => {
-                // No forward_amount and forward_
-                let jettonAmount = 1n
-                let forwardAmount = 0n
-                let minFwdFee = estimateAdminTransferFwd(jettonAmount, null, forwardAmount, null)
-                console.log("Estimate fwd:", minFwdFee)
-                /*
-                     forward_ton_amount +
-                     fwd_count * fwd_fee +
-                     (2 * gas_consumption + min_tons_for_storage));
-        */
-                let minimalFee = calcSendFees(
-                    send_gas_fee,
-                    receive_gas_fee,
-                    minFwdFee,
-                    forwardAmount,
-                    min_tons_for_storage,
-                )
-                console.log("Minimal fee:", minimalFee)
-                // Off by one should faile
-                await testAdminTransfer(
-                    minimalFee - 1n,
-                    jettonAmount,
-                    deployer.address,
-                    forwardAmount,
-                    null,
-                    null,
-                    ExtendedGovernanceJettonMinter.errors["Insufficient amount of TON attached"],
-                )
-                // Now should succeed
-                await testAdminTransfer(
-                    minimalFee,
-                    jettonAmount,
-                    deployer.address,
-                    forwardAmount,
-                    null,
-                    null,
-                    0,
-                )
-                console.log("Minimal admin transfer fee:", fromNano(minimalFee))
-            })
-            it("forward_payload should impact transfer fees", async () => {
-                let jettonAmount = 1n
-                let forwardAmount = 0n
-                let forwardPayload = beginCell().storeUint(0x123456789abcdef, 128).endCell()
-
-                // We estimate without forward payload
-                let minFwdFee = estimateAdminTransferFwd(jettonAmount, null, forwardAmount, null)
-                let minimalFee = calcSendFees(
-                    send_gas_fee,
-                    receive_gas_fee,
-                    minFwdFee,
-                    forwardAmount,
-                    min_tons_for_storage,
-                )
-                // Should fail
-                await testAdminTransfer(
-                    minimalFee,
-                    jettonAmount,
-                    deployer.address,
-                    forwardAmount,
-                    null,
-                    forwardPayload,
-                    ExtendedGovernanceJettonMinter.errors["Insufficient amount of TON attached"],
-                )
-                // We should re-estimate now
-                let newFwdFee = estimateAdminTransferFwd(
-                    jettonAmount,
-                    null,
-                    forwardAmount,
-                    forwardPayload,
-                )
-                minimalFee += newFwdFee - minFwdFee
-                minFwdFee = newFwdFee
-                // Add succeed
-                await testAdminTransfer(
-                    minimalFee,
-                    jettonAmount,
-                    deployer.address,
-                    forwardAmount,
-                    null,
-                    forwardPayload,
-                    0,
-                )
-                // Now let's see if increase in size would impact fee.
-                forwardPayload = beginCell()
-                    .storeUint(getRandomInt(100000, 200000), 128)
-                    .storeRef(forwardPayload)
-                    .endCell()
-                // Should fail now
-                await testAdminTransfer(
-                    minimalFee,
-                    jettonAmount,
-                    deployer.address,
-                    forwardAmount,
-                    null,
-                    forwardPayload,
-                    ExtendedGovernanceJettonMinter.errors["Insufficient amount of TON attached"],
-                )
-
-                newFwdFee = estimateAdminTransferFwd(
-                    jettonAmount,
-                    null,
-                    forwardAmount,
-                    forwardPayload,
-                )
-
-                minimalFee += newFwdFee - minFwdFee
-                // And succeed again, after updating calculations
-                await testAdminTransfer(
-                    minimalFee,
-                    jettonAmount,
-                    deployer.address,
-                    forwardAmount,
-                    null,
-                    forwardPayload,
-                    0,
-                )
-                // Test edge
-                await testAdminTransfer(
-                    minimalFee - 1n,
-                    jettonAmount,
-                    deployer.address,
-                    forwardAmount,
-                    null,
-                    forwardPayload,
-                    ExtendedGovernanceJettonMinter.errors["Insufficient amount of TON attached"],
-                )
-                // Custom payload impacts fee, because forwardAmount is calculated based on inMsg fwdFee field
-                /*
-        const customPayload = beginCell().storeUint(getRandomInt(100000, 200000), 128).endCell();
-        await testSendFees(minimalFee, forwardAmount, forwardPayload, customPayload, true);
-        */
-            })
-            it("forward amount > 0 should account for forward fee twice", async () => {
-                let jettonAmount = 1n
-                let forwardAmount = toNano("0.05")
-                let forwardPayload = beginCell().storeUint(0x123456789abcdef, 128).endCell()
-
-                let minFwdFee = estimateAdminTransferFwd(
-                    jettonAmount,
-                    null,
-                    forwardAmount,
-                    forwardPayload,
-                )
-                // We estimate without forward amount
-                let minimalFee = calcSendFees(
-                    send_gas_fee,
-                    receive_gas_fee,
-                    minFwdFee,
-                    0n,
-                    min_tons_for_storage,
-                )
-                // Should fail
-                await testAdminTransfer(
-                    minimalFee,
-                    jettonAmount,
-                    deployer.address,
-                    forwardAmount,
-                    null,
-                    forwardPayload,
-                    ExtendedGovernanceJettonMinter.errors["Insufficient amount of TON attached"],
-                )
-                // Adding forward fee once more + forwardAmount should end up in successfull transfer
-                minimalFee += minFwdFee + forwardAmount
-                await testAdminTransfer(
-                    minimalFee,
-                    jettonAmount,
-                    deployer.address,
-                    forwardAmount,
-                    null,
-                    forwardPayload,
-                    0,
-                )
-                // Make sure this is actual edge value and not just excessive amount
-                // Off by one should fail
-                await testAdminTransfer(
-                    minimalFee - 1n,
-                    jettonAmount,
-                    deployer.address,
-                    forwardAmount,
-                    null,
-                    forwardPayload,
-                    ExtendedGovernanceJettonMinter.errors["Insufficient amount of TON attached"],
-                )
-            })
-            it("forward fees should be calculated using actual config values", async () => {
-                let jettonAmount = 1n
-                let forwardAmount = toNano("0.05")
-                let forwardPayload = beginCell().storeUint(0x123456789abcdef, 128).endCell()
-
-                let minFwdFee = estimateAdminTransferFwd(
-                    jettonAmount,
-                    null,
-                    forwardAmount,
-                    forwardPayload,
-                )
-                // We estimate everything correctly
-                let minimalFee = calcSendFees(
-                    send_gas_fee,
-                    receive_gas_fee,
-                    minFwdFee,
-                    forwardAmount,
-                    min_tons_for_storage,
-                )
-                // Results in the successfull transfer
-                await testAdminTransfer(
-                    minimalFee,
-                    jettonAmount,
-                    deployer.address,
-                    forwardAmount,
-                    null,
-                    forwardPayload,
-                    0,
-                )
-
-                const oldConfig = blockchain.config
-                const newPrices: MsgPrices = {
-                    ...msgPrices,
-                    bitPrice: msgPrices.bitPrice * 10n,
-                    cellPrice: msgPrices.cellPrice * 10n,
-                }
-                blockchain.setConfig(setMsgPrices(blockchain.config, newPrices, 0))
-
-                await testAdminTransfer(
-                    minimalFee,
-                    jettonAmount,
-                    deployer.address,
-                    forwardAmount,
-                    null,
-                    forwardPayload,
-                    ExtendedGovernanceJettonMinter.errors["Insufficient amount of TON attached"],
-                )
-                const newFwdFee = estimateAdminTransferFwd(
-                    jettonAmount,
-                    null,
-                    forwardAmount,
-                    forwardPayload,
-                    newPrices,
-                )
-
-                minimalFee += (newFwdFee - minFwdFee) * 2n + defaultOverhead * 9n
-
-                /*
-         * We can't do it like this anymore, because change in forward prices
-         * also may change rounding in reverse fee calculation
-        // Delta is 18 times old fee because oldFee x 2 is already accounted
-        // for two forward
-        const newOverhead = forwardOverhead(newPrices, stateInitStats);
-        minimalFee += (minFwdFee - msgPrices.lumpPrice) * 18n + defaultOverhead * 9n;
-        */
-                // Should succeed now
-                await testAdminTransfer(
-                    minimalFee,
-                    jettonAmount,
-                    deployer.address,
-                    forwardAmount,
-                    null,
-                    forwardPayload,
-                    0,
-                )
-                // Testing edge
-                await testAdminTransfer(
-                    minimalFee - 1n,
-                    jettonAmount,
-                    deployer.address,
-                    forwardAmount,
-                    null,
-                    forwardPayload,
-                    ExtendedGovernanceJettonMinter.errors["Insufficient amount of TON attached"],
-                )
-                // Rolling config back
-                blockchain.setConfig(oldConfig)
-            })
-            it("gas fees for transfer should be calculated from actual config", async () => {
-                let jettonAmount = 1n
-                let forwardAmount = toNano("0.05")
-                let forwardPayload = beginCell().storeUint(0x123456789abcdef, 128).endCell()
-
-                let minFwdFee = estimateAdminTransferFwd(
-                    jettonAmount,
-                    null,
-                    forwardAmount,
-                    forwardPayload,
-                )
-                // We estimate everything correctly
-                let minimalFee = calcSendFees(
-                    send_gas_fee,
-                    receive_gas_fee,
-                    minFwdFee,
-                    forwardAmount,
-                    min_tons_for_storage,
-                )
-                // Results in the successfull transfer
-                await testAdminTransfer(
-                    minimalFee,
-                    jettonAmount,
-                    deployer.address,
-                    forwardAmount,
-                    null,
-                    forwardPayload,
-                    0,
-                )
-                const oldConfig = blockchain.config
-                blockchain.setConfig(
-                    setGasPrice(
-                        oldConfig,
-                        {
-                            ...gasPrices,
-                            gas_price: gasPrices.gas_price * 3n,
-                        },
+            describe.skip("Force transfer fees", () => {
+                it("force transfer works with minimal ton amount", async () => {
+                    // No forward_amount and forward_
+                    let jettonAmount = 1n
+                    let forwardAmount = 0n
+                    let minFwdFee = estimateAdminTransferFwd(
+                        jettonAmount,
+                        null,
+                        forwardAmount,
+                        null,
+                    )
+                    console.log("Estimate fwd:", minFwdFee)
+                    /*
+                         forward_ton_amount +
+                         fwd_count * fwd_fee +
+                         (2 * gas_consumption + min_tons_for_storage));
+            */
+                    let minimalFee = calcSendFees(
+                        send_gas_fee,
+                        receive_gas_fee,
+                        minFwdFee,
+                        forwardAmount,
+                        min_tons_for_storage,
+                    )
+                    console.log("Minimal fee:", minimalFee)
+                    // Off by one should faile
+                    // Commented out as fees are calculated differently in Tact-governance
+                    // await testAdminTransfer(
+                    //     minimalFee - 1n,
+                    //     jettonAmount,
+                    //     deployer.address,
+                    //     forwardAmount,
+                    //     null,
+                    //     null,
+                    //     ExtendedGovernanceJettonMinter.errors["Insufficient amount of TON attached"],
+                    // )
+                    // Now should succeed
+                    await testAdminTransfer(
+                        minimalFee,
+                        jettonAmount,
+                        deployer.address,
+                        forwardAmount,
+                        null,
+                        null,
                         0,
-                    ),
-                )
-                await testAdminTransfer(
-                    minimalFee,
-                    jettonAmount,
-                    deployer.address,
-                    forwardAmount,
-                    null,
-                    forwardPayload,
-                    ExtendedGovernanceJettonMinter.errors["Insufficient amount of TON attached"],
-                )
-                // add gas delta
-                minimalFee +=
-                    (send_gas_fee - gasPrices.flat_gas_price) * 2n +
-                    (receive_gas_fee - gasPrices.flat_gas_price) * 2n
-                await testAdminTransfer(
-                    minimalFee,
-                    jettonAmount,
-                    deployer.address,
-                    forwardAmount,
-                    null,
-                    forwardPayload,
-                    0,
-                )
-                // Test edge
-                await testAdminTransfer(
-                    minimalFee - 1n,
-                    jettonAmount,
-                    deployer.address,
-                    forwardAmount,
-                    null,
-                    forwardPayload,
-                    ExtendedGovernanceJettonMinter.errors["Insufficient amount of TON attached"],
-                )
-                blockchain.setConfig(oldConfig)
-            })
-            it("storage fee for transfer should be calculated from actual config", async () => {
-                let jettonAmount = 1n
-                let forwardAmount = toNano("0.05")
-                let forwardPayload = beginCell().storeUint(0x123456789abcdef, 128).endCell()
+                    )
+                    console.log("Minimal admin transfer fee:", fromNano(minimalFee))
+                })
+                it("forward_payload should impact transfer fees", async () => {
+                    let jettonAmount = 1n
+                    let forwardAmount = 0n
+                    let forwardPayload = beginCell().storeUint(0x123456789abcdef, 128).endCell()
 
-                let minFwdFee = estimateAdminTransferFwd(
-                    jettonAmount,
-                    null,
-                    forwardAmount,
-                    forwardPayload,
-                )
-                // We estimate everything correctly
-                let minimalFee = calcSendFees(
-                    send_gas_fee,
-                    receive_gas_fee,
-                    minFwdFee,
-                    forwardAmount,
-                    min_tons_for_storage,
-                )
-                await testAdminTransfer(
-                    minimalFee,
-                    jettonAmount,
-                    deployer.address,
-                    forwardAmount,
-                    null,
-                    forwardPayload,
-                    0,
-                )
-                // Results in the successfull transfer
+                    // We estimate without forward payload
+                    let minFwdFee = estimateAdminTransferFwd(
+                        jettonAmount,
+                        null,
+                        forwardAmount,
+                        null,
+                    )
+                    let minimalFee = calcSendFees(
+                        send_gas_fee,
+                        receive_gas_fee,
+                        minFwdFee,
+                        forwardAmount,
+                        min_tons_for_storage,
+                    )
+                    // Should fail
+                    // Commented out as fees are calculated differently in Tact-governance
+                    // await testAdminTransfer(
+                    //     minimalFee,
+                    //     jettonAmount,
+                    //     deployer.address,
+                    //     forwardAmount,
+                    //     null,
+                    //     forwardPayload,
+                    //     ExtendedGovernanceJettonMinter.errors["Insufficient amount of TON attached"],
+                    // )
+                    // We should re-estimate now
+                    let newFwdFee = estimateAdminTransferFwd(
+                        jettonAmount,
+                        null,
+                        forwardAmount,
+                        forwardPayload,
+                    )
+                    minimalFee += newFwdFee - minFwdFee
+                    minFwdFee = newFwdFee
+                    // Add succeed
+                    await testAdminTransfer(
+                        minimalFee,
+                        jettonAmount,
+                        deployer.address,
+                        forwardAmount,
+                        null,
+                        forwardPayload,
+                        0,
+                    )
+                    // Now let's see if increase in size would impact fee.
+                    // We add 4^6 Cells
+                    forwardPayload = storeBigPayload(beginCell(), 6).endCell()
+                    // Should fail now
+                    await testAdminTransfer(
+                        minimalFee,
+                        jettonAmount,
+                        deployer.address,
+                        forwardAmount,
+                        null,
+                        forwardPayload,
+                        ExtendedGovernanceJettonMinter.errors[
+                            "Insufficient amount of TON attached"
+                        ],
+                    )
 
-                const oldConfig = blockchain.config
-                const newPrices = {
-                    ...storagePrices,
-                    bit_price_ps: storagePrices.bit_price_ps * 10n,
-                    cell_price_ps: storagePrices.cell_price_ps * 10n,
-                }
+                    newFwdFee = estimateAdminTransferFwd(
+                        jettonAmount,
+                        null,
+                        forwardAmount,
+                        forwardPayload,
+                    )
 
-                blockchain.setConfig(setStoragePrices(oldConfig, newPrices))
+                    minimalFee += newFwdFee - minFwdFee
+                    // And succeed again, after updating calculations
+                    await testAdminTransfer(
+                        minimalFee,
+                        jettonAmount,
+                        deployer.address,
+                        forwardAmount,
+                        null,
+                        forwardPayload,
+                        0,
+                    )
+                    // Test edge
+                    await testAdminTransfer(
+                        minimalFee - 1n,
+                        jettonAmount,
+                        deployer.address,
+                        forwardAmount,
+                        null,
+                        forwardPayload,
+                        ExtendedGovernanceJettonMinter.errors[
+                            "Insufficient amount of TON attached"
+                        ],
+                    )
+                    // Custom payload impacts fee, because forwardAmount is calculated based on inMsg fwdFee field
+                    /*
+            const customPayload = beginCell().storeUint(getRandomInt(100000, 200000), 128).endCell();
+            await testSendFees(minimalFee, forwardAmount, forwardPayload, customPayload, true);
+            */
+                })
+                it("forward amount > 0 should account for forward fee twice", async () => {
+                    let jettonAmount = 1n
+                    let forwardAmount = toNano("0.05")
+                    let forwardPayload = beginCell().storeUint(0x123456789abcdef, 128).endCell()
 
-                await testAdminTransfer(
-                    minimalFee,
-                    jettonAmount,
-                    deployer.address,
-                    forwardAmount,
-                    null,
-                    forwardPayload,
-                    ExtendedGovernanceJettonMinter.errors["Insufficient amount of TON attached"],
-                )
+                    let minFwdFee = estimateAdminTransferFwd(
+                        jettonAmount,
+                        null,
+                        forwardAmount,
+                        forwardPayload,
+                    )
+                    // We estimate without forward amount
+                    let minimalFee = calcSendFees(
+                        send_gas_fee,
+                        receive_gas_fee,
+                        minFwdFee,
+                        0n,
+                        min_tons_for_storage,
+                    )
+                    // Should fail
+                    await testAdminTransfer(
+                        minimalFee,
+                        jettonAmount,
+                        deployer.address,
+                        forwardAmount,
+                        null,
+                        forwardPayload,
+                        ExtendedGovernanceJettonMinter.errors[
+                            "Insufficient amount of TON attached"
+                        ],
+                    )
+                    // Adding forward fee once more + forwardAmount should end up in successfull transfer
+                    minimalFee += minFwdFee + forwardAmount
+                    await testAdminTransfer(
+                        minimalFee,
+                        jettonAmount,
+                        deployer.address,
+                        forwardAmount,
+                        null,
+                        forwardPayload,
+                        0,
+                    )
+                    // Make sure this is actual edge value and not just excessive amount
+                    // Off by one should fail
+                    await testAdminTransfer(
+                        minimalFee - 1n,
+                        jettonAmount,
+                        deployer.address,
+                        forwardAmount,
+                        null,
+                        forwardPayload,
+                        ExtendedGovernanceJettonMinter.errors[
+                            "Insufficient amount of TON attached"
+                        ],
+                    )
+                })
+                it("forward fees should be calculated using actual config values", async () => {
+                    let jettonAmount = 1n
+                    let forwardAmount = toNano("0.05")
+                    let forwardPayload = beginCell().storeUint(0x123456789abcdef, 128).endCell()
 
-                const newStorageFee = calcStorageFee(
-                    newPrices,
-                    walletStats,
-                    BigInt(5 * 365 * 24 * 3600),
-                )
-                minimalFee += newStorageFee - min_tons_for_storage
+                    let minFwdFee = estimateAdminTransferFwd(
+                        jettonAmount,
+                        null,
+                        forwardAmount,
+                        forwardPayload,
+                    )
+                    // We estimate everything correctly
+                    let minimalFee = calcSendFees(
+                        send_gas_fee,
+                        receive_gas_fee,
+                        minFwdFee,
+                        forwardAmount,
+                        min_tons_for_storage,
+                    )
+                    // Results in the successfull transfer
+                    await testAdminTransfer(
+                        minimalFee,
+                        jettonAmount,
+                        deployer.address,
+                        forwardAmount,
+                        null,
+                        forwardPayload,
+                        0,
+                    )
 
-                await testAdminTransfer(
-                    minimalFee,
-                    jettonAmount,
-                    deployer.address,
-                    forwardAmount,
-                    null,
-                    forwardPayload,
-                    0,
-                )
-                // Tet edge
-                await testAdminTransfer(
-                    minimalFee - 1n,
-                    jettonAmount,
-                    deployer.address,
-                    forwardAmount,
-                    null,
-                    forwardPayload,
-                    ExtendedGovernanceJettonMinter.errors["Insufficient amount of TON attached"],
-                )
-                blockchain.setConfig(oldConfig)
+                    const oldConfig = blockchain.config
+                    const newPrices: MsgPrices = {
+                        ...msgPrices,
+                        bitPrice: msgPrices.bitPrice * 10n,
+                        cellPrice: msgPrices.cellPrice * 10n,
+                    }
+                    blockchain.setConfig(setMsgPrices(blockchain.config, newPrices, 0))
+
+                    await testAdminTransfer(
+                        minimalFee,
+                        jettonAmount,
+                        deployer.address,
+                        forwardAmount,
+                        null,
+                        forwardPayload,
+                        ExtendedGovernanceJettonMinter.errors[
+                            "Insufficient amount of TON attached"
+                        ],
+                    )
+                    const newFwdFee = estimateAdminTransferFwd(
+                        jettonAmount,
+                        null,
+                        forwardAmount,
+                        forwardPayload,
+                        newPrices,
+                    )
+
+                    minimalFee += (newFwdFee - minFwdFee) * 2n + defaultOverhead * 9n
+
+                    /*
+             * We can't do it like this anymore, because change in forward prices
+             * also may change rounding in reverse fee calculation
+            // Delta is 18 times old fee because oldFee x 2 is already accounted
+            // for two forward
+            const newOverhead = forwardOverhead(newPrices, stateInitStats);
+            minimalFee += (minFwdFee - msgPrices.lumpPrice) * 18n + defaultOverhead * 9n;
+            */
+                    // Should succeed now
+                    await testAdminTransfer(
+                        minimalFee,
+                        jettonAmount,
+                        deployer.address,
+                        forwardAmount,
+                        null,
+                        forwardPayload,
+                        0,
+                    )
+                    // Testing edge
+                    await testAdminTransfer(
+                        minimalFee - 1n,
+                        jettonAmount,
+                        deployer.address,
+                        forwardAmount,
+                        null,
+                        forwardPayload,
+                        ExtendedGovernanceJettonMinter.errors[
+                            "Insufficient amount of TON attached"
+                        ],
+                    )
+                    // Rolling config back
+                    blockchain.setConfig(oldConfig)
+                })
+                it("gas fees for transfer should be calculated from actual config", async () => {
+                    let jettonAmount = 1n
+                    let forwardAmount = toNano("0.05")
+                    let forwardPayload = beginCell().storeUint(0x123456789abcdef, 128).endCell()
+
+                    let minFwdFee = estimateAdminTransferFwd(
+                        jettonAmount,
+                        null,
+                        forwardAmount,
+                        forwardPayload,
+                    )
+                    // We estimate everything correctly
+                    let minimalFee = calcSendFees(
+                        send_gas_fee,
+                        receive_gas_fee,
+                        minFwdFee,
+                        forwardAmount,
+                        min_tons_for_storage,
+                    )
+                    // Results in the successfull transfer
+                    await testAdminTransfer(
+                        minimalFee,
+                        jettonAmount,
+                        deployer.address,
+                        forwardAmount,
+                        null,
+                        forwardPayload,
+                        0,
+                    )
+                    const oldConfig = blockchain.config
+                    blockchain.setConfig(
+                        setGasPrice(
+                            oldConfig,
+                            {
+                                ...gasPrices,
+                                gas_price: gasPrices.gas_price * 3n,
+                            },
+                            0,
+                        ),
+                    )
+                    await testAdminTransfer(
+                        minimalFee,
+                        jettonAmount,
+                        deployer.address,
+                        forwardAmount,
+                        null,
+                        forwardPayload,
+                        ExtendedGovernanceJettonMinter.errors[
+                            "Insufficient amount of TON attached"
+                        ],
+                    )
+                    // add gas delta
+                    minimalFee +=
+                        (send_gas_fee - gasPrices.flat_gas_price) * 2n +
+                        (receive_gas_fee - gasPrices.flat_gas_price) * 2n
+                    await testAdminTransfer(
+                        minimalFee,
+                        jettonAmount,
+                        deployer.address,
+                        forwardAmount,
+                        null,
+                        forwardPayload,
+                        0,
+                    )
+                    // Test edge
+                    await testAdminTransfer(
+                        minimalFee - 1n,
+                        jettonAmount,
+                        deployer.address,
+                        forwardAmount,
+                        null,
+                        forwardPayload,
+                        ExtendedGovernanceJettonMinter.errors[
+                            "Insufficient amount of TON attached"
+                        ],
+                    )
+                    blockchain.setConfig(oldConfig)
+                })
+                it("storage fee for transfer should be calculated from actual config", async () => {
+                    let jettonAmount = 1n
+                    let forwardAmount = toNano("0.05")
+                    let forwardPayload = beginCell().storeUint(0x123456789abcdef, 128).endCell()
+
+                    let minFwdFee = estimateAdminTransferFwd(
+                        jettonAmount,
+                        null,
+                        forwardAmount,
+                        forwardPayload,
+                    )
+                    // We estimate everything correctly
+                    let minimalFee = calcSendFees(
+                        send_gas_fee,
+                        receive_gas_fee,
+                        minFwdFee,
+                        forwardAmount,
+                        min_tons_for_storage,
+                    )
+                    await testAdminTransfer(
+                        minimalFee,
+                        jettonAmount,
+                        deployer.address,
+                        forwardAmount,
+                        null,
+                        forwardPayload,
+                        0,
+                    )
+                    // Results in the successfull transfer
+
+                    const oldConfig = blockchain.config
+                    const newPrices = {
+                        ...storagePrices,
+                        bit_price_ps: storagePrices.bit_price_ps * 10n,
+                        cell_price_ps: storagePrices.cell_price_ps * 10n,
+                    }
+
+                    blockchain.setConfig(setStoragePrices(oldConfig, newPrices))
+
+                    await testAdminTransfer(
+                        minimalFee,
+                        jettonAmount,
+                        deployer.address,
+                        forwardAmount,
+                        null,
+                        forwardPayload,
+                        ExtendedGovernanceJettonMinter.errors[
+                            "Insufficient amount of TON attached"
+                        ],
+                    )
+
+                    const newStorageFee = calcStorageFee(
+                        newPrices,
+                        walletStats,
+                        BigInt(5 * 365 * 24 * 3600),
+                    )
+                    minimalFee += newStorageFee - min_tons_for_storage
+
+                    await testAdminTransfer(
+                        minimalFee,
+                        jettonAmount,
+                        deployer.address,
+                        forwardAmount,
+                        null,
+                        forwardPayload,
+                        0,
+                    )
+                    // Tet edge
+                    await testAdminTransfer(
+                        minimalFee - 1n,
+                        jettonAmount,
+                        deployer.address,
+                        forwardAmount,
+                        null,
+                        forwardPayload,
+                        ExtendedGovernanceJettonMinter.errors[
+                            "Insufficient amount of TON attached"
+                        ],
+                    )
+                    blockchain.setConfig(oldConfig)
+                })
             })
         })
         describe("Force burn", () => {
@@ -2851,159 +2936,173 @@ describe("JettonWallet", () => {
                     )
                 })
             })
-            it("minimal burn message fee", async () => {
-                let burnAmount = toNano("0.01")
-                const burnFwd = estimateBurnFwd()
-                let minimalFee = burnFwd + burn_gas_fee + burn_notification_fee + 1n
+            describe.skip("Burn fees", () => {
+                it("minimal burn message fee", async () => {
+                    let burnAmount = toNano("0.01")
+                    const burnFwd = estimateBurnFwd()
+                    let minimalFee = burnFwd + burn_gas_fee + burn_notification_fee + 1n
 
-                // Off by one
-                await testAdminBurn(
-                    minimalFee - 1n,
-                    burnAmount,
-                    deployer.address,
-                    deployer.address,
-                    null,
-                    ExtendedGovernanceJettonMinter.errors["Insufficient amount of TON attached"],
-                )
-                // Now should succeed
-                await testAdminBurn(
-                    minimalFee,
-                    burnAmount,
-                    deployer.address,
-                    deployer.address,
-                    null,
-                    0,
-                )
-                console.log("Minimal admin burn fee:", fromNano(minimalFee))
-            })
-            // Now custom payload does impacf forward fee, because it is calculated from input message fwdFee
-            it("burn custom payload should not impact fees", async () => {
-                let burnAmount = toNano("0.01")
-                const customPayload = beginCell().storeUint(getRandomInt(1000, 2000), 256).endCell()
-                const burnFwd = estimateBurnFwd()
-                let minimalFee = burnFwd + burn_gas_fee + burn_notification_fee + 1n
-                // Would fail if it impacts fees
-                await testAdminBurn(
-                    minimalFee,
-                    burnAmount,
-                    deployer.address,
-                    deployer.address,
-                    customPayload,
-                    0,
-                )
-            })
-            it("burn forward fee should be calculated from actual config values", async () => {
-                let burnAmount = toNano("0.01")
-                let burnFwd = estimateBurnFwd()
-                let minimalFee = burnFwd + burn_gas_fee + burn_notification_fee + 1n
-                // Succeeds initally
-
-                await testAdminBurn(
-                    minimalFee,
-                    burnAmount,
-                    notDeployer.address,
-                    deployer.address,
-                    null,
-                    0,
-                )
-
-                const oldConfig = blockchain.config
-                const newPrices: MsgPrices = {
-                    ...msgPrices,
-                    bitPrice: msgPrices.bitPrice * 10n,
-                    cellPrice: msgPrices.cellPrice * 10n,
-                }
-                blockchain.setConfig(setMsgPrices(blockchain.config, newPrices, 0))
-                await testAdminBurn(
-                    minimalFee,
-                    burnAmount,
-                    notDeployer.address,
-                    deployer.address,
-                    null,
-                    ExtendedGovernanceJettonMinter.errors["Insufficient amount of TON attached"],
-                )
-                const newFwd = estimateBurnFwd(newPrices)
-                minimalFee += newFwd - burnFwd
-                // Can't do that due to reverse fee calculation rounding errors
-                //minimalFee += (burnFwd - msgPrices.lumpPrice) * 9n;
-
-                // Success again
-                await testAdminBurn(
-                    minimalFee,
-                    burnAmount,
-                    notDeployer.address,
-                    deployer.address,
-                    null,
-                    0,
-                )
-                // Check edge
-
-                await testAdminBurn(
-                    minimalFee - 1n,
-                    burnAmount,
-                    notDeployer.address,
-                    deployer.address,
-                    null,
-                    ExtendedGovernanceJettonMinter.errors["Insufficient amount of TON attached"],
-                )
-                blockchain.setConfig(oldConfig)
-            })
-            it("burn gas fees should be calculated from actual config values", async () => {
-                let burnAmount = toNano("0.01")
-                const burnFwd = estimateBurnFwd()
-                let minimalFee = burnFwd + burn_gas_fee + burn_notification_fee + 1n
-                // Succeeds initally
-                await testAdminBurn(
-                    minimalFee,
-                    burnAmount,
-                    notDeployer.address,
-                    deployer.address,
-                    null,
-                    0,
-                )
-                const oldConfig = blockchain.config
-                blockchain.setConfig(
-                    setGasPrice(
-                        oldConfig,
-                        {
-                            ...gasPrices,
-                            gas_price: gasPrices.gas_price * 2n,
-                        },
+                    // Off by one
+                    await testAdminBurn(
+                        minimalFee - 1n,
+                        burnAmount,
+                        deployer.address,
+                        deployer.address,
+                        null,
+                        ExtendedGovernanceJettonMinter.errors[
+                            "Insufficient amount of TON attached"
+                        ],
+                    )
+                    // Now should succeed
+                    await testAdminBurn(
+                        minimalFee,
+                        burnAmount,
+                        deployer.address,
+                        deployer.address,
+                        null,
                         0,
-                    ),
-                )
-                await testAdminBurn(
-                    minimalFee,
-                    burnAmount,
-                    notDeployer.address,
-                    deployer.address,
-                    null,
-                    ExtendedGovernanceJettonMinter.errors["Insufficient amount of TON attached"],
-                )
+                    )
+                    console.log("Minimal admin burn fee:", fromNano(minimalFee))
+                })
+                // Now custom payload does impacf forward fee, because it is calculated from input message fwdFee
+                it("burn custom payload should not impact fees", async () => {
+                    let burnAmount = toNano("0.01")
+                    const customPayload = beginCell()
+                        .storeUint(getRandomInt(1000, 2000), 256)
+                        .endCell()
+                    const burnFwd = estimateBurnFwd()
+                    let minimalFee = burnFwd + burn_gas_fee + burn_notification_fee + 1n
+                    // Would fail if it impacts fees
+                    await testAdminBurn(
+                        minimalFee,
+                        burnAmount,
+                        deployer.address,
+                        deployer.address,
+                        customPayload,
+                        0,
+                    )
+                })
+                it("burn forward fee should be calculated from actual config values", async () => {
+                    let burnAmount = toNano("0.01")
+                    let burnFwd = estimateBurnFwd()
+                    let minimalFee = burnFwd + burn_gas_fee + burn_notification_fee + 1n
+                    // Succeeds initally
 
-                minimalFee +=
-                    burn_gas_fee -
-                    gasPrices.flat_gas_price /* 2n*/ +
-                    (burn_notification_fee - gasPrices.flat_gas_price) // * 2n;
+                    await testAdminBurn(
+                        minimalFee,
+                        burnAmount,
+                        notDeployer.address,
+                        deployer.address,
+                        null,
+                        0,
+                    )
 
-                await testAdminBurn(
-                    minimalFee,
-                    burnAmount,
-                    notDeployer.address,
-                    deployer.address,
-                    null,
-                    0,
-                )
-                // Verify edge
-                await testAdminBurn(
-                    minimalFee - 1n,
-                    burnAmount,
-                    notDeployer.address,
-                    deployer.address,
-                    null,
-                    ExtendedGovernanceJettonMinter.errors["Insufficient amount of TON attached"],
-                )
-                blockchain.setConfig(oldConfig)
+                    const oldConfig = blockchain.config
+                    const newPrices: MsgPrices = {
+                        ...msgPrices,
+                        bitPrice: msgPrices.bitPrice * 10n,
+                        cellPrice: msgPrices.cellPrice * 10n,
+                    }
+                    blockchain.setConfig(setMsgPrices(blockchain.config, newPrices, 0))
+                    await testAdminBurn(
+                        minimalFee,
+                        burnAmount,
+                        notDeployer.address,
+                        deployer.address,
+                        null,
+                        ExtendedGovernanceJettonMinter.errors[
+                            "Insufficient amount of TON attached"
+                        ],
+                    )
+                    const newFwd = estimateBurnFwd(newPrices)
+                    minimalFee += newFwd - burnFwd
+                    // Can't do that due to reverse fee calculation rounding errors
+                    //minimalFee += (burnFwd - msgPrices.lumpPrice) * 9n;
+
+                    // Success again
+                    await testAdminBurn(
+                        minimalFee,
+                        burnAmount,
+                        notDeployer.address,
+                        deployer.address,
+                        null,
+                        0,
+                    )
+                    // Check edge
+
+                    await testAdminBurn(
+                        minimalFee - 1n,
+                        burnAmount,
+                        notDeployer.address,
+                        deployer.address,
+                        null,
+                        ExtendedGovernanceJettonMinter.errors[
+                            "Insufficient amount of TON attached"
+                        ],
+                    )
+                    blockchain.setConfig(oldConfig)
+                })
+                it("burn gas fees should be calculated from actual config values", async () => {
+                    let burnAmount = toNano("0.01")
+                    const burnFwd = estimateBurnFwd()
+                    let minimalFee = burnFwd + burn_gas_fee + burn_notification_fee + 1n
+                    // Succeeds initally
+                    await testAdminBurn(
+                        minimalFee,
+                        burnAmount,
+                        notDeployer.address,
+                        deployer.address,
+                        null,
+                        0,
+                    )
+                    const oldConfig = blockchain.config
+                    blockchain.setConfig(
+                        setGasPrice(
+                            oldConfig,
+                            {
+                                ...gasPrices,
+                                gas_price: gasPrices.gas_price * 2n,
+                            },
+                            0,
+                        ),
+                    )
+                    await testAdminBurn(
+                        minimalFee,
+                        burnAmount,
+                        notDeployer.address,
+                        deployer.address,
+                        null,
+                        ExtendedGovernanceJettonMinter.errors[
+                            "Insufficient amount of TON attached"
+                        ],
+                    )
+
+                    minimalFee +=
+                        burn_gas_fee -
+                        gasPrices.flat_gas_price /* 2n*/ +
+                        (burn_notification_fee - gasPrices.flat_gas_price) // * 2n;
+
+                    await testAdminBurn(
+                        minimalFee,
+                        burnAmount,
+                        notDeployer.address,
+                        deployer.address,
+                        null,
+                        0,
+                    )
+                    // Verify edge
+                    await testAdminBurn(
+                        minimalFee - 1n,
+                        burnAmount,
+                        notDeployer.address,
+                        deployer.address,
+                        null,
+                        ExtendedGovernanceJettonMinter.errors[
+                            "Insufficient amount of TON attached"
+                        ],
+                    )
+                    blockchain.setConfig(oldConfig)
+                })
             })
         })
     })
