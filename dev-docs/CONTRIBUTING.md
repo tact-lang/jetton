@@ -1,54 +1,54 @@
 # Contributing to Tact Jetton
 
-Thank you for considering contributing to this project! Contributions are welcome and appreciated
+Thank you for considering contributing to this project! Contributions are welcome and appreciated.
 
 ## Scope
 
 We are currently accepting contributions in these directions:
 
-- Fixing existing bugs and compliance with TEPs
-- Improving documentation and tooling
-- Optimizing Tact source code
+- Fixing existing bugs and compliance with TEPs.
+- Improving documentation and tooling.
+- Optimizing Tact source code.
 
-If you want to add new functionality that hasn't been implemented before, it's better to open the issue first and discuss it with the maintainers
+If you want to add new functionality that hasn't been implemented before, it's better to open the issue first and discuss it with the maintainers.
 
 ## Tests
 
 This repo has different types of tests:
 
-- Tests that were copied from reference TEP implementation
-- Extended tests that for additional functionality and implementation details
-- End-to-end tests for compatibility with API providers
+- Tests that were copied from [reference TEP implementation](https://github.com/ton-blockchain/token-contract/blob/568f9c5c291b3cba39bfa75c1770c569c613796e/sandbox_tests/JettonWallet.spec.ts).
+- Extended tests for additional functionality and implementation details.
+- End-to-end tests for compatibility with API providers.
 
-We strongly advice against changing or editing the first type, since most-likely any new changes and code improvements shouldn't break them (only in case of the bug in the original jetton implementation)
+We strongly advice against changing or editing the first type, since most-likely any new changes and code improvements shouldn't break them (only in case of the bug in the original jetton implementation).
 
-You can run unit tests with `yarn test`
+You can run unit tests with `yarn test`.
 
 To run end-to-end tests locally, you need:
 
-1. Deploy Jetton instance in testnet/mainnet. You can use `contract.deploy.ts` script for this
-2. Complete the `.env` file with deployed Jetton data, so verification script could use it to try to index your Jetton in the blockchain
-3. Run `yarn verify-deployment`
+1. Deploy Jetton instance in testnet/mainnet. You can use `contract.deploy.ts` script for this.
+2. Complete the `.env` file with deployed Jetton data, so verification script could use it to try to index your Jetton in the blockchain.
+3. Run `yarn verify-deployment`.
 
 ## Benchmarks
 
-To run benchmarks use `yarn bench`. Note that benchmarks fail "early" on the first gas consumption failed assert
+To run benchmarks use `yarn bench`. Note that benchmarks fail "early" on the first gas consumption failed assert.
 
-To add new benchmark entry run `yarn bench:add`. This will acquire latest gas usage for all benchmark scenarios and add new entry to the result file
+To add new benchmark entry run `yarn bench:add`. This will acquire latest gas usage for all benchmark scenarios and add new entry to the result file.
 
-If you want to update the latest entry instead of adding a new one, run `yarn bench:update`
+If you want to update the latest entry instead of adding a new one, run `yarn bench:update`.
 
-To add benchmark for a new type of operation (e.g. new receiver, chain of operations on the Jetton contract, etc.), take a look at the `src/benchmarks/environment.ts`. This file contains logic for getting the gas usage and asserting execution results. After this, you will need to add new `assert` statement to `src/benchmarks/benchmark.ts`
+To add benchmark for a new type of operation (e.g. new receiver, chain of operations on the Jetton contract, etc.), take a look at the `src/benchmarks/environment.ts`. This file contains logic for getting the gas usage and asserting execution results. After this, you will need to add new `assert` statement to `src/benchmarks/benchmark.ts`.
 
 ## How to Contribute
 
 ### 0\*. Open an issue
 
-Since the scope of this repository is relatively small, it's better to first discuss the changes, since they might be not planned or already in work
+Since the scope of this repository is relatively small, it's better to first discuss the changes, since they might be not planned or already in work.
 
 ### 1. Fork the Repository
 
-Start by forking the repository to your GitHub account. This will allow you to make changes without affecting the original repository
+Start by forking the repository to your GitHub account. This will allow you to make changes without affecting the original repository.
 
 ### 2. Clone the Repository
 
@@ -74,17 +74,17 @@ Make your changes to the codebase. Ensure that your changes align with the proje
 
 ### 5. Test Your Changes
 
-Build contracts and run the test suite to ensure your changes do not break existing functionality
+Build contracts and run the test suite to ensure your changes do not break existing functionality.
 
-If you are adding new features, consider adding tests for them as well
+If you are adding new features, consider adding tests for them as well.
 
 ### 6\*. Add benchmarks
 
-If you are changing existing Tact code or adding new contracts functionality, it is mandatory to add benchmarks to your pull request
+If you are changing existing Tact code or adding new contracts functionality, it is mandatory to add benchmarks to your pull request.
 
 ### 7. Submit a Pull Request
 
-Once your changes are ready, push them to your forked repository and create a pull request to the main repository. Provide a clear description of your changes and why they are necessary. Please link any new PR's with the issues they are closing
+Once your changes are ready, push them to your forked repository and create a pull request to the main repository. Provide a clear description of your changes and why they are necessary. Please link any new PR's with the issues they are closing.
 
 ## Guidelines
 
@@ -92,7 +92,7 @@ Once your changes are ready, push them to your forked repository and create a pu
 - Write clear and concise commit messages.
 - Ensure your changes are well-documented.
 - If your changes include new features, update the relevant documentation files.
-- Update benchmarks if you are modifying Tact source code
+- Update benchmarks if you are modifying Tact source code.
 
 ## Reporting Issues
 

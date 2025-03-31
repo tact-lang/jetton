@@ -4,7 +4,7 @@ This documents discusses design choices and differences between this and other j
 
 ## Gas assertions
 
-There are a few ways to deal with TEP-74 defined gas constraints and storage fees:
+There are a few ways to deal with [TEP-74](https://github.com/ton-blockchain/TEPs/blob/master/text/0074-jettons-standard.md) defined gas constraints and storage fees:
 
 - Precalculated in emulation gas constants
 - Hardcoded raw tons amount
