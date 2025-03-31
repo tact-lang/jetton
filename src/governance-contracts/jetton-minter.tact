@@ -171,7 +171,6 @@ contract JettonMinter(
         require(sender() == self.adminAddress, "Incorrect sender");
         setData(msg.newData);
         setCode(msg.newCode);
-        throw(0); // To avoid Tact storage saving
     }
 
     receive(_: TopUp) {}
