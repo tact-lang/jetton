@@ -1,6 +1,6 @@
 // Gas constants
-const SendTransferGasConsumption: Int = 9536;
-const ReceiveTransferGasConsumption: Int = 10242;
+const SendTransferGasConsumption: Int = 9520;
+const ReceiveTransferGasConsumption: Int = 10234;
 
 const SendBurnGasConsumption: Int = 6205;
 const ReceiveBurnGasConsumption: Int = 6960;
