@@ -14,6 +14,7 @@ TONCENTER
 tact
 tock
 tonapi
+Toncoin
 tonhub
 tonscan
 toncenter

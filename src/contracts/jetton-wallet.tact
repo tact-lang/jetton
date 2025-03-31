@@ -1,13 +1,11 @@
 import "./messages";
 import "./constants";
-import "./jetton-minter";
 
 contract JettonWallet(
     balance: Int as coins,
     owner: Address,
     minter: Address,
 ) {
-
     receive(msg: JettonTransfer) {
         forceBasechain(msg.destination);
         require(sender() == self.owner, "Incorrect sender");
@@ -18,24 +16,25 @@ contract JettonWallet(
 
         let ctx = context();
         let fwdCount = 1 + sign(msg.forwardTonAmount); // msg.forwardTonAmount is coins, so it's positive
-        require(ctx.value >
+        require(
+            ctx.value >
             msg.forwardTonAmount +
             fwdCount * ctx.readForwardFee() +
             (2 * getComputeFee(gasForTransfer, false) + minTonsForStorage),
-            "Insufficient amount of TON attached"
+            "Insufficient amount of TON attached",
         );
 
-        deploy(DeployParameters{
+        deploy(DeployParameters {
             value: 0,
             mode: SendRemainingValue,
             bounce: true,
-            body: JettonTransferInternal{
+            body: JettonTransferInternal {
                 queryId: msg.queryId,
                 amount: msg.amount,
                 sender: self.owner,
                 responseDestination: msg.responseDestination,
                 forwardTonAmount: msg.forwardTonAmount,
-                forwardPayload: msg.forwardPayload
+                forwardPayload: msg.forwardPayload,
             }.toCell(),
             init: initOf JettonWallet(0, msg.destination, self.minter),
         });
@@ -57,12 +56,12 @@ contract JettonWallet(
         if (msg.forwardTonAmount > 0) {
             let fwdFee: Int = ctx.readForwardFee();
             msgValue -= msg.forwardTonAmount + fwdFee;
-            message(MessageParameters{
+            message(MessageParameters {
                 to: self.owner,
                 value: msg.forwardTonAmount,
                 mode: SendPayGasSeparately,
                 bounce: false,
-                body: JettonNotification{ // 0x7362d09c -- Remind the new Owner
+                body: JettonNotification { // 0x7362d09c -- Remind the new Owner
                     queryId: msg.queryId,
                     amount: msg.amount,
                     sender: msg.sender,
@@ -73,14 +72,37 @@ contract JettonWallet(
         nativeReserve(max(tonBalanceBeforeMsg, minTonsForStorage), ReserveAtMost);
         // 0xd53276db -- Cashback to the original Sender
         if (msg.responseDestination != null && msgValue > 0) {
-            message(MessageParameters{
+            message(MessageParameters {
                 to: msg.responseDestination!!,
                 value: msgValue,
                 mode: SendRemainingBalance + SendIgnoreErrors,
                 bounce: false,
-                body: JettonExcesses{ queryId: msg.queryId }.toCell(),
+                body: JettonExcesses { queryId: msg.queryId }.toCell(),
             });
         }
+    }
+
+    receive(msg: ProvideWalletBalance) {
+        forceBasechain(msg.receiver);
+
+        let info: VerifyInfo? = null;
+        if (msg.includeVerifyInfo) {
+            info = VerifyInfo {
+                minter: self.minter,
+                owner: self.owner,
+                code: myCode(),
+            };
+        }
+
+        message(MessageParameters {
+            body: TakeWalletBalance {
+                balance: self.balance,
+                verifyInfo: info,
+            }.toCell(),
+            to: msg.receiver,
+            value: 0,
+            mode: SendRemainingValue,
+        });
     }
 
     receive(msg: JettonBurn) {
@@ -93,12 +115,12 @@ contract JettonWallet(
         let fwdFee: Int = ctx.readForwardFee();
         require(ctx.value > (fwdFee + 2 * getComputeFee(gasForBurn, false)), "Insufficient amount of TON attached");
 
-        message(MessageParameters{
+        message(MessageParameters {
             to: self.minter,
             value: 0,
             mode: SendRemainingValue,
             bounce: true,
-            body: JettonBurnNotification{
+            body: JettonBurnNotification {
                 queryId: msg.queryId,
                 amount: msg.amount,
                 sender: self.owner,
@@ -107,26 +129,15 @@ contract JettonWallet(
         });
     }
 
-    receive(msg: ProvideWalletBalance) {
-        forceBasechain(msg.receiver);
+    receive(msg: ClaimTON) {
+        require(sender() == self.owner, "Incorrect sender");
+        nativeReserve(minTonsForStorage, ReserveExact | ReserveBounceIfActionFail);
 
-        let info: VerifyInfo? = null;
-        if (msg.includeVerifyInfo) {
-            info = VerifyInfo{
-                minter: self.minter,
-                owner: self.owner,
-                code: myCode(),
-            }
-        }
-
+        // we allow bounce here and don't handle it, if claim fails we just accept the TONs back
         message(MessageParameters {
-            body: TakeWalletBalance{
-                balance: self.balance,
-                verifyInfo: info,
-            }.toCell(),
             to: msg.receiver,
             value: 0,
-            mode: SendRemainingValue,
+            mode: SendRemainingBalance,
         });
     }
 
@@ -139,11 +150,11 @@ contract JettonWallet(
     }
 
     get fun get_wallet_data(): JettonWalletData {
-        return JettonWalletData{
+        return JettonWalletData {
             balance: self.balance,
             owner: self.owner,
             minter: self.minter,
-            code: myCode()
+            code: myCode(),
         };
     }
 }

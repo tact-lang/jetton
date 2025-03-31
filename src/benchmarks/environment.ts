@@ -154,7 +154,10 @@ export const runDiscoveryBenchmark = async () => {
     )
 
     // external -> discovery -> take
-    assertTransactionChainWasSuccessful(discoveryResult.transactions, (l: number) => l === 3)
+    assertTransactionChainWasSuccessful(
+        discoveryResult.transactions,
+        (length: number) => length === 3,
+    )
 
     return getUsedGasInternal(discoveryResult, {type: "single"})
 }
@@ -185,6 +188,38 @@ export const runReportBalanceBenchmark = async () => {
 
     // external -> report -> take + bounce
     assertTransactionChainWasSuccessful(reportResult.transactions, lengthEqualsEither(3, 4))
+
+    return getUsedGasInternal(reportResult, {type: "single"})
+}
+
+// benchmark for claiming from wallet because it's more often used
+export const runClaimTonBenchmark = async () => {
+    const {deployer, jettonMinter, getJettonWallet, notDeployer} = await loadJettonEnvironment.then(
+        v => v(),
+    )
+
+    // mint as jetton wallet deploy
+    const mintResult = await jettonMinter.sendMint(
+        deployer.getSender(),
+        deployer.address,
+        toNano(100000),
+        toNano("0.1"),
+        toNano("1"),
+    )
+
+    // external -> mint -> transfer internal -> excesses <could fail> + notification
+    assertTransactionChainWasSuccessful(mintResult.transactions, lengthEqualsEither(4, 5))
+
+    const deployerWallet = await getJettonWallet(deployer.address)
+
+    const reportResult = await deployerWallet.sendClaimTon(
+        deployer.getSender(),
+        notDeployer.address,
+        toNano(1),
+    )
+
+    // external -> claim -> take
+    assertTransactionChainWasSuccessful(reportResult.transactions, (length: number) => length === 3)
 
     return getUsedGasInternal(reportResult, {type: "single"})
 }

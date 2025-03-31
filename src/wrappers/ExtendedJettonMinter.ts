@@ -1,5 +1,6 @@
 import {
     ChangeOwner,
+    ClaimTON,
     JettonMinter,
     JettonUpdateContent,
     Mint,
@@ -102,6 +103,19 @@ export class ExtendedJettonMinter extends JettonMinter {
             queryId: 0n,
             ownerAddress: address,
             includeAddress: includeAddress,
+        }
+        return this.send(provider, via, {value: value}, msg)
+    }
+
+    async sendClaimTon(
+        provider: ContractProvider,
+        via: Sender,
+        address: Address,
+        value: bigint = toNano("0.1"),
+    ): Promise<void> {
+        const msg: ClaimTON = {
+            $$type: "ClaimTON",
+            receiver: address,
         }
         return this.send(provider, via, {value: value}, msg)
     }

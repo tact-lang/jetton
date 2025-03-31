@@ -1,5 +1,3 @@
-// https://github.com/ton-blockchain/TEPs/blob/master/text/0089-jetton-wallet-discovery.md
-
 import "./jetton-wallet";
 import "./messages";
 import "./constants";
@@ -20,6 +18,39 @@ contract JettonMinter(
     jettonContent: Cell,
     mintable: Bool, // Should be deployed with this flag set to true
 ) {
+    receive(msg: Mint) {
+        require(sender() == self.owner, "Incorrect sender");
+        require(self.mintable, "Mint is closed");
+        self.totalSupply += msg.mintMessage.amount;
+
+        deploy(DeployParameters {
+            value: 0,
+            bounce: true,
+            mode: SendRemainingValue,
+            body: msg.mintMessage.toCell(),
+            init: getJettonWalletInit(msg.receiver),
+        });
+    }
+
+    receive(msg: ProvideWalletAddress) {
+        // we use message fwdFee for estimation of forward_payload costs
+        let ctx = context();
+        let fwdFee = ctx.readForwardFee();
+        require(ctx.value > fwdFee + getComputeFee(gasForDiscovery, false), "Insufficient gas for discovery");
+        let ownerWorkchain: Int = parseStdAddress(msg.ownerAddress.asSlice()).workchain;
+
+        let targetJettonWallet: BasechainAddress = (ownerWorkchain == Workchain)
+            ? contractBasechainAddress(initOf JettonWallet(0, msg.ownerAddress, myAddress()))
+            : emptyBasechainAddress();
+
+        message(MessageParameters {
+            body: makeTakeWalletAddressMsg(targetJettonWallet, msg),
+            to: sender(),
+            value: 0,
+            mode: SendRemainingValue,
+        });
+    }
+
     receive(msg: JettonBurnNotification) {
         let sender = parseStdAddress(sender().asSlice());
         let wallet = getJettonBasechainWalletByOwner(msg.sender);
@@ -31,7 +62,7 @@ contract JettonMinter(
         if (msg.responseDestination != null) {
             message(MessageParameters {
                 to: msg.responseDestination!!,
-                body: JettonExcesses{ queryId: msg.queryId }.toCell(),
+                body: JettonExcesses { queryId: msg.queryId }.toCell(),
                 value: 0,
                 bounce: false,
                 mode: SendRemainingValue | SendIgnoreErrors, // ignore errors, because supply has already been updated
@@ -39,43 +70,9 @@ contract JettonMinter(
         }
     }
 
-    receive(msg: ProvideWalletAddress) {
-        // we use message fwdFee for estimation of forward_payload costs
-        let ctx = context();
-        let fwdFee = ctx.readForwardFee();
-        require(ctx.value > fwdFee + getComputeFee(gasForDiscovery, false), "Insufficient gas for discovery");
-        let ownerWorkchain: Int = parseStdAddress(msg.ownerAddress.asSlice()).workchain;
-
-        let targetJettonWallet: BasechainAddress =
-            (ownerWorkchain == Workchain) ?
-            contractBasechainAddress(initOf JettonWallet(0, msg.ownerAddress, myAddress()))
-            : emptyBasechainAddress();
-
-        message(MessageParameters {
-            body: makeTakeWalletAddressMsg(targetJettonWallet, msg),
-            to: sender(),
-            value: 0,
-            mode: SendRemainingValue,
-        });
-    }
-
     receive(msg: JettonUpdateContent) {
         require(sender() == self.owner, "Incorrect sender");
         self.jettonContent = msg.content;
-    }
-
-    receive(msg: Mint) {
-        require(sender() == self.owner, "Incorrect sender");
-        require(self.mintable, "Mint is closed");
-        self.totalSupply += msg.mintMessage.amount;
-
-        deploy(DeployParameters{
-            value: 0,
-            bounce: true,
-            mode: SendRemainingValue,
-            body: msg.mintMessage.toCell(),
-            init: getJettonWalletInit(msg.receiver)
-        });
     }
 
     receive(msg: ChangeOwner) {
@@ -89,6 +86,18 @@ contract JettonMinter(
         cashback(sender());
     }
 
+    receive(msg: ClaimTON) {
+        require(sender() == self.owner, "Incorrect sender");
+        nativeReserve(minTonsForStorage, ReserveExact | ReserveBounceIfActionFail);
+
+        // we allow bounce here and don't handle it, if claim fails we just accept the TONs back
+        message(MessageParameters {
+            to: msg.receiver,
+            value: 0,
+            mode: SendRemainingBalance,
+        });
+    }
+
     bounced(msg: bounced<JettonTransferInternal>) {
         self.totalSupply -= msg.amount;
     }
@@ -99,7 +108,7 @@ contract JettonMinter(
             mintable: self.mintable,
             adminAddress: self.owner,
             jettonContent: self.jettonContent,
-            jettonWalletCode: codeOf JettonWallet
+            jettonWalletCode: codeOf JettonWallet,
         };
     }
 
@@ -111,8 +120,7 @@ contract JettonMinter(
 asm fun emptyAddress(): Address { b{00} PUSHSLICE }
 
 inline fun makeTakeWalletAddressMsg(targetJettonWallet: BasechainAddress, msg: ProvideWalletAddress): Cell {
-    return
-        beginCell()
+    return beginCell()
         .storeUint(TakeWalletAddressOpcode, 32)
         .storeUint(msg.queryId, 64)
         .storeBasechainAddress(targetJettonWallet)
