@@ -29,8 +29,8 @@ export const uploadDeployResultToGist = async (jettonMinterAddress: Address) => 
         const tonapiResponse = await callGetMetadataFromTonApi(jettonMinterAddress)
 
         const content = {
-            tonviewer: `https://${network}.tonviewer.com/${jettonMinterAddress.toString({urlSafe: true})}`,
-            tonscan: `https://${network}.tonscan.org/address/${jettonMinterAddress.toString({urlSafe: true})}`,
+            tonviewer: `https:///${network === "mainnet" ? "" : network + "."}tonviewer.com/${jettonMinterAddress.toString({urlSafe: true})}`,
+            tonscan: `https:///${network === "mainnet" ? "" : network + "."}tonscan.org/address/${jettonMinterAddress.toString({urlSafe: true})}`,
             toncenterMetadata: toncenterResponse,
             tonapiMetadata: tonapiResponse,
         }
