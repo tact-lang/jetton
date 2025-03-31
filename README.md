@@ -123,6 +123,24 @@ You can read on-chain data for the minter from its address using script `src/scr
 yarn read
 ```
 
+Example output:
+
+```shell
+❯ yarn read
+yarn run v1.22.22
+$ ts-node ./src/scripts/contract.read.ts
+Enter minter address: kQC58H9FUaJ0XUBKq9lXJxF_JBQZIy0dC4_7y4ggr9PEKClM
+
+Minter data
+Total supply: 1000000000000000000
+Owner: EQD2ZeBj70MzYZll7HVTT4cNSn62-P0VCL4ncCd-08-4alAY
+Is mintable: Yes
+Token name: TactJetton
+Description: This is description of Jetton #41 (Run at 14171609974 - 1)
+Image: https://raw.githubusercontent.com/tact-lang/tact/refs/heads/main/docs/public/logomark-light.svg
+Done in 5.03s.
+```
+
 ### 6. Test Contracts
 
 Run tests in the `@ton/sandbox` environment:
@@ -137,6 +155,37 @@ To run gas usage benchmarks and get them printed in the table, use
 
 ```bash
 yarn bench
+```
+
+Example output
+
+```shell
+❯ yarn bench
+yarn run v1.22.22
+$ cross-env PRINT_TABLE=true ts-node ./src/benchmarks/benchmarks.ts
+Gas Usage Results:
+┌────────────────────────────────────────────────────────────────────┬────────────────┬────────────────┬────────────────┬───────────────┬───────────────┬─────────────┬────────────────┬──────┐
+│ Run                                                                │ transfer       │ mint           │ burn           │ discovery     │ reportBalance │ claimWallet │ Summary        │ PR # │
+├────────────────────────────────────────────────────────────────────┼────────────────┼────────────────┼────────────────┼───────────────┼───────────────┼─────────────┼────────────────┼──────┤
+│ Initial                                                            │ 16319          │ 18811          │ 12558          │ 6655          │ -             │ -           │ 54343          │ 77   │
+├────────────────────────────────────────────────────────────────────┼────────────────┼────────────────┼────────────────┼───────────────┼───────────────┼─────────────┼────────────────┼──────┤
+│ With Tact-lang changes (selector hack and basechain optimizations) │ 15511 (-4.95%) │ 18027 (-4.17%) │ 12390 (-1.34%) │ 6557 (-1.47%) │ -             │ -           │ 52485 (-3.42%) │ 83   │
+├────────────────────────────────────────────────────────────────────┼────────────────┼────────────────┼────────────────┼───────────────┼───────────────┼─────────────┼────────────────┼──────┤
+│ With Report Balance                                                │ 15511 same     │ 18027 same     │ 12408 (+0.15%) │ 6557 same     │ 4537 (new)    │ -           │ 57040 (+8.68%) │ 84   │
+├────────────────────────────────────────────────────────────────────┼────────────────┼────────────────┼────────────────┼───────────────┼───────────────┼─────────────┼────────────────┼──────┤
+│ Set selector-hack flag to default value                            │ 15651 (+0.90%) │ 18195 (+0.93%) │ 12576 (+1.35%) │ 6655 (+1.49%) │ 4607 (+1.54%) │ -           │ 57684 (+1.13%) │ 86   │
+├────────────────────────────────────────────────────────────────────┼────────────────┼────────────────┼────────────────┼───────────────┼───────────────┼─────────────┼────────────────┼──────┤
+│ With Ton Claim                                                     │ 15651 same     │ 17799 (-2.18%) │ 12944 (+2.93%) │ 6612 (-0.65%) │ 4440 (-3.62%) │ 4030 (new)  │ 61476 (+6.57%) │ 90   │
+└────────────────────────────────────────────────────────────────────┴────────────────┴────────────────┴────────────────┴───────────────┴───────────────┴─────────────┴────────────────┴──────┘
+
+Comparison with Tact Jetton implementation:
+Transfer: 95.91% of Tact Jetton gas usage
+Mint: 94.62% of Tact Jetton gas usage
+Burn: 103.07% of Tact Jetton gas usage
+Discovery: 99.35% of Tact Jetton gas usage
+ReportBalance: new! of Tact Jetton gas usage
+ClaimWallet: new! of Tact Jetton gas usage
+Done in 2.17s.
 ```
 
 If you want to modify the contracts and benchmark your implementation, you can run

@@ -84,7 +84,7 @@ If you are changing existing Tact code or adding new contracts functionality, it
 
 ### 7. Submit a Pull Request
 
-Once your changes are ready, push them to your forked repository and create a pull request to the main repository. Provide a clear description of your changes and why they are necessary. Please link any new PR's with the issues they are closing.
+Once your changes are ready, push them to your forked repository and create a pull request to the main repository. Provide a clear description of your changes and why they are necessary. Please link any new PR's with the issues they are closing. Please, allow editing your PR by maintainers, as they won't bother you and in case of any small issues present will edit your PR directly
 
 ## Guidelines
 
