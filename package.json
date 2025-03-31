@@ -1,7 +1,8 @@
 {
     "private": true,
     "scripts": {
-        "build": "tact --config ./tact.config.json --project Jetton",
+        "build": "yarn build:base && yarn build:governance",
+        "build:base": "tact --config ./tact.config.json --project Jetton",
         "build:governance": "tact --config ./tact.config.json --project Governance",
         "lint": "yarn misti ./tact.config.json",
         "lint:es": "eslint .",
