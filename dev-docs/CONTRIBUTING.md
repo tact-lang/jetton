@@ -22,7 +22,7 @@ This repo has different types of tests:
 
 We strongly advice against changing or editing the first type, since most-likely any new changes and code improvements shouldn't break them (only in case of the bug in the original jetton implementation)
 
-You can run unit tests with `yarn build && yarn test`
+You can run unit tests with `yarn test`
 
 To run end-to-end tests locally, you need:
 
@@ -32,11 +32,11 @@ To run end-to-end tests locally, you need:
 
 ## Benchmarks
 
-To run benchmarks use `yarn build && yarn bench`. Note that benchmarks fail "early" on the first gas consumption failed assert
+To run benchmarks use `yarn bench`. Note that benchmarks fail "early" on the first gas consumption failed assert
 
-To add new benchmark entry run `yarn build && yarn bench:add`. This will acquire latest gas usage for all benchmark scenarios and add new entry to the result file
+To add new benchmark entry run `yarn bench:add`. This will acquire latest gas usage for all benchmark scenarios and add new entry to the result file
 
-If you want to update the latest entry instead of adding a new one, run `yarn build && yarn bench:update`
+If you want to update the latest entry instead of adding a new one, run `yarn bench:update`
 
 To add benchmark for a new type of operation (e.g. new receiver, chain of operations on the Jetton contract, etc.), take a look at the `src/benchmarks/environment.ts`. This file contains logic for getting the gas usage and asserting execution results. After this, you will need to add new `assert` statement to `src/benchmarks/benchmark.ts`
 
