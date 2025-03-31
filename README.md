@@ -204,12 +204,16 @@ graph LR
 
 Read more about imports in the [Tact standard library](https://docs.tact-lang.org/ref/standard-libraries/).
 
+## Contributing
+
+Please check [CONTRIBUTING.md](dev-docs/CONTRIBUTING.md)
+
 ## Best Practices
 
 - For guidance on interacting with Jettons using Tact, read the [Jetton cookbook](https://docs.tact-lang.org/cookbook/jettons/).
 - Be cautious of fake messages sent by scammers. Read [security best practices](https://docs.tact-lang.org/book/security-best-practices/) to protect yourself from fraudulent activities.
 - Always consult the [official Tact documentation](https://docs.tact-lang.org/) for additional resources and support.
-- Check [Specification](./SPEC.md) for more in-depth dive into implementation details
+- Check [Specification](dev-docs/SPEC.md) for more in-depth dive into implementation details
 
 ## License
 

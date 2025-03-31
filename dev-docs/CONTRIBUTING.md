@@ -10,7 +10,7 @@ We are currently accepting contributions in these directions:
 - Improving documentation and tooling
 - Optimizing Tact source code
 
-If you want to add new functionality that hasn't been implemented before, it's better to open the issue first and disscuss it with the maintainers
+If you want to add new functionality that hasn't been implemented before, it's better to open the issue first and discuss it with the maintainers
 
 ## Tests
 
@@ -18,13 +18,13 @@ This repo has different types of tests:
 
 - Tests that were copied from reference TEP implementation
 - Extended tests that for additional functionality and implementation details
-- End-to-end tests for compatability with API providers
+- End-to-end tests for compatibility with API providers
 
 We strongly advice against changing or editing the first type, since most-likely any new changes and code improvements shouldn't break them (only in case of the bug in the original jetton implementation)
 
 You can run unit tests with `yarn build && yarn test`
 
-To run end-to-end tests localy, you need:
+To run end-to-end tests locally, you need:
 
 1. Deploy Jetton instance in testnet/mainnet. You can use `contract.deploy.ts` script for this
 2. Complete the `.env` file with deployed Jetton data, so verification script could use it to try to index your Jetton in the blockchain
@@ -44,7 +44,7 @@ To add benchmark for a new type of operation (e.g. new receiver, chain of operat
 
 ### 0\*. Open an issue
 
-Since the scope of this repository is relatively small, it's better to first disscuss the changes, since they might be not planned or already in work
+Since the scope of this repository is relatively small, it's better to first discuss the changes, since they might be not planned or already in work
 
 ### 1. Fork the Repository
 
@@ -92,7 +92,7 @@ Once your changes are ready, push them to your forked repository and create a pu
 - Write clear and concise commit messages.
 - Ensure your changes are well-documented.
 - If your changes include new features, update the relevant documentation files.
-- Update benchmarks if you are modifing Tact source code
+- Update benchmarks if you are modifying Tact source code
 
 ## Reporting Issues
 
