@@ -1,14 +1,4 @@
-import {
-    Cell,
-    Slice,
-    toNano,
-    beginCell,
-    Address,
-    Dictionary,
-    Message,
-    DictionaryValue,
-    Transaction,
-} from "@ton/core"
+import {Cell, Slice, beginCell, Dictionary, Message, DictionaryValue, Transaction} from "@ton/core"
 
 export type GasPrices = {
     flat_gas_limit: bigint
@@ -16,7 +6,7 @@ export type GasPrices = {
     gas_price: bigint
 }
 export type StorageValue = {
-    utime_sice: number
+    utime_since: number
     bit_price_ps: bigint
     cell_price_ps: bigint
     mc_bit_price_ps: bigint
@@ -74,13 +64,13 @@ export class StorageStats {
 }
 
 export function computedGeneric<T extends Transaction>(transaction: T) {
-    if (transaction.description.type !== "generic") throw "Expected generic transactionaction"
+    if (transaction.description.type !== "generic") throw "Expected generic transaction"
     if (transaction.description.computePhase.type !== "vm") throw "Compute phase expected"
     return transaction.description.computePhase
 }
 
 export function storageGeneric<T extends Transaction>(transaction: T) {
-    if (transaction.description.type !== "generic") throw "Expected generic transactionaction"
+    if (transaction.description.type !== "generic") throw "Expected generic transaction"
     const storagePhase = transaction.description.storagePhase
     if (storagePhase === null || storagePhase === undefined) throw "Storage phase expected"
     return storagePhase
@@ -165,7 +155,7 @@ export const storageValue: DictionaryValue<StorageValue> = {
     serialize: (src, builder) => {
         builder
             .storeUint(0xcc, 8)
-            .storeUint(src.utime_sice, 32)
+            .storeUint(src.utime_since, 32)
             .storeUint(src.bit_price_ps, 64)
             .storeUint(src.cell_price_ps, 64)
             .storeUint(src.mc_bit_price_ps, 64)
@@ -173,7 +163,7 @@ export const storageValue: DictionaryValue<StorageValue> = {
     },
     parse: src => {
         return {
-            utime_sice: src.skip(8).loadUint(32),
+            utime_since: src.skip(8).loadUint(32),
             bit_price_ps: src.loadUintBig(64),
             cell_price_ps: src.loadUintBig(64),
             mc_bit_price_ps: src.loadUintBig(64),
@@ -288,7 +278,6 @@ export function computeMessageForwardFees(msgPrices: MsgPrices, msg: Message) {
         BigInt(storageStats.cells),
         BigInt(storageStats.bits),
     )
-    // Meeh
     if (fees.remaining < msg.info.forwardFee) {
         // console.log(`Remaining ${fees.remaining} < ${msg.info.forwardFee} lump bits:${lumpBits}`);
         storageStats = storageStats.addCells(1).addBits(lumpBits)
@@ -298,7 +287,7 @@ export function computeMessageForwardFees(msgPrices: MsgPrices, msg: Message) {
         console.log("Result fees:", fees)
         console.log(msg)
         console.log(fees.remaining)
-        throw new Error("Something went wrong in fee calcuation!")
+        throw new Error("Something went wrong in fee calculation!")
     }
     return {fees, stats: storageStats}
 }

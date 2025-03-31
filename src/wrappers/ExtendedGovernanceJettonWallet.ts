@@ -18,13 +18,12 @@ export function jettonWalletConfigToCell(config: JettonWalletConfig): Cell {
 
 export function parseJettonWalletData(data: Cell) {
     const sc = data.beginParse()
-    const parsed = {
+    return {
         status: sc.loadUint(4),
         balance: sc.loadCoins(),
         ownerAddress: sc.loadAddress(),
         jettonMasterAddress: sc.loadAddress(),
     }
-    return parsed
 }
 
 export class ExtendedGovernanceJettonWallet extends JettonWallet {
@@ -43,7 +42,7 @@ export class ExtendedGovernanceJettonWallet extends JettonWallet {
         })
     }
 
-    static async createFromConfig(config: JettonWalletConfig, code: Cell, workchain = 0) {
+    static async createFromConfig(config: JettonWalletConfig, code: Cell, _workchain = 0) {
         return await this.fromInit(0n, 0n, config.ownerAddress, config.jettonMasterAddress)
     }
 

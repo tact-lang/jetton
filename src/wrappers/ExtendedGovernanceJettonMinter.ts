@@ -2,8 +2,6 @@ import {
     Address,
     beginCell,
     Cell,
-    Contract,
-    contractAddress,
     ContractProvider,
     Sender,
     SendMode,
@@ -12,7 +10,7 @@ import {
 } from "@ton/core"
 
 import {JettonMinter as GovernanceJettonMinter} from "../output/Governance_JettonMinter"
-import {Op} from "./GovenanceJettonConstants"
+import {Op} from "./GovernanceJettonConstants"
 import {ExtendedGovernanceJettonWallet} from "./ExtendedGovernanceJettonWallet"
 
 export type JettonMinterContent = {
@@ -151,7 +149,7 @@ export class ExtendedGovernanceJettonMinter extends GovernanceJettonMinter {
         })
     }
 
-    static async createFromConfig(config: JettonMinterConfig, code: Cell, workchain = 0) {
+    static async createFromConfig(config: JettonMinterConfig, code: Cell, _workchain = 0) {
         const content =
             config.jetton_content instanceof Cell
                 ? config.jetton_content
@@ -423,7 +421,7 @@ export class ExtendedGovernanceJettonMinter extends GovernanceJettonMinter {
         }
     }
 
-    static parseCallTo(slice: Slice, refPrser: (slice: Slice) => any) {
+    static parseCallTo(slice: Slice, refParser: (slice: Slice) => any) {
         const op = slice.loadUint(32)
         if (op !== Op.call_to) throw new Error("Invalid op")
         const queryId = slice.loadUint(64)
@@ -435,7 +433,7 @@ export class ExtendedGovernanceJettonMinter extends GovernanceJettonMinter {
             queryId,
             toAddress,
             tonAmount,
-            action: refPrser(ref.beginParse()),
+            action: refParser(ref.beginParse()),
         }
     }
 

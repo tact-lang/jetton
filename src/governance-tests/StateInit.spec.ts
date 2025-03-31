@@ -1,29 +1,5 @@
-import {
-    Blockchain,
-    SandboxContract,
-    TreasuryContract,
-    internal,
-    BlockchainSnapshot,
-    SendMessageResult,
-    defaultConfigSeqno,
-    BlockchainTransaction,
-} from "@ton/sandbox"
-import {
-    Cell,
-    toNano,
-    beginCell,
-    Address,
-    Transaction,
-    TransactionComputeVm,
-    TransactionStoragePhase,
-    storeAccountStorage,
-    Sender,
-    Dictionary,
-    storeMessage,
-    fromNano,
-    DictionaryValue,
-    storeStateInit,
-} from "@ton/core"
+import {Blockchain, SandboxContract, TreasuryContract} from "@ton/sandbox"
+import {Address, beginCell, Cell, Dictionary, storeStateInit, toNano} from "@ton/core"
 import {
     ExtendedGovernanceJettonMinter,
     jettonContentToCell,
@@ -32,13 +8,13 @@ import {ExtendedGovernanceJettonWallet} from "../wrappers/ExtendedGovernanceJett
 
 import "@ton/test-utils"
 import {collectCellStats} from "./gasUtils"
-import {Op} from "../wrappers/GovenanceJettonConstants"
+import {Op} from "../wrappers/GovernanceJettonConstants"
 
 let blockchain: Blockchain
 let deployer: SandboxContract<TreasuryContract>
 let jettonMinter: SandboxContract<ExtendedGovernanceJettonMinter>
 let minter_code: Cell
-let wallet_code: Cell
+let _wallet_code: Cell
 let jwallet_code_raw: Cell
 let jwallet_code: Cell
 let userWallet: (address: Address) => Promise<SandboxContract<ExtendedGovernanceJettonWallet>>
@@ -68,8 +44,7 @@ describe("State init tests", () => {
         //jwallet_code is library
         const _libs = Dictionary.empty(Dictionary.Keys.BigUint(256), Dictionary.Values.Cell())
         _libs.set(BigInt(`0x${jwallet_code_raw.hash().toString("hex")}`), jwallet_code_raw)
-        const libs = beginCell().storeDictDirect(_libs).endCell()
-        blockchain.libs = libs
+        blockchain.libs = beginCell().storeDictDirect(_libs).endCell()
         let lib_prep = beginCell().storeUint(2, 8).storeBuffer(jwallet_code_raw.hash()).endCell()
         jwallet_code = new Cell({exotic: true, bits: lib_prep.bits, refs: lib_prep.refs})
 
@@ -108,7 +83,7 @@ describe("State init tests", () => {
             inMessageBounced: true,
         })
     })
-    it("should mint max jetton walue", async () => {
+    it("should mint max jetton value", async () => {
         const maxValue = 2n ** 120n - 1n
         const deployerWallet = await userWallet(deployer.address)
         const res = await jettonMinter.sendMint(
