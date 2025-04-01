@@ -1,5 +1,10 @@
-import {Address, beginCell, Cell, toNano} from "@ton/core"
-import {Blockchain, BlockchainSnapshot, SandboxContract, TreasuryContract} from "@ton/sandbox"
+import {Address, beginCell, Cell, toNano} from "@tact-lang/compiler/dist/core"
+import {
+    Blockchain,
+    BlockchainSnapshot,
+    SandboxContract,
+    TreasuryContract,
+} from "@tact-lang/compiler/dist/sandbox"
 import {ExtendedJettonWallet} from "../wrappers/ExtendedJettonWallet"
 import {ExtendedJettonMinter} from "../wrappers/ExtendedJettonMinter"
 
@@ -13,7 +18,7 @@ import {
     minTonsForStorage,
 } from "../output/Jetton_JettonMinter"
 
-import "@ton/test-utils"
+import "@tact-lang/compiler/dist/jest-utils"
 
 // this test suite includes tests for the extended functionality
 describe("Jetton Minter Extended", () => {

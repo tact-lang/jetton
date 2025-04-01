@@ -1,5 +1,5 @@
 import {z} from "zod"
-import {Address} from "@ton/core"
+import {Address} from "@tact-lang/compiler/dist/core"
 
 const tonapiResponseSchema = z.object({
     mintable: z.boolean(),

@@ -1,4 +1,4 @@
-import {Address, toNano, Cell} from "@ton/core"
+import {Address, toNano, Cell} from "@tact-lang/compiler/dist/core"
 
 export const randomAddress = (wc: number = 0) => {
     const buf = Buffer.alloc(32)

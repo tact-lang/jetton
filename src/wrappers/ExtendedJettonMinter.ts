@@ -6,7 +6,14 @@ import {
     Mint,
     ProvideWalletAddress,
 } from "../output/Jetton_JettonMinter"
-import {Address, beginCell, Cell, ContractProvider, Sender, toNano} from "@ton/core"
+import {
+    Address,
+    beginCell,
+    Cell,
+    ContractProvider,
+    Sender,
+    toNano,
+} from "@tact-lang/compiler/dist/core"
 
 export class ExtendedJettonMinter extends JettonMinter {
     constructor(address: Address, init?: {code: Cell; data: Cell}) {

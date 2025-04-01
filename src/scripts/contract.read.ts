@@ -1,6 +1,6 @@
 import "dotenv/config"
 import {getHttpEndpoint} from "@orbs-network/ton-access"
-import {Address} from "@ton/core"
+import {Address} from "@tact-lang/compiler/dist/core"
 import {createInterface} from "readline/promises"
 import {TonClient} from "@ton/ton"
 import {JettonMinter} from "../output/Jetton_JettonMinter"

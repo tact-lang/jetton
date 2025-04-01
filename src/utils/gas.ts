@@ -1,5 +1,5 @@
-import {Address, Cell} from "@ton/core"
-import type {Blockchain, SendMessageResult} from "@ton/sandbox"
+import {Address, Cell} from "@tact-lang/compiler/dist/core"
+import type {Blockchain, SendMessageResult} from "@tact-lang/compiler/dist/sandbox"
 import chalk from "chalk"
 import Table from "cli-table3"
 

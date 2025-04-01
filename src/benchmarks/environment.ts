@@ -1,6 +1,6 @@
-import {Blockchain} from "@ton/sandbox"
+import {Blockchain} from "@tact-lang/compiler/dist/sandbox"
 import {JettonUpdateContent} from "../output/Jetton_JettonMinter"
-import {Address, beginCell, Cell, toNano} from "@ton/core"
+import {Address, beginCell, Cell, toNano} from "@tact-lang/compiler/dist/core"
 import {assertTransactionChainWasSuccessful, assertWasDeployed} from "../utils/assert"
 import {ExtendedJettonMinter} from "../wrappers/ExtendedJettonMinter"
 import {ExtendedJettonWallet} from "../wrappers/ExtendedJettonWallet"

@@ -1,4 +1,4 @@
-import {Address} from "@ton/core"
+import {Address} from "@tact-lang/compiler/dist/core"
 import {callGetMetadataFromTonCenter} from "./toncenter"
 import {callGetMetadataFromTonApi} from "./tonapi"
 
