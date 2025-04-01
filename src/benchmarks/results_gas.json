@@ -58,6 +58,19 @@
                 "claimWallet": "4030"
             },
             "summary": "61476"
+        },
+        {
+            "label": "Tact bumped to 1.6.5",
+            "pr": "https://github.com/tact-lang/jetton/pull/109",
+            "gas": {
+                "transfer": "15615",
+                "mint": "18381",
+                "burn": "12880",
+                "discovery": "6023",
+                "reportBalance": "4308",
+                "claimWallet": "3984"
+            },
+            "summary": "61191"
         }
     ]
 }
