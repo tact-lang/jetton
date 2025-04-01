@@ -1,8 +1,6 @@
 # Jetton (Fungible Token) Implementation in Tact
 
-![Work in Progress](https://img.shields.io/badge/Work_In_Progress-Do%20not%20use%20in%20production%20yet-red?style=for-the-badge)
-
-# **This will definitely be a stable version of Jettons, but not for now. Please, do not use this code in production. It might have some bugs.**
+[![Testnet Deploy](https://img.shields.io/github/actions/workflow/status/tact-lang/jetton/deploy-test.yml?branch=main&style=for-the-badge&logo=stackblitz&label=Testnet%20Deploy)](https://gist.github.com/Kaladin13/3d2f2d0b3e2f5a81f77d8e490e3b2807#file-deploy-result-json)
 
 ## Overview
 
@@ -11,6 +9,7 @@ This project includes a complete setup for working with Tact-based Jetton smart 
 - A pre-configured Tact compiler.
 - Smart contracts written in the Tact language.
 - TypeScript + Jest testing environment with `@ton/sandbox`.
+- Gas usage benchmarks throughout different versions
 
 ## Goals
 
@@ -21,6 +20,8 @@ This implementation is fully compatible with the following TON standards:
 - [TEP-89](https://github.com/ton-blockchain/TEPs/blob/master/text/0089-jetton-wallet-discovery.md).
 
 You can use this implementation as an alternative to the reference Jetton contracts available in the [TON Blockchain repository](https://github.com/ton-blockchain/token-contract).
+
+You can read [Specification](./SPEC.md), that goes into the design choices and differences between this and other implementations
 
 ## Improvements and additional features
 
@@ -114,13 +115,89 @@ This verification test will check:
 - If the contract parameters match what you specified
 - If the contract metadata is correctly set up
 
-### 5. Test Contracts
+### 5. Read Contract Data
+
+You can read on-chain data for the minter from its address using script `src/scripts/contract.read.ts`
+
+```bash
+yarn read
+```
+
+Example output:
+
+```shell
+❯ yarn read
+yarn run v1.22.22
+$ ts-node ./src/scripts/contract.read.ts
+Enter minter address: kQC58H9FUaJ0XUBKq9lXJxF_JBQZIy0dC4_7y4ggr9PEKClM
+
+Minter data
+Total supply: 1000000000000000000
+Owner: EQD2ZeBj70MzYZll7HVTT4cNSn62-P0VCL4ncCd-08-4alAY
+Is mintable: Yes
+Token name: TactJetton
+Description: This is description of Jetton #41 (Run at 14171609974 - 1)
+Image: https://raw.githubusercontent.com/tact-lang/tact/refs/heads/main/docs/public/logomark-light.svg
+Done in 5.03s.
+```
+
+### 6. Test Contracts
 
 Run tests in the `@ton/sandbox` environment:
 
 ```bash
 yarn test
 ```
+
+### 6. Benchmark Contracts
+
+To run gas usage benchmarks and get them printed in the table, use
+
+```bash
+yarn bench
+```
+
+Example output
+
+```shell
+❯ yarn bench
+yarn run v1.22.22
+$ cross-env PRINT_TABLE=true ts-node ./src/benchmarks/benchmarks.ts
+Gas Usage Results:
+┌────────────────────────────────────────────────────────────────────┬────────────────┬────────────────┬────────────────┬───────────────┬───────────────┬─────────────┬────────────────┬──────┐
+│ Run                                                                │ transfer       │ mint           │ burn           │ discovery     │ reportBalance │ claimWallet │ Summary        │ PR # │
+├────────────────────────────────────────────────────────────────────┼────────────────┼────────────────┼────────────────┼───────────────┼───────────────┼─────────────┼────────────────┼──────┤
+│ Initial                                                            │ 16319          │ 18811          │ 12558          │ 6655          │ -             │ -           │ 54343          │ 77   │
+├────────────────────────────────────────────────────────────────────┼────────────────┼────────────────┼────────────────┼───────────────┼───────────────┼─────────────┼────────────────┼──────┤
+│ With Tact-lang changes (selector hack and basechain optimizations) │ 15511 (-4.95%) │ 18027 (-4.17%) │ 12390 (-1.34%) │ 6557 (-1.47%) │ -             │ -           │ 52485 (-3.42%) │ 83   │
+├────────────────────────────────────────────────────────────────────┼────────────────┼────────────────┼────────────────┼───────────────┼───────────────┼─────────────┼────────────────┼──────┤
+│ With Report Balance                                                │ 15511 same     │ 18027 same     │ 12408 (+0.15%) │ 6557 same     │ 4537 (new)    │ -           │ 57040 (+8.68%) │ 84   │
+├────────────────────────────────────────────────────────────────────┼────────────────┼────────────────┼────────────────┼───────────────┼───────────────┼─────────────┼────────────────┼──────┤
+│ Set selector-hack flag to default value                            │ 15651 (+0.90%) │ 18195 (+0.93%) │ 12576 (+1.35%) │ 6655 (+1.49%) │ 4607 (+1.54%) │ -           │ 57684 (+1.13%) │ 86   │
+├────────────────────────────────────────────────────────────────────┼────────────────┼────────────────┼────────────────┼───────────────┼───────────────┼─────────────┼────────────────┼──────┤
+│ With Ton Claim                                                     │ 15651 same     │ 17799 (-2.18%) │ 12944 (+2.93%) │ 6612 (-0.65%) │ 4440 (-3.62%) │ 4030 (new)  │ 61476 (+6.57%) │ 90   │
+└────────────────────────────────────────────────────────────────────┴────────────────┴────────────────┴────────────────┴───────────────┴───────────────┴─────────────┴────────────────┴──────┘
+
+Comparison with Tact Jetton implementation:
+Transfer: 95.91% of Tact Jetton gas usage
+Mint: 94.62% of Tact Jetton gas usage
+Burn: 103.07% of Tact Jetton gas usage
+Discovery: 99.35% of Tact Jetton gas usage
+ReportBalance: new! of Tact Jetton gas usage
+ClaimWallet: new! of Tact Jetton gas usage
+Done in 2.17s.
+```
+
+If you want to modify the contracts and benchmark your implementation, you can run
+
+```bash
+# add to add new entry
+yarn bench:add
+# or update to replace latest
+yarn bench:update
+```
+
+After that, use `yarn bench` to pretty-print the difference table with your results in it
 
 ## Jetton Architecture
 
@@ -142,6 +219,7 @@ src/
 │
 │   # Tests
 ├── tests/
+│   ├── extended.spec.ts
 │   └── jetton.spec.ts
 │
 │   # Deployment script
@@ -159,37 +237,32 @@ The configuration for the Tact compiler is in `tact.config.json` in the root of 
 
 ## Smart Contracts Structure
 
-The main smart contract is `jetton_minter.tact`, it imports `messages.tact` and `jetton_wallet.tact`. With the default configuration of `tact.config.json` targeting `jetton_minter.tact`, they're all compiled automatically.
+The main smart contract is `jetton-minter.tact`, it imports `messages.tact`, `constants.tact` and `jetton-wallet.tact`. With the default configuration of `tact.config.json` targeting `jetton-minter.tact`, they're all compiled automatically.
 
-### Inherited traits
-
-Jetton Minter uses only _OwnableTransferable_, which is inherited from the _Ownable_ trait. Jetton Wallet only uses the _Ownable_ trait. All these traits come from the Tact's [standard libraries](https://docs.tact-lang.org/ref/standard-libraries/).
-
-Schemes of inheritance and imports:
+Scheme of imports:
 
 ```mermaid
 graph LR
-    B[jetton_minter.tact] -->|import| A[messages.tact]
-    C[jetton_wallet.tact] -->|import| A[messages.tact]
-    B[jetton_minter.tact] -->|import| C[jetton_wallet.tact]
+    B[jetton-minter.tact] -->|import| A[messages.tact]
+    C[jetton-wallet.tact] -->|import| A[messages.tact]
+    B[jetton-minter.tact] -->|import| C[jetton-wallet.tact]
 
-    C[jetton_wallet.tact] -->|uses| E[ownable]
-    B[jetton_minter.tact] -->|uses| F[ownableTransferable]
-    F[ownableTransferable] -->|inherits| E[ownable]
-
-    class E,F ownableStyle;
-
-    classDef ownableStyle stroke-width:2,rx:25,ry:25;
-
+    C[jetton-wallet.tact] -->|import| E[constants.tact]
+    B[jetton-minter.tact] -->|import| E[constants.tact]
 ```
 
-Read more about those traits in the [Tact standard library](https://docs.tact-lang.org/ref/standard-libraries/).
+Read more about imports in the [Tact standard library](https://docs.tact-lang.org/ref/standard-libraries/).
+
+## Contributing
+
+Please check [CONTRIBUTING.md](dev-docs/CONTRIBUTING.md)
 
 ## Best Practices
 
 - For guidance on interacting with Jettons using Tact, read the [Jetton cookbook](https://docs.tact-lang.org/cookbook/jettons/).
 - Be cautious of fake messages sent by scammers. Read [security best practices](https://docs.tact-lang.org/book/security-best-practices/) to protect yourself from fraudulent activities.
 - Always consult the [official Tact documentation](https://docs.tact-lang.org/) for additional resources and support.
+- Check [Specification](dev-docs/SPEC.md) for more in-depth dive into implementation details
 
 ## License
 

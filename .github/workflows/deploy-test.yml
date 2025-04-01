@@ -6,6 +6,7 @@ on:
     branches:
       - main
       - deploy-check-in-ci
+      - usage-docs
 
 jobs:
   deploy-test:
@@ -36,4 +37,7 @@ jobs:
           JETTON_SUPPLY: 1000000000
           TONAPI_KEY: ${{ secrets.TONAPI_KEY }}
           TONCENTER_TESTNET_KEY: ${{ secrets.TONCENTER_TESTNET_KEY }}
+          GIST_UPLOAD_ENABLED: "true"
+          GIST_SECRET: ${{ secrets.GIST_JETTON_DEPLOY_SECRET }}
+          GIST_ID: "3d2f2d0b3e2f5a81f77d8e490e3b2807"
         run: yarn deploy && yarn verify-deployment
