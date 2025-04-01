@@ -40,33 +40,57 @@ export class ExtendedJettonMinter extends JettonMinter {
         return res.jettonContent
     }
 
+    /**
+     * Sends a mint message to the Jetton Minter contract to mint new Jettons for a specified recipient.
+     *
+     * @param provider - The contract provider used to interact with the blockchain.
+     * @param via - The sender object representing the wallet or account initiating the mint operation.
+     * @param to - The recipient address to which the newly minted Jettons will be sent.
+     * @param jettonAmount - The amount of Jettons to mint.
+     * @param forwardTonAmount - The amount of TONs to forward to the recipient along with the Jettons.
+     * @param totalTonAmount - The total amount of TONs to attach to the mint operation for fees and forwarding.
+     *
+     * @throws {Error} If the `totalTonAmount` is less than or equal to the `forwardTonAmount`.
+     *
+     * @returns A promise that resolves when the mint message has been sent.
+     *
+     * @example
+     * await jettonMinter.sendMint(
+     *     provider,
+     *     sender,
+     *     recipientAddress,
+     *     toNano("1000"), // Jetton amount
+     *     toNano("0.05"), // Forward TON amount
+     *     toNano("0.1"),  // Total TON amount
+     * );
+     */
     async sendMint(
         provider: ContractProvider,
         via: Sender,
         to: Address,
-        jetton_amount: bigint,
-        forward_ton_amount: bigint,
-        total_ton_amount: bigint,
+        jettonAmount: bigint,
+        forwardTonAmount: bigint,
+        totalTonAmount: bigint,
     ): Promise<void> {
-        if (total_ton_amount <= forward_ton_amount) {
+        if (totalTonAmount <= forwardTonAmount) {
             throw new Error("Total TON amount should be greater than the forward amount")
         }
         const msg: Mint = {
             $$type: "Mint",
             queryId: 0n,
             receiver: to,
-            tonAmount: total_ton_amount,
+            tonAmount: totalTonAmount,
             mintMessage: {
                 $$type: "JettonTransferInternal",
                 queryId: 0n,
-                amount: jetton_amount,
+                amount: jettonAmount,
                 sender: this.address,
                 responseDestination: this.address,
-                forwardTonAmount: forward_ton_amount,
+                forwardTonAmount: forwardTonAmount,
                 forwardPayload: beginCell().storeUint(0, 1).asSlice(),
             },
         }
-        return this.send(provider, via, {value: total_ton_amount + toNano("0.015")}, msg)
+        return this.send(provider, via, {value: totalTonAmount + toNano("0.015")}, msg)
     }
 
     async sendChangeAdmin(

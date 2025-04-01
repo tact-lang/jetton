@@ -23,15 +23,43 @@ export class ExtendedJettonWallet extends JettonWallet {
         return (await this.getGetWalletData(provider)).balance
     }
 
+    /**
+     * Sends a Jetton transfer message from this wallet to a specified recipient.
+     *
+     * @param provider - The contract provider used to interact with the blockchain. Automatically passed by the test environment proxy
+     * @param via - The sender object representing the wallet or account initiating the transfer.
+     * @param value - The amount of TONs to attach to the transfer for fees and forwarding.
+     * @param jettonAmount - The amount of Jettons to transfer.
+     * @param to - The recipient address to which the Jettons will be sent.
+     * @param responseAddress - The address to receive the response from the transfer operation (Jetton excesses)
+     * @param customPayload - An optional custom payload to include in the transfer message.
+     * @param forwardTonAmount - The amount of TONs to forward to the recipient along with the Jettons.
+     * @param forwardPayload - An optional payload to include in the forwarded message to the recipient.
+     *
+     * @returns A promise that resolves when the transfer message has been sent, returns SendResult.
+     *
+     * @example
+     * await jettonWallet.sendTransfer(
+     *     provider,
+     *     sender,
+     *     toNano("0.05"),
+     *     toNano("100"),
+     *     recipientAddress,
+     *     responseAddress,
+     *     null,
+     *     toNano("0.01"),
+     *     null
+     * );
+     */
     sendTransfer = async (
         provider: ContractProvider,
         via: Sender,
         value: bigint,
-        jetton_amount: bigint,
+        jettonAmount: bigint,
         to: Address,
         responseAddress: Address,
         customPayload: Cell | null,
-        forward_ton_amount: bigint,
+        forwardTonAmount: bigint,
         forwardPayload: Cell | null,
     ): Promise<void> => {
         const parsedForwardPayload =
@@ -42,11 +70,11 @@ export class ExtendedJettonWallet extends JettonWallet {
         const msg: JettonTransfer = {
             $$type: "JettonTransfer",
             queryId: 0n,
-            amount: jetton_amount,
+            amount: jettonAmount,
             destination: to,
             responseDestination: responseAddress,
             customPayload: customPayload,
-            forwardTonAmount: forward_ton_amount,
+            forwardTonAmount: forwardTonAmount,
             forwardPayload: parsedForwardPayload,
         }
 
@@ -57,14 +85,14 @@ export class ExtendedJettonWallet extends JettonWallet {
         provider: ContractProvider,
         via: Sender,
         value: bigint,
-        jetton_amount: bigint,
+        jettonAmount: bigint,
         responseAddress: Address | null,
         customPayload: Cell | null,
     ): Promise<void> => {
         const msg: JettonBurn = {
             $$type: "JettonBurn",
             queryId: 0n,
-            amount: jetton_amount,
+            amount: jettonAmount,
             responseDestination: responseAddress,
             customPayload: customPayload,
         }
@@ -101,6 +129,7 @@ export class ExtendedJettonWallet extends JettonWallet {
         return this.send(provider, via, {value: value}, msg)
     }
 
+    // for compatibility with the reference implementation tests
     sendWithdrawTons = async (_provider: ContractProvider, _via: Sender): Promise<void> => {
         throw new Error("Not implemented")
     }
