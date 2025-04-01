@@ -1,5 +1,5 @@
 import {Sha256} from "@aws-crypto/sha256-js"
-import {Dictionary, beginCell, Cell, Address} from "@tact-lang/compiler/dist/core"
+import {Dictionary, beginCell, Cell, Address} from "@tact-lang/compiler/core"
 import {JettonMinter} from "../output/Jetton_JettonMinter"
 import {TonClient} from "@ton/ton"
 import chalk from "chalk"

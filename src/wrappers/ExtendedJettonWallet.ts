@@ -1,12 +1,5 @@
 import {ClaimTON, JettonTransfer, JettonWallet} from "../output/Jetton_JettonWallet"
-import {
-    Address,
-    Builder,
-    Cell,
-    ContractProvider,
-    Sender,
-    toNano,
-} from "@tact-lang/compiler/dist/core"
+import {Address, Builder, Cell, ContractProvider, Sender, toNano} from "@tact-lang/compiler/core"
 import {JettonBurn, ProvideWalletBalance} from "../output/Jetton_JettonMinter"
 
 export class ExtendedJettonWallet extends JettonWallet {

@@ -1,10 +1,5 @@
-import {Address, Builder, beginCell, Cell, toNano} from "@tact-lang/compiler/dist/core"
-import {
-    Blockchain,
-    internal,
-    SandboxContract,
-    TreasuryContract,
-} from "@tact-lang/compiler/dist/sandbox"
+import {Address, Builder, beginCell, Cell, toNano} from "@tact-lang/compiler/core"
+import {Blockchain, internal, SandboxContract, TreasuryContract} from "@tact-lang/compiler/sandbox"
 import {ExtendedJettonWallet} from "../wrappers/ExtendedJettonWallet"
 import {ExtendedJettonMinter} from "../wrappers/ExtendedJettonMinter"
 
@@ -17,7 +12,7 @@ import {
     minTonsForStorage,
 } from "../output/Jetton_JettonMinter"
 
-import "@tact-lang/compiler/dist/jest-utils"
+import "@tact-lang/compiler/jest-utils"
 import {getRandomInt, randomAddress} from "../utils/utils"
 import {JettonWallet} from "../output/Jetton_JettonWallet"
 import {randomBytes} from "crypto"

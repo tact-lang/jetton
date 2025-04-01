@@ -1,10 +1,10 @@
-import {Address, beginCell, Cell, toNano} from "@tact-lang/compiler/dist/core"
+import {Address, beginCell, Cell, toNano} from "@tact-lang/compiler/core"
 import {
     Blockchain,
     BlockchainSnapshot,
     SandboxContract,
     TreasuryContract,
-} from "@tact-lang/compiler/dist/sandbox"
+} from "@tact-lang/compiler/sandbox"
 import {ExtendedJettonWallet} from "../wrappers/ExtendedJettonWallet"
 import {ExtendedJettonMinter} from "../wrappers/ExtendedJettonMinter"
 
@@ -18,7 +18,7 @@ import {
     minTonsForStorage,
 } from "../output/Jetton_JettonMinter"
 
-import "@tact-lang/compiler/dist/jest-utils"
+import "@tact-lang/compiler/jest-utils"
 
 // this test suite includes tests for the extended functionality
 describe("Jetton Minter Extended", () => {
@@ -82,6 +82,7 @@ describe("Jetton Minter Extended", () => {
         }
 
         userWallet = async (address: Address) => {
+            jettonMinter.getGetWalletAddress
             return blockchain.openContract(
                 new ExtendedJettonWallet(await jettonMinter.getGetWalletAddress(address)),
             )

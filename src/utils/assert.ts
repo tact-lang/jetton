@@ -1,8 +1,8 @@
 import {strict as assert} from "assert"
-import {Address, Cell, AccountStatus, ContractABI, fromNano} from "@tact-lang/compiler/dist/core"
+import {Address, Cell, AccountStatus, ContractABI, fromNano} from "@tact-lang/compiler/core"
 import chalk from "chalk"
-import {BlockchainTransaction} from "@tact-lang/compiler/dist/sandbox"
-import {flattenTransaction, FlatTransaction} from "@tact-lang/compiler/dist/jest-utils"
+import {BlockchainTransaction} from "@tact-lang/compiler/sandbox"
+import {flattenTransaction, FlatTransaction} from "@tact-lang/compiler/jest-utils"
 
 type FlatTransactionValue = number | bigint | boolean | Address | Cell | AccountStatus | undefined
 

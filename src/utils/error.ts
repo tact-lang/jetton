@@ -1,4 +1,4 @@
-import {ABIError} from "@tact-lang/compiler/dist/core"
+import {ABIError} from "@tact-lang/compiler/core"
 import {Maybe} from "@ton/core/dist/utils/maybe"
 
 export function findErrorCodeByMessage(
