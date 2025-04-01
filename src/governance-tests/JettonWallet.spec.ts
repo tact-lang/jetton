@@ -1553,10 +1553,10 @@ describe("JettonWallet", () => {
 
             // Remember, that it is governance Jettons
             // From jettonMaster to jw
-            console.log("Gas for send burn", getComputeGasForTx(sendResult.transactions[1]!))
+            console.log("Gas for send burn", getComputeGasForTx(sendResult.transactions[2]!))
             expect(getComputeGasForTx(sendResult.transactions[2]!)).toBeLessThanOrEqual(gasForBurn)
             // From jw to jetton_master
-            console.log("Gas for receive burn", getComputeGasForTx(sendResult.transactions[2]))
+            console.log("Gas for receive burn", getComputeGasForTx(sendResult.transactions[3]))
             expect(getComputeGasForTx(sendResult.transactions[3])).toBeLessThanOrEqual(gasForBurn)
         })
     })
