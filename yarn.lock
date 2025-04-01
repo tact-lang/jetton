@@ -1235,10 +1235,10 @@
     "@smithy/util-buffer-from" "^2.2.0"
     tslib "^2.6.2"
 
-"@tact-lang/compiler@^1.6.3", "@tact-lang/compiler@~1.6.1":
-  version "1.6.3"
-  resolved "https://registry.yarnpkg.com/@tact-lang/compiler/-/compiler-1.6.3.tgz#ab2073c8190accb53d7bd9ab2e6c339564f6b939"
-  integrity sha512-TLskaEiipGOM4Y93tYVH1xxLpm4gFuB11RxyrYYfJoZ7A5qPXT9IF9fZXP+niUdUlxXuzS3zS1Yc4O4hs9eK4A==
+"@tact-lang/compiler@^1.6.5", "@tact-lang/compiler@~1.6.1":
+  version "1.6.5"
+  resolved "https://registry.yarnpkg.com/@tact-lang/compiler/-/compiler-1.6.5.tgz#9dd1771c705a89ed2ff29f5d2d80dffd78cd2b0f"
+  integrity sha512-h7NnKQIaCo3iK/V7ten/6Q3APQkZK0RLji9LO2YpmYyRjlPWU77V2K6kf9GnaBNTDXG8DobxYWvozgPVtf8ttA==
   dependencies:
     "@tact-lang/opcode" "^0.3.0"
     "@ton/core" "0.60.1"

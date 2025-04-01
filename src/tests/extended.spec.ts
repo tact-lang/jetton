@@ -1,7 +1,21 @@
-import {Address, beginCell, Cell, toNano} from "@ton/core"
-import {Blockchain, BlockchainSnapshot, SandboxContract, TreasuryContract} from "@ton/sandbox"
+import {
+    Address,
+    beginCell,
+    Cell,
+    toNano,
+    TransactionComputeVm,
+    TransactionDescriptionGeneric,
+} from "@ton/core"
+import {
+    Blockchain,
+    BlockchainSnapshot,
+    BlockchainTransaction,
+    SandboxContract,
+    TreasuryContract,
+} from "@ton/sandbox"
 import {ExtendedJettonWallet} from "../wrappers/ExtendedJettonWallet"
 import {ExtendedJettonMinter} from "../wrappers/ExtendedJettonMinter"
+import {flattenTransaction, randomAddress} from "@ton/test-utils"
 
 import {
     JettonUpdateContent,
@@ -11,9 +25,15 @@ import {
     TakeWalletBalance,
     storeTakeWalletBalance,
     minTonsForStorage,
+    gasForTransfer,
+    gasForBurn,
 } from "../output/Jetton_JettonMinter"
 
-import "@ton/test-utils"
+function _printTransactions(txs: BlockchainTransaction[]) {
+    for (let tx of txs) {
+        console.log(flattenTransaction(tx))
+    }
+}
 
 // this test suite includes tests for the extended functionality
 describe("Jetton Minter Extended", () => {
@@ -356,6 +376,73 @@ describe("Jetton Minter Extended", () => {
             from: jettonMinter.address,
             to: deployer.address,
             inMessageBounced: true,
+        })
+    })
+
+    describe("Tact-way fees", () => {
+        function getComputeGasForTx(tx: BlockchainTransaction) {
+            return (
+                (tx.description as TransactionDescriptionGeneric)
+                    .computePhase as TransactionComputeVm
+            ).gasUsed
+        }
+
+        it("transfers with specified gas", async () => {
+            const jettonMintAmount = 0n
+            await jettonMinter.sendMint(
+                deployer.getSender(),
+                deployer.address,
+                jettonMintAmount,
+                0n,
+                toNano(1),
+            )
+            const deployerJettonWallet = await userWallet(deployer.address)
+            const randomNewReceiver = randomAddress(0)
+            const sendResult = await deployerJettonWallet.sendTransfer(
+                deployer.getSender(),
+                toNano("0.1"), //tons
+                0n, //Transfer 0 jettons, it doesn't affect the fee
+                randomNewReceiver,
+                deployer.address,
+                null,
+                toNano("0.05"),
+                null,
+            )
+            // From sender to jw
+            console.log("Gas for send transfer", getComputeGasForTx(sendResult.transactions[1]!))
+            expect(getComputeGasForTx(sendResult.transactions[1]!)).toBeLessThanOrEqual(
+                gasForTransfer,
+            )
+            // From jw to jw
+            console.log("Gas for receive transfer", getComputeGasForTx(sendResult.transactions[2]))
+            expect(getComputeGasForTx(sendResult.transactions[2])).toBeLessThanOrEqual(
+                gasForTransfer,
+            )
+        })
+        it("Burns with specified gas", async () => {
+            const jettonMintAmount = 0n
+            await jettonMinter.sendMint(
+                deployer.getSender(),
+                deployer.address,
+                jettonMintAmount,
+                0n,
+                toNano(1),
+            )
+            const deployerJettonWallet = await userWallet(deployer.address)
+            const sendResult = await deployerJettonWallet.sendBurn(
+                deployer.getSender(),
+                toNano(0.1),
+                0n, //Burn 0 jettons, it doesn't affect the fee
+                deployer.address,
+                null,
+            )
+
+            // From deployer to jw
+            console.log("Gas for send burn", getComputeGasForTx(sendResult.transactions[1]!))
+            expect(getComputeGasForTx(sendResult.transactions[1]!)).toBeLessThanOrEqual(gasForBurn)
+            // From jw to jetton_master
+            console.log("Gas for receive burn", getComputeGasForTx(sendResult.transactions[2]))
+            expect(getComputeGasForTx(sendResult.transactions[2])).toBeLessThanOrEqual(gasForBurn)
         })
     })
 })

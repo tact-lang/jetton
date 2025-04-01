@@ -83,8 +83,6 @@ contract JettonWallet(
     }
 
     receive(msg: ProvideWalletBalance) {
-        forceBasechain(msg.receiver);
-
         let info: VerifyInfo? = null;
         if (msg.includeVerifyInfo) {
             info = VerifyInfo {
