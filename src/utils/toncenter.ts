@@ -16,7 +16,8 @@ const tokenMetadataSchema = z.object({
 
 const tonCenterResponseSchema = z.record(tokenMetadataSchema)
 
-export type TonCenterResponse = z.infer<typeof tonCenterResponseSchema>
+type TonCenterResponse = z.infer<typeof tonCenterResponseSchema>
+export type TonCenterJettonMetadata = z.infer<typeof tokenMetadataSchema>
 
 export const callGetMetadataFromTonCenter = async (
     address: Address,

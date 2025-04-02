@@ -2,7 +2,7 @@ import {TonClient, WalletContractV4, Address, toNano} from "@ton/ton"
 import {getHttpEndpoint} from "@orbs-network/ton-access"
 import {JettonWallet} from "../output/Jetton_JettonWallet"
 import {validateJettonParams, JettonParams, buildJettonMinterFromEnv} from "../utils/jetton-helpers"
-import {callGetMetadataFromTonCenter} from "../utils/toncenter"
+import {callGetMetadataFromTonCenter, TonCenterJettonMetadata} from "../utils/toncenter"
 import {mnemonicToPrivateKey} from "@ton/crypto"
 import "dotenv/config"
 import {JettonMinter} from "../output/Jetton_JettonMinter"
@@ -93,40 +93,43 @@ describe("Contract Deployment Verification", () => {
     }, 60000) // Increased timeout for the test as we need to wait for the contract to be deployed
 
     it("should be recognized by TonCenter", async () => {
-        // This code is commented as TonCenter has an issue https://github.com/tact-lang/jetton/issues/87
-        /*
         const sleepTime = 5000
         const maxAttempts = 10
         let attempt = 0
-        let metadata: TonCenterResponse | undefined
-        
+        let metadata: TonCenterJettonMetadata | undefined
+
         while (attempt < maxAttempts) {
             await sleep(sleepTime)
             attempt++
-            metadata = await callGetMetadataFromTonCenter(jettonMinter.address)
-            if (metadata.is_indexed) {
-                console.log(`Contract is indexed by TonCenter, attempt ${attempt}/${maxAttempts}`)
+            const toncenterResponse = await callGetMetadataFromTonCenter(jettonMinter.address)
+            const resultParams = toncenterResponse[jettonParams.address.toRawString().toUpperCase()]
+
+            if (typeof resultParams !== "undefined") {
+                console.log(
+                    `Contract is discovered by TonCenter, attempt ${attempt}/${maxAttempts}`,
+                )
+                metadata = resultParams
                 break
             }
-            console.log(`Contract is not indexed by TonCenter, attempt ${attempt}/${maxAttempts}`)
+
+            console.log(
+                `Contract is not discovered by TonCenter, attempt ${attempt}/${maxAttempts}`,
+            )
         }
         if (!metadata) {
             throw new Error("Contract is not indexed by TonCenter")
         }
-        */
-        const response = await callGetMetadataFromTonCenter(jettonMinter.address)
 
-        const resultParams = response[jettonParams.address.toRawString().toUpperCase()]
-        expect(resultParams).toBeDefined()
-        expect(resultParams.token_info[0].type).toBe("jetton_masters")
+        expect(metadata).toBeDefined()
+        expect(metadata.token_info[0].type).toBe("jetton_masters")
 
         // This code is commented as TonCenter has an issue https://github.com/tact-lang/jetton/issues/87
         // expect(resultParams.is_indexed).toBe(true)
 
-        if (resultParams.is_indexed) {
-            expect(resultParams.token_info[0].name).toBe(jettonParams.metadata.name)
-            expect(resultParams.token_info[0].description).toBe(jettonParams.metadata.description)
-            expect(resultParams.token_info[0].image).toBe(jettonParams.metadata.image)
+        if (metadata.is_indexed) {
+            expect(metadata.token_info[0].name).toBe(jettonParams.metadata.name)
+            expect(metadata.token_info[0].description).toBe(jettonParams.metadata.description)
+            expect(metadata.token_info[0].image).toBe(jettonParams.metadata.image)
         }
     }, 60000) // Increased as we need to wait for the contract to be indexed by TonCenter
 
