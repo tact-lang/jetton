@@ -17,6 +17,19 @@ export const differentAddress = (old: Address) => {
     return newAddr
 }
 
+export const getNetworkFromEnv = () => {
+    const envNetwork = process.env.NETWORK
+    if (envNetwork === "mainnet" || envNetwork === "testnet") {
+        return envNetwork
+    } else {
+        return "testnet"
+    }
+}
+
+export const getNetworkSubdomain = (network: "mainnet" | "testnet") => {
+    return network === "mainnet" ? "" : network + "."
+}
+
 const getRandom = (min: number, max: number) => {
     return Math.random() * (max - min) + min
 }

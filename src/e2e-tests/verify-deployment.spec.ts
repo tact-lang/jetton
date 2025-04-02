@@ -9,6 +9,7 @@ import {JettonMinter} from "../output/Jetton_JettonMinter"
 import {callGetMetadataFromTonApi} from "../utils/tonapi"
 import {expect} from "@jest/globals"
 import {uploadDeployResultToGist} from "../utils/gist"
+import {getNetworkFromEnv} from "../utils/utils"
 
 describe("Contract Deployment Verification", () => {
     let client: TonClient
@@ -17,11 +18,9 @@ describe("Contract Deployment Verification", () => {
     let jettonParams: JettonParams
 
     beforeAll(async () => {
-        const network = process.env.NETWORK ?? "testnet"
-        if (network !== "testnet" && network !== "mainnet") {
-            throw new Error("Invalid network")
-        }
-        const endpoint = await getHttpEndpoint({network: network as "testnet" | "mainnet"})
+        const network = getNetworkFromEnv()
+
+        const endpoint = await getHttpEndpoint({network})
         client = new TonClient({endpoint})
 
         const mnemonics = process.env.MNEMONICS

@@ -6,6 +6,7 @@ import {TonClient} from "@ton/ton"
 import {JettonMinter} from "../output/Jetton_JettonMinter"
 import {displayContentCell} from "../utils/jetton-helpers"
 import chalk from "chalk"
+import {getNetworkFromEnv} from "../utils/utils"
 
 const readContractAddress = async () => {
     const readline = createInterface({
@@ -26,14 +27,9 @@ const readContractAddress = async () => {
 }
 
 const main = async () => {
-    const network = process.env.NETWORK ?? "testnet"
+    const network = getNetworkFromEnv()
 
-    if (network !== "mainnet" && network !== "testnet") {
-        console.error("Invalid network, should be mainnet or testnet, got ", network)
-        throw new Error("Invalid network")
-    }
-
-    const endpoint = await getHttpEndpoint({network: network})
+    const endpoint = await getHttpEndpoint({network})
     const client = new TonClient({
         endpoint: endpoint,
     })

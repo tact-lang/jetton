@@ -1,5 +1,6 @@
 import {z} from "zod"
 import {Address} from "@ton/core"
+import {getNetworkFromEnv, getNetworkSubdomain} from "./utils"
 
 const tonapiResponseSchema = z.object({
     mintable: z.boolean(),
@@ -23,9 +24,10 @@ const tonapiResponseSchema = z.object({
 export type TonApiResponse = z.infer<typeof tonapiResponseSchema>
 
 export const callGetMetadataFromTonApi = async (address: Address): Promise<TonApiResponse> => {
-    const network = process.env.NETWORK ?? "testnet"
+    const network = getNetworkFromEnv()
+
     const url = new URL(
-        `https://${network}.tonapi.io/v2/jettons/${address.toString({urlSafe: true})}`,
+        `https://${getNetworkSubdomain(network)}tonapi.io/v2/jettons/${address.toString({urlSafe: true})}`,
     )
 
     const TONAPI_KEY = process.env.TONAPI_KEY
