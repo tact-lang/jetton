@@ -2,6 +2,7 @@ import {Address, beginCell, Cell, toNano} from "@ton/core"
 import {Blockchain, BlockchainSnapshot, SandboxContract, TreasuryContract} from "@ton/sandbox"
 import {ExtendedJettonWallet} from "../wrappers/ExtendedJettonWallet"
 import {ExtendedJettonMinter} from "../wrappers/ExtendedJettonMinter"
+import {randomAddress} from "@ton/test-utils"
 
 import {
     JettonUpdateContent,
@@ -11,9 +12,10 @@ import {
     TakeWalletBalance,
     storeTakeWalletBalance,
     minTonsForStorage,
+    gasForTransfer,
+    gasForBurn,
 } from "../output/Jetton_JettonMinter"
-
-import "@ton/test-utils"
+import {getComputeGasForTx} from "../utils/gas"
 
 // this test suite includes tests for the extended functionality
 describe("Jetton Minter Extended", () => {
@@ -356,6 +358,75 @@ describe("Jetton Minter Extended", () => {
             from: jettonMinter.address,
             to: deployer.address,
             inMessageBounced: true,
+        })
+    })
+
+    describe("Tact-way fees", () => {
+        it("transfers with specified gas", async () => {
+            const jettonMintAmount = 0n
+            await jettonMinter.sendMint(
+                deployer.getSender(),
+                deployer.address,
+                jettonMintAmount,
+                0n,
+                toNano(1),
+            )
+            const deployerJettonWallet = await userWallet(deployer.address)
+            const randomNewReceiver = randomAddress(0)
+            const sendResult = await deployerJettonWallet.sendTransfer(
+                deployer.getSender(),
+                toNano("0.1"), //tons
+                0n, //Transfer 0 jettons, it doesn't affect the fee
+                randomNewReceiver,
+                deployer.address,
+                null,
+                toNano("0.05"),
+                null,
+            )
+            // NOTE: here we use constant from contract source code itself
+            // for both send and receive transactions, since basically it approximates the maximum
+            // of them two, making it easier to perform gas checks it Tact and it's sufficient enough
+
+            // From sender to jw
+            console.log("Gas for send transfer", getComputeGasForTx(sendResult.transactions[1]!))
+            expect(getComputeGasForTx(sendResult.transactions[1]!)).toBeLessThanOrEqual(
+                gasForTransfer,
+            )
+            // From jw to jw
+            console.log(
+                "Gas for receive (internal) transfer",
+                getComputeGasForTx(sendResult.transactions[2]),
+            )
+            expect(getComputeGasForTx(sendResult.transactions[2])).toBeLessThanOrEqual(
+                gasForTransfer,
+            )
+        })
+
+        it("Burns with specified gas", async () => {
+            const jettonMintAmount = 0n
+            await jettonMinter.sendMint(
+                deployer.getSender(),
+                deployer.address,
+                jettonMintAmount,
+                0n,
+                toNano(1),
+            )
+            const deployerJettonWallet = await userWallet(deployer.address)
+            const sendResult = await deployerJettonWallet.sendBurn(
+                deployer.getSender(),
+                toNano(0.1),
+                0n, //Burn 0 jettons, it doesn't affect the fee
+                deployer.address,
+                null,
+            )
+            // Same here as in transfers with single constant
+
+            // From deployer to jw
+            console.log("Gas for send burn", getComputeGasForTx(sendResult.transactions[1]!))
+            expect(getComputeGasForTx(sendResult.transactions[1]!)).toBeLessThanOrEqual(gasForBurn)
+            // From jw to jetton_master
+            console.log("Gas for receive burn", getComputeGasForTx(sendResult.transactions[2]))
+            expect(getComputeGasForTx(sendResult.transactions[2])).toBeLessThanOrEqual(gasForBurn)
         })
     })
 })
