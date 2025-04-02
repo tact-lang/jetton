@@ -950,13 +950,12 @@ describe("Jetton Minter", () => {
             false,
             minimalFee,
         )
-        // Here should be aborted transaction
-        // expect(discoveryResult.transactions).toHaveTransaction({
-        //     from: deployer.address,
-        //     to: jettonMinter.address,
-        //     aborted: true,
-        //     exitCode: JettonMinter.errors["Insufficient gas for discovery"],
-        // })
+        expect(discoveryResult.transactions).toHaveTransaction({
+            from: deployer.address,
+            to: jettonMinter.address,
+            aborted: true,
+            exitCode: JettonMinter.errors["Out of gas error"],
+        })
         /*
          * Might be helpful to have logical OR in expect lookup
          * Because here is what is stated in standard:
