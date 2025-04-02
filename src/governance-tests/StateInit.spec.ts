@@ -19,6 +19,7 @@ let jwallet_code_raw: Cell
 let jwallet_code: Cell
 let userWallet: (address: Address) => Promise<SandboxContract<ExtendedGovernanceJettonWallet>>
 
+// This test set is copied from https://github.com/ton-blockchain/stablecoin-contract
 describe("State init tests", () => {
     beforeAll(async () => {
         blockchain = await Blockchain.create()

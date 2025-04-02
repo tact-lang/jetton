@@ -1,7 +1,7 @@
 import "./messages";
 import "./constants";
 
-contract JettonWallet(
+contract JettonWalletGovernance(
     status: Int as uint4,
     balance: Int as coins,
     owner: Address,
@@ -43,7 +43,7 @@ contract JettonWallet(
                 forwardTonAmount: msg.forwardTonAmount,
                 forwardPayload: msg.forwardPayload,
             }.toCell(),
-            init: initOf JettonWallet(0, 0, msg.destination, self.master),
+            init: initOf JettonWalletGovernance(0, 0, msg.destination, self.master),
         });
     }
 
@@ -53,7 +53,7 @@ contract JettonWallet(
         self.balance += msg.amount;
 
         // This message should come only from master, or from other JettonWallet
-        let wallet: StateInit = initOf JettonWallet(0, 0, msg.sender, self.master);
+        let wallet: StateInit = initOf JettonWalletGovernance(0, 0, msg.sender, self.master);
         if (!wallet.hasSameBasechainAddress(sender())) {
             require(self.master == sender(), "Incorrect sender");
         }
@@ -134,17 +134,16 @@ contract JettonWallet(
             code: myCode(),
         };
     }
+
     get fun get_status(): Int {
         return self.status;
     }
 }
 
-
-inline fun checkEitherForwardPayload(forwardPayload: Slice) {
-    if (forwardPayload.preloadUint(1) == 1) {
-        let bitsAndRefs = caclulateSliceBitsAndRefs(forwardPayload);
-        require(bitsAndRefs.refs == 1 && bitsAndRefs.bits == 1, "Invalid forward payload in message");
-    }
+asm fun checkEitherForwardPayload(forwardPayload: Slice) {
+    PLDDICTQ
+    9 THROWIFNOT
+    DROP
 }
 
 struct SliceBitsAndRefs {
@@ -154,8 +153,4 @@ struct SliceBitsAndRefs {
 
 asm fun caclulateSliceBitsAndRefs(slice: Slice): SliceBitsAndRefs {
     SBITREFS
-}
-
-asm fun getPrecompiledGasConsumption(): Int? {
-    GETPRECOMPILEDGAS
 }

@@ -22,7 +22,7 @@
             "mode": "full",
             "options": {
                 "external": false,
-                "debug": true,
+                "debug": false,
                 "ipfsAbiGetter": false,
                 "interfacesGetter": false,
                 "experimental": {

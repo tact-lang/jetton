@@ -14,7 +14,7 @@ struct JettonMinterState {
     jettonWalletCode: Cell;
 }
 
-contract JettonMinter(
+contract JettonMinterGovernance(
     totalSupply: Int as coins,
     adminAddress: Address,
     nextAdminAddress: Address?,
@@ -73,7 +73,7 @@ contract JettonMinter(
         let ownerWorkchain: Int = parseStdAddress(msg.ownerAddress.asSlice()).workchain;
 
         let targetJettonWallet: BasechainAddress = (ownerWorkchain == Workchain)
-            ? contractBasechainAddress(initOf JettonWallet(0, 0, msg.ownerAddress, myAddress()))
+            ? contractBasechainAddress(initOf JettonWalletGovernance(0, 0, msg.ownerAddress, myAddress()))
             : emptyBasechainAddress();
 
         message(MessageParameters {
@@ -100,22 +100,17 @@ contract JettonMinter(
     receive(msg: CallTo) {
         require(sender() == self.adminAddress, "Incorrect sender");
         let masterMsgSlice = msg.masterMsg.beginParse();
-        let op = masterMsgSlice.loadUint(32);
-        masterMsgSlice.skipBits(64); // skip queryId
+        let op = masterMsgSlice.preloadUint(32);
 
         if (op == JettonTransferOpcode) {
-            masterMsgSlice.skipCoins();
-            masterMsgSlice.skipAddress();
-            masterMsgSlice.skipAddress();
-            masterMsgSlice.skipMaybeRef();
-            let forwardTonAmount = masterMsgSlice.loadCoins();
+            let msgToSend = JettonTransfer.fromSlice(masterMsgSlice);
 
-            checkEitherForwardPayload(masterMsgSlice);
+            checkEitherForwardPayload(msgToSend.forwardPayload);
 
             let ctx = context();
-            let fwdCount = 1 + sign(forwardTonAmount);
+            let fwdCount = 1 + sign(msgToSend.forwardTonAmount);
             require(ctx.value >
-                forwardTonAmount +
+                msgToSend.forwardTonAmount +
                 fwdCount * ctx.readForwardFee() +
                 (2 * getComputeFee(gasForTransfer, false) + minTonsForStorage),
                 "Insufficient amount of TON attached"
@@ -128,11 +123,9 @@ contract JettonMinter(
                 body: msg.masterMsg,
                 init: getJettonWalletInit(msg.toAddress),
             });
-        } else if (op == JettonBurnOpcode) { // JettonBurnNotification opcode
-            masterMsgSlice.skipCoins();
-            masterMsgSlice.skipAddress();
-            masterMsgSlice.skipMaybeRef(); // customPayload
-            masterMsgSlice.endParse();
+        } else if (op == JettonBurnOpcode) {
+            // It is needed to validate the message
+            JettonBurn.fromSlice(masterMsgSlice);
 
             let ctx = context();
             require(ctx.value > (ctx.readForwardFee() + 2 * getComputeFee(gasForBurn, false)), 
@@ -147,8 +140,8 @@ contract JettonMinter(
             });
 
         } else if (op == SetStatusOpcode) { // SetStatus opcode
-            masterMsgSlice.skipBits(4); // STATUS_SIZE = 4
-            masterMsgSlice.endParse();
+            // It is needed to validate the message
+            SetStatus.fromSlice(masterMsgSlice);
 
             deploy(DeployParameters{
                 bounce: false,
@@ -185,7 +178,7 @@ contract JettonMinter(
             mintable: self.mintable,
             adminAddress: self.adminAddress,
             jettonContent: self.jettonContent,
-            jettonWalletCode: codeOf JettonWallet,
+            jettonWalletCode: codeOf JettonWalletGovernance,
         };
     }
 
@@ -210,7 +203,7 @@ inline fun makeTakeWalletAddressMsg(targetJettonWallet: BasechainAddress, msg: P
 }
 
 inline fun getJettonWalletInit(address: Address): StateInit {
-    return initOf JettonWallet(0, 0, address, myAddress());
+    return initOf JettonWalletGovernance(0, 0, address, myAddress());
 }
 
 inline fun getJettonWalletByOwner(jettonWalletOwner: Address): Address {
