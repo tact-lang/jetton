@@ -1,6 +1,5 @@
 import "./messages";
 import "./constants";
-import "./utils";
 
 contract JettonWallet(
     balance: Int as coins,

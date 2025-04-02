@@ -15,3 +15,12 @@ inline fun makeTakeWalletAddressMsg(targetJettonWallet: BasechainAddress, msg: P
         .storeMaybeRef(msg.includeAddress ? beginCell().storeAddress(msg.ownerAddress).endCell() : null)
         .endCell();
 }
+
+struct SliceBitsAndRefs {
+    bits: Int;
+    refs: Int;
+}
+
+asm fun caclulateSliceBitsAndRefs(slice: Slice): SliceBitsAndRefs {
+    SBITREFS
+}

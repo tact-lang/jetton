@@ -3,12 +3,12 @@ import {Address, beginCell, Cell, Dictionary, storeStateInit, toNano} from "@ton
 import {
     ExtendedGovernanceJettonMinter,
     jettonContentToCell,
-} from "../wrappers/ExtendedGovernanceJettonMinter"
-import {ExtendedGovernanceJettonWallet} from "../wrappers/ExtendedGovernanceJettonWallet"
+} from "../../wrappers/ExtendedGovernanceJettonMinter"
+import {ExtendedGovernanceJettonWallet} from "../../wrappers/ExtendedGovernanceJettonWallet"
 
 import "@ton/test-utils"
 import {collectCellStats} from "./gasUtils"
-import {Op} from "../wrappers/GovernanceJettonConstants"
+import {Op} from "../../wrappers/GovernanceJettonConstants"
 
 let blockchain: Blockchain
 let deployer: SandboxContract<TreasuryContract>

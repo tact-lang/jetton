@@ -2,7 +2,7 @@ import "./jetton-wallet";
 import "./messages";
 import "./constants";
 import "../utils.tact";
-import "./utils";
+import "../utils";
 
 struct JettonMinterState {
     totalSupply: Int as coins;

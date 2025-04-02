@@ -1,7 +1,7 @@
 import {Address, beginCell, Cell, toNano} from "@ton/core"
 import {Blockchain, internal, SandboxContract, TreasuryContract} from "@ton/sandbox"
-import {ExtendedJettonWallet} from "../wrappers/ExtendedJettonWallet"
-import {ExtendedJettonMinter} from "../wrappers/ExtendedJettonMinter"
+import {ExtendedJettonWallet} from "../../wrappers/ExtendedJettonWallet"
+import {ExtendedJettonMinter} from "../../wrappers/ExtendedJettonMinter"
 
 import {
     JettonUpdateContent,
@@ -10,11 +10,11 @@ import {
     storeMint,
     JettonMinter,
     minTonsForStorage,
-} from "../output/Jetton_JettonMinter"
+} from "../../output/Jetton_JettonMinter"
 
 import "@ton/test-utils"
-import {getRandomInt, randomAddress, storeBigPayload} from "../utils/utils"
-import {JettonWallet} from "../output/Jetton_JettonWallet"
+import {getRandomInt, randomAddress, storeBigPayload} from "../../utils/utils"
+import {JettonWallet} from "../../output/Jetton_JettonWallet"
 
 function jettonContentToCell(content: {type: 0 | 1; uri: string}) {
     return beginCell()

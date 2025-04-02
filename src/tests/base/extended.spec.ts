@@ -1,7 +1,7 @@
 import {Address, beginCell, Cell, toNano} from "@ton/core"
 import {Blockchain, BlockchainSnapshot, SandboxContract, TreasuryContract} from "@ton/sandbox"
-import {ExtendedJettonWallet} from "../wrappers/ExtendedJettonWallet"
-import {ExtendedJettonMinter} from "../wrappers/ExtendedJettonMinter"
+import {ExtendedJettonWallet} from "../../wrappers/ExtendedJettonWallet"
+import {ExtendedJettonMinter} from "../../wrappers/ExtendedJettonMinter"
 import {randomAddress} from "@ton/test-utils"
 
 import {
@@ -14,8 +14,8 @@ import {
     minTonsForStorage,
     gasForTransfer,
     gasForBurn,
-} from "../output/Jetton_JettonMinter"
-import {getComputeGasForTx} from "../utils/gas"
+} from "../../output/Jetton_JettonMinter"
+import {getComputeGasForTx} from "../../utils/gas"
 
 // this test suite includes tests for the extended functionality
 describe("Jetton Minter Extended", () => {

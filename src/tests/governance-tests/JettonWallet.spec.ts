@@ -23,7 +23,7 @@ import {
     TransactionComputeVm,
 } from "@ton/core"
 
-import {Op} from "../wrappers/GovernanceJettonConstants"
+import {Op} from "../../wrappers/GovernanceJettonConstants"
 import {findTransactionRequired, flattenTransaction} from "@ton/test-utils"
 
 import {
@@ -61,11 +61,11 @@ import {sha256} from "@ton/crypto"
 import {
     ExtendedGovernanceJettonMinter,
     jettonContentToCell,
-} from "../wrappers/ExtendedGovernanceJettonMinter"
-import {ExtendedGovernanceJettonWallet} from "../wrappers/ExtendedGovernanceJettonWallet"
-import {gasForBurn, gasForTransfer} from "../output/Governance_GovernanceJettonMinter"
+} from "../../wrappers/ExtendedGovernanceJettonMinter"
+import {ExtendedGovernanceJettonWallet} from "../../wrappers/ExtendedGovernanceJettonWallet"
+import {gasForBurn, gasForTransfer} from "../../output/Governance_GovernanceJettonMinter"
 
-import {storeBigPayload} from "../utils/utils"
+import {storeBigPayload} from "../../utils/utils"
 
 type JettonMinterContent = {
     uri: string
@@ -1011,7 +1011,10 @@ describe("JettonWallet", () => {
                 .storeBuilder(forwardTail)
                 .endCell()
 
-            let errCodes = [9]
+            let errCodes = [
+                9,
+                ExtendedGovernanceJettonMinter.errors["Invalid forward payload in message"],
+            ]
             let res = await sendTransferPayload(
                 deployer.address,
                 deployerJettonWallet.address,
@@ -1077,7 +1080,10 @@ describe("JettonWallet", () => {
                 .storeAddress(deployer.address)
                 .storeMaybeRef(null)
                 .storeCoins(toNano("0.05")) // No forward payload indication
-            let errCodes = [9]
+            let errCodes = [
+                9,
+                ExtendedGovernanceJettonMinter.errors["Invalid forward payload in message"],
+            ]
             let res = await sendTransferPayload(
                 deployer.address,
                 deployerJettonWallet.address,
