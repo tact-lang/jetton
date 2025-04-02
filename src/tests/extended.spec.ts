@@ -385,7 +385,7 @@ describe("Jetton Minter Extended", () => {
             )
             // NOTE: here we use constant from contract source code itself
             // for both send and receive transactions, since basically it approximates the maximum
-            // of them two, making it easier to perform gas checks it Tact and it's sufficent enough
+            // of them two, making it easier to perform gas checks it Tact and it's sufficient enough
 
             // From sender to jw
             console.log("Gas for send transfer", getComputeGasForTx(sendResult.transactions[1]!))

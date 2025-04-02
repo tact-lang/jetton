@@ -116,7 +116,7 @@ claim_ton#0393b1ce receiver:MsgAddress = InternalMsgBody;
 
 ## Semantic changes
 
-We decided to change behaviour of a few receivers
+We decided to change behavior of a few receivers
 
 #### Mint send amount
 
