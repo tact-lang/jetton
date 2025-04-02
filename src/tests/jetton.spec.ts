@@ -911,7 +911,10 @@ describe("Jetton Minter", () => {
         })
     })
 
-    it("Minimal discovery fee", async () => {
+    // This test is present in reference implementation
+    // But we decided to remove gas-check from ProvideWalletAddress receiver
+    // As it does not make sense to check gas in this receiver (You will just waste gas and get custom error instead of -14)
+    it.skip("Minimal discovery fee", async () => {
         // 5000 gas-units + msg_forward_prices.lump_price + msg_forward_prices.cell_price = 0.0061
         //const fwdFee     = 1464012n;
         //const minimalFee = fwdFee + 10000000n; // toNano('0.0061');
@@ -951,7 +954,7 @@ describe("Jetton Minter", () => {
             from: deployer.address,
             to: jettonMinter.address,
             aborted: true,
-            exitCode: JettonMinter.errors["Insufficient gas for discovery"],
+            exitCode: JettonMinter.errors["Out of gas error"],
         })
         /*
          * Might be helpful to have logical OR in expect lookup

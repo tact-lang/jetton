@@ -1,5 +1,5 @@
 import {Address, Cell} from "@ton/core"
-import type {Blockchain, SendMessageResult} from "@ton/sandbox"
+import type {Blockchain, BlockchainTransaction, SendMessageResult} from "@ton/sandbox"
 import chalk from "chalk"
 import Table from "cli-table3"
 
@@ -27,12 +27,16 @@ export function getUsedGasInternal(
 
     return sendResult.transactions
         .slice(1, lastTxInChainNumber)
-        .map(t =>
-            t.description.type === "generic" && t.description.computePhase.type === "vm"
-                ? Number(t.description.computePhase.gasUsed)
-                : 0,
-        )
+        .map(t => getComputeGasForTx(t))
         .reduceRight((prev, cur) => prev + cur)
+}
+
+export function getComputeGasForTx(tx: BlockchainTransaction) {
+    if (tx.description.type === "generic" && tx.description.computePhase.type === "vm") {
+        return Number(tx.description.computePhase.gasUsed)
+    }
+
+    return 0
 }
 
 type BenchmarkResult = {
