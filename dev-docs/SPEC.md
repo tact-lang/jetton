@@ -51,6 +51,18 @@ require(
 );
 ```
 
+#### Atomic receivers
+
+Terminology first: we call receiver **atomic**, if it only does send single out message that is not expected to further continue as a chain of transaction (we don't say it couldn't, we just don't make such assertions in our logic)
+
+Examples of **atomic** receivers are:
+
+- Claim TON
+- Provide Wallet address
+- Provide Wallet balance
+
+We decided to remove gas usage checks from atomic receivers, since they will fail shortly after in action phase anyway. The only difference is custom exit code, however someone can argue that TVM exit codes are more explicit about what happened anyway
+
 ## Features
 
 We have added additional receivers, not specified by TEP, but long awaited by devs
@@ -101,3 +113,32 @@ sequenceDiagram
 ```tlb
 claim_ton#0393b1ce receiver:MsgAddress = InternalMsgBody;
 ```
+
+## Semantic changes
+
+We decided to change behaviour of a few receivers
+
+#### Mint send amount
+
+In other implementations, `mint` TL-B looks like this:
+
+```tlb
+mint#21
+  query_id:uint64
+  to_address:MsgAddressInt
+  ton_amount:Coins
+  master_msg:^JettonInternalTransfer
+  = JettonMinterMsg;
+```
+
+Field `ton_amount` represents amount that we want to send with out `master_msg` that is `JettonInternalTransfer`. However, since **atomic** receiver and it's only functionality is to perform checks and send next message in the chain, it make sense for it to follow general semantics in such cases, which is
+
+```tact
+message(MessageParameters {
+    ...
+    value: 0,
+    mode: SendRemainingValue,
+});
+```
+
+Our implementation does exactly this: ignores `ton_amount` field and uses `SendMode 64`. Given `excesses`, this approach seems more preferable and easier to follow both for users and developers
