@@ -23,7 +23,9 @@ export const callGetMetadataFromTonCenter = async (
     address: Address,
 ): Promise<TonCenterResponse> => {
     const network = process.env.NETWORK ?? "testnet"
-    const url = new URL(`https://${network}.toncenter.com/api/v3/metadata`)
+    const url = new URL(
+        `https://${network === "mainnet" ? "" : network + "."}toncenter.com/api/v3/metadata`,
+    )
     url.searchParams.append("address", address.toString({urlSafe: true}))
 
     const TONCENTER_KEY = process.env[`TONCENTER_${network.toUpperCase()}_KEY`]
