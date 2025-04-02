@@ -16,26 +16,32 @@ contract JettonMinter(
     jettonContent: Cell,
     mintable: Bool, // Should be deployed with this flag set to true
 ) {
-    // Owner of this contract may be masterchain address, 
+    // Owner of this contract may be masterchain address,
     // however minting is possible only to basechain addresses
+    // it is asserted inside the deploy function
     receive(msg: Mint) {
         require(sender() == self.owner, "Incorrect sender");
         require(self.mintable, "Mint is closed");
- 
+
         let ctx = context();
-        require(ctx.value > 
+        // we don't add compute fees for mint itself and reserve here
+        // it's okay since it’s sent only by the admin and excesses will return back
+        require(
+            ctx.value >
             minTonsForStorage +
-            msg.mintMessage.forwardTonAmount + 
-            ctx.readForwardFee() + 
+            msg.mintMessage.forwardTonAmount +
+            ctx.readForwardFee() +
             2 * getComputeFee(gasForTransfer, false),
-            "Insufficient gas for mint");
+            "Insufficient gas for mint",
+        );
 
         self.totalSupply += msg.mintMessage.amount;
 
+        // basechain destination is calculated inside deploy function
         deploy(DeployParameters {
-            value: 0,
+            value: 0, // ignore msg.tonAmount and use SendMode 64 instead
             bounce: true,
-            mode: SendRemainingValue,
+            mode: SendRemainingValue | SendBounceIfActionFail,
             body: msg.mintMessage.toCell(),
             init: getJettonWalletInit(msg.receiver),
         });
@@ -45,7 +51,7 @@ contract JettonMinter(
         let ownerWorkchain: Int = parseStdAddress(msg.ownerAddress.asSlice()).workchain;
 
         // If owner is basechain address, we can calculate jettonWallet
-        let targetJettonWallet: BasechainAddress = (ownerWorkchain == 0)
+        let targetJettonWallet: BasechainAddress = (ownerWorkchain == Basechain)
             ? contractBasechainAddress(initOf JettonWallet(0, msg.ownerAddress, myAddress()))
             : emptyBasechainAddress();
 
@@ -60,9 +66,9 @@ contract JettonMinter(
     receive(msg: JettonBurnNotification) {
         let sender = parseStdAddress(sender().asSlice());
         let wallet = getJettonBasechainWalletByOwner(msg.sender);
-        
+
         // Workchain 0 is basechain
-        require(sender.workchain == 0 && sender.address == wallet.hash!!, "Unauthorized burn");
+        require(sender.workchain == Basechain && sender.address == wallet.hash!!, "Unauthorized burn");
 
         self.totalSupply -= msg.amount;
 

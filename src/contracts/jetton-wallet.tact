@@ -104,6 +104,8 @@ contract JettonWallet(
     }
 
     receive(msg: JettonBurn) {
+        // we can skip forceBasechain here because with other checks in place it's not possible 
+        // to acquire jettons ourside of basechain, so amount check is enough
         require(sender() == self.owner, "Incorrect sender");
 
         self.balance -= msg.amount;
