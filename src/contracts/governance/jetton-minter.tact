@@ -3,6 +3,7 @@
 import "./jetton-wallet";
 import "./messages";
 import "./constants";
+import "../utils.tact";
 
 const Workchain: Int = 0;
 
@@ -14,7 +15,7 @@ struct JettonMinterState {
     jettonWalletCode: Cell;
 }
 
-contract JettonMinterGovernance(
+contract GovernanceJettonMinter(
     totalSupply: Int as coins,
     adminAddress: Address,
     nextAdminAddress: Address?,
@@ -189,17 +190,6 @@ contract JettonMinterGovernance(
     get fun get_next_admin_address(): Address? {
         return self.nextAdminAddress;
     }
-}
-
-asm fun emptyAddress(): Address { b{00} PUSHSLICE }
-
-inline fun makeTakeWalletAddressMsg(targetJettonWallet: BasechainAddress, msg: ProvideWalletAddress): Cell {
-    return beginCell()
-        .storeUint(TakeWalletAddressOpcode, 32)
-        .storeUint(msg.queryId, 64)
-        .storeBasechainAddress(targetJettonWallet)
-        .storeMaybeRef(msg.includeAddress ? beginCell().storeAddress(msg.ownerAddress).endCell() : null)
-        .endCell();
 }
 
 inline fun getJettonWalletInit(address: Address): StateInit {

@@ -139,18 +139,3 @@ contract JettonWalletGovernance(
         return self.status;
     }
 }
-
-asm fun checkEitherForwardPayload(forwardPayload: Slice) {
-    PLDDICTQ
-    9 THROWIFNOT
-    DROP
-}
-
-struct SliceBitsAndRefs {
-    bits: Int;
-    refs: Int;
-}
-
-asm fun caclulateSliceBitsAndRefs(slice: Slice): SliceBitsAndRefs {
-    SBITREFS
-}

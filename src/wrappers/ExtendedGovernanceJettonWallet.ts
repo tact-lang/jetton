@@ -1,6 +1,6 @@
 import {Address, beginCell, Cell, ContractProvider, Sender, SendMode, toNano} from "@ton/core"
 
-import {JettonWallet} from "../output/Governance_JettonWallet"
+import {JettonWalletGovernance} from "../output/Governance_JettonWalletGovernance"
 
 export type JettonWalletConfig = {
     ownerAddress: Address
@@ -26,13 +26,13 @@ export function parseJettonWalletData(data: Cell) {
     }
 }
 
-export class ExtendedGovernanceJettonWallet extends JettonWallet {
+export class ExtendedGovernanceJettonWallet extends JettonWalletGovernance {
     constructor(address: Address, init?: {code: Cell; data: Cell}) {
         super(address, init)
     }
 
     static async fromInit(status: bigint, balance: bigint, owner: Address, minter: Address) {
-        const base = await JettonWallet.fromInit(status, balance, owner, minter)
+        const base = await JettonWalletGovernance.fromInit(status, balance, owner, minter)
         if (base.init === undefined) {
             throw new Error("GovernanceJettonWallet init is not defined")
         }
@@ -88,7 +88,7 @@ export class ExtendedGovernanceJettonWallet extends JettonWallet {
         forwardPayload: Cell | null,
     ) {
         return beginCell()
-            .storeUint(JettonWallet.opcodes.JettonTransfer, 32)
+            .storeUint(JettonWalletGovernance.opcodes.JettonTransfer, 32)
             .storeUint(0, 64) // op, queryId
             .storeCoins(jetton_amount)
             .storeAddress(to)
@@ -133,7 +133,7 @@ export class ExtendedGovernanceJettonWallet extends JettonWallet {
         customPayload: Cell | null,
     ) {
         return beginCell()
-            .storeUint(JettonWallet.opcodes.JettonBurn, 32)
+            .storeUint(JettonWalletGovernance.opcodes.JettonBurn, 32)
             .storeUint(0, 64) // op, queryId
             .storeCoins(jetton_amount)
             .storeAddress(responseAddress)

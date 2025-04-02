@@ -9,7 +9,7 @@ import {
     toNano,
 } from "@ton/core"
 
-import {JettonMinter as GovernanceJettonMinter} from "../output/Governance_JettonMinter"
+import {GovernanceJettonMinter} from "../output/Governance_GovernanceJettonMinter"
 import {Op} from "./GovernanceJettonConstants"
 import {ExtendedGovernanceJettonWallet} from "./ExtendedGovernanceJettonWallet"
 

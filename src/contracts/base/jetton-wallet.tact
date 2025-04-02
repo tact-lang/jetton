@@ -1,5 +1,6 @@
 import "./messages";
 import "./constants";
+import "./utils";
 
 contract JettonWallet(
     balance: Int as coins,
@@ -12,7 +13,7 @@ contract JettonWallet(
 
         self.balance -= msg.amount;
         require(self.balance >= 0, "Incorrect balance after send");
-        require(msg.forwardPayload.bits() >= 1, "Invalid forward payload");
+        checkEitherForwardPayload(msg.forwardPayload);
 
         let ctx = context();
         let fwdCount = 1 + sign(msg.forwardTonAmount); // msg.forwardTonAmount is coins, so it's positive
