@@ -187,13 +187,7 @@ describe("JettonWallet", () => {
             )
         ).init!.code
         minter_code = (
-            await ExtendedGovernanceJettonMinter.fromInit(
-                0n,
-                deployer.address,
-                null,
-                new Cell(),
-                true,
-            )
+            await ExtendedGovernanceJettonMinter.fromInit(0n, deployer.address, null, new Cell())
         ).init!.code
         notDeployer = await blockchain.treasury("notDeployer")
         walletStats = new StorageStats(11000, 24)

@@ -9,6 +9,11 @@
             "addWords": true
         }
     ],
+    "ignoreRegExpList": [
+        "\\b[xB]\\{[a-fA-F0-9]*_?\\}", // binary literals in Fift-asm
+        "\\b0[xX][a-fA-F0-9_]*\\b", // hexadecimal numbers
+        "\\b(?:address|crc32|cell|slice|rawSlice)\\(\".+?\"\\)", // some comptime functions
+    ],
     "ignorePaths": [
         "node_modules/**",
         "dist/**",
@@ -17,6 +22,9 @@
         "package.json",
         "yarn.lock",
         "src/output/**",
-        "tsconfig.json"
+        "tsconfig.json",
+        "*.boc",
+        "*.fif",
+        "*.spec.ts.snap"
     ]
 }

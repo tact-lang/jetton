@@ -131,14 +131,12 @@ export class ExtendedGovernanceJettonMinter extends GovernanceJettonMinter {
         owner: Address,
         nextAdmin: Address | null,
         jettonContent: Cell,
-        mintable: boolean,
     ) {
         const base = await GovernanceJettonMinter.fromInit(
             totalSupply,
             owner,
             nextAdmin,
             jettonContent,
-            mintable,
         )
         if (base.init === undefined) {
             throw new Error("GovernanceJettonMinter init is not defined")
@@ -154,7 +152,7 @@ export class ExtendedGovernanceJettonMinter extends GovernanceJettonMinter {
             config.jetton_content instanceof Cell
                 ? config.jetton_content
                 : jettonContentToCell(config.jetton_content)
-        return await this.fromInit(0n, config.admin, null, content, true)
+        return await this.fromInit(0n, config.admin, null, content)
     }
 
     async sendDeploy(provider: ContractProvider, via: Sender, value: bigint) {

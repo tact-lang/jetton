@@ -33,13 +33,7 @@ describe("State init tests", () => {
             )
         ).init!.code
         minter_code = (
-            await ExtendedGovernanceJettonMinter.fromInit(
-                0n,
-                deployer.address,
-                null,
-                new Cell(),
-                true,
-            )
+            await ExtendedGovernanceJettonMinter.fromInit(0n, deployer.address, null, new Cell())
         ).init!.code
 
         //jwallet_code is library

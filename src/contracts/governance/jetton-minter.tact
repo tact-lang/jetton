@@ -20,7 +20,6 @@ contract GovernanceJettonMinter(
     adminAddress: Address,
     nextAdminAddress: Address?,
     jettonContent: Cell,
-    mintable: Bool, // Should be deployed with this flag set to true
 ) {
     receive(msg: Mint) {
         require(sender() == self.adminAddress, "Incorrect sender");
@@ -176,7 +175,7 @@ contract GovernanceJettonMinter(
     get fun get_jetton_data(): JettonMinterState {
         return JettonMinterState {
             totalSupply: self.totalSupply,
-            mintable: self.mintable,
+            mintable: true,
             adminAddress: self.adminAddress,
             jettonContent: self.jettonContent,
             jettonWalletCode: codeOf JettonWalletGovernance,

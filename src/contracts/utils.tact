@@ -1,6 +1,6 @@
 inline fun checkEitherForwardPayload(forwardPayload: Slice) {
     if (forwardPayload.preloadUint(1) == 1) {
-        let bitsAndRefs = caclulateSliceBitsAndRefs(forwardPayload);
+        let bitsAndRefs = calculateSliceBitsAndRefs(forwardPayload);
         require(bitsAndRefs.refs == 1 && bitsAndRefs.bits == 1, "Invalid forward payload in message");
     }
 }
@@ -21,6 +21,6 @@ struct SliceBitsAndRefs {
     refs: Int;
 }
 
-asm fun caclulateSliceBitsAndRefs(slice: Slice): SliceBitsAndRefs {
+asm fun calculateSliceBitsAndRefs(slice: Slice): SliceBitsAndRefs {
     SBITREFS
 }
