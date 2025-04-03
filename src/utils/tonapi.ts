@@ -1,5 +1,6 @@
 import {z} from "zod"
 import {Address} from "@ton/core"
+import {getJettonHttpLink, getNetworkFromEnv} from "./utils"
 
 const tonapiResponseSchema = z.object({
     mintable: z.boolean(),
@@ -23,16 +24,15 @@ const tonapiResponseSchema = z.object({
 export type TonApiResponse = z.infer<typeof tonapiResponseSchema>
 
 export const callGetMetadataFromTonApi = async (address: Address): Promise<TonApiResponse> => {
-    const network = process.env.NETWORK ?? "testnet"
-    const url = new URL(
-        `https://${network}.tonapi.io/v2/jettons/${address.toString({urlSafe: true})}`,
-    )
+    const network = getNetworkFromEnv()
+
+    const url = getJettonHttpLink(network, address, "tonapi")
 
     const TONAPI_KEY = process.env.TONAPI_KEY
     if (!TONAPI_KEY) {
         throw new Error("TONAPI_KEY is not set")
     }
-    const response = await fetch(url.toString(), {
+    const response = await fetch(url, {
         headers: {
             "X-API-Key": TONAPI_KEY,
             Accept: "application/json",
