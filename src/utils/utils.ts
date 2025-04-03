@@ -26,8 +26,32 @@ export const getNetworkFromEnv = () => {
     }
 }
 
-export const getNetworkSubdomain = (network: "mainnet" | "testnet") => {
+const getNetworkSubdomain = (network: "mainnet" | "testnet") => {
     return network === "mainnet" ? "" : network + "."
+}
+
+type HttpJettonLink = "tonviewer" | "tonapi" | "toncenter" | "tonscan"
+
+export const getJettonHttpLink = (
+    network: "mainnet" | "testnet",
+    minterAddress: Address,
+    linkType: HttpJettonLink,
+) => {
+    const subdomain = getNetworkSubdomain(network)
+    const address = minterAddress.toString({urlSafe: true})
+
+    switch (linkType) {
+        case "tonviewer":
+            return `https://${subdomain}tonviewer.com/${address}`
+        case "tonapi":
+            return `https://${subdomain}tonapi.io/v2/jettons/${address}`
+        case "toncenter":
+            return `https://${subdomain}toncenter.com/api/v3/metadata?address=${address}`
+        case "tonscan":
+            return `https://${subdomain}tonscan.org/address/${address}`
+        default:
+            throw new Error("Invalid link type")
+    }
 }
 
 const getRandom = (min: number, max: number) => {

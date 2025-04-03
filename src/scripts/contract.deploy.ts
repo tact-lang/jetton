@@ -8,7 +8,7 @@ import {storeMint} from "../output/Jetton_JettonMinter"
 
 import {printSeparator} from "../utils/print"
 import "dotenv/config"
-import {getNetworkFromEnv, getNetworkSubdomain} from "../utils/utils"
+import {getJettonHttpLink, getNetworkFromEnv} from "../utils/utils"
 
 /*
     (Remember to install dependencies by running "yarn install" in the terminal)
@@ -110,9 +110,8 @@ const main = async () => {
         ],
     })
     console.log("====== Deployment message sent to =======\n", jettonMinter.address)
-    console.log(
-        `You can soon check your deployed contract at https://${getNetworkSubdomain(network)}tonviewer.com/${jettonMinter.address.toString({urlSafe: true})}`,
-    )
+    const link = getJettonHttpLink(network, jettonMinter.address, "tonviewer")
+    console.log(`You can soon check your deployed contract at ${link}`)
 }
 
 void main()

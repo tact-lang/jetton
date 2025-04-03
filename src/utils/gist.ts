@@ -1,7 +1,7 @@
 import {Address} from "@ton/core"
 import {callGetMetadataFromTonCenter} from "./toncenter"
 import {callGetMetadataFromTonApi} from "./tonapi"
-import {getNetworkFromEnv, getNetworkSubdomain} from "./utils"
+import {getJettonHttpLink, getNetworkFromEnv} from "./utils"
 
 export const uploadDeployResultToGist = async (jettonMinterAddress: Address) => {
     const isUploadEnabled = process.env.GIST_UPLOAD_ENABLED === "true"
@@ -30,8 +30,8 @@ export const uploadDeployResultToGist = async (jettonMinterAddress: Address) => 
         const tonapiResponse = await callGetMetadataFromTonApi(jettonMinterAddress)
 
         const content = {
-            tonviewer: `https://${getNetworkSubdomain(network)}tonviewer.com/${jettonMinterAddress.toString({urlSafe: true})}`,
-            tonscan: `https://${getNetworkSubdomain(network)}tonscan.org/address/${jettonMinterAddress.toString({urlSafe: true})}`,
+            tonviewer: getJettonHttpLink(network, jettonMinterAddress, "tonviewer"),
+            tonscan: getJettonHttpLink(network, jettonMinterAddress, "tonscan"),
             toncenterMetadata: toncenterResponse,
             tonapiMetadata: tonapiResponse,
         }
