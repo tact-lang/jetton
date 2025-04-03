@@ -1,6 +1,8 @@
 import "./jetton-wallet";
 import "./messages";
 import "./constants";
+import "../utils.tact";
+import "../utils";
 
 struct JettonMinterState {
     totalSupply: Int as coins;
@@ -22,6 +24,8 @@ contract JettonMinter(
     receive(msg: Mint) {
         require(sender() == self.owner, "Incorrect sender");
         require(self.mintable, "Mint is closed");
+
+        checkEitherForwardPayload(msg.mintMessage.forwardPayload);
 
         let ctx = context();
         // we don't add compute fees for mint itself and reserve here
@@ -131,16 +135,6 @@ contract JettonMinter(
     }
 }
 
-asm fun emptyAddress(): Address { b{00} PUSHSLICE }
-
-inline fun makeTakeWalletAddressMsg(targetJettonWallet: BasechainAddress, msg: ProvideWalletAddress): Cell {
-    return beginCell()
-        .storeUint(TakeWalletAddressOpcode, 32)
-        .storeUint(msg.queryId, 64)
-        .storeBasechainAddress(targetJettonWallet)
-        .storeMaybeRef(msg.includeAddress ? beginCell().storeAddress(msg.ownerAddress).endCell() : null)
-        .endCell();
-}
 
 inline fun getJettonWalletInit(address: Address): StateInit {
     return initOf JettonWallet(0, address, myAddress());

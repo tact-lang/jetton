@@ -2,7 +2,7 @@
     "projects": [
         {
             "name": "Jetton",
-            "path": "./src/contracts/jetton-minter.tact",
+            "path": "./src/contracts/base/jetton-minter.tact",
             "output": "./src/output",
             "mode": "full",
             "options": {
@@ -12,6 +12,24 @@
                 "interfacesGetter": false,
                 "experimental": {
                     "inline": true
+                }
+            }
+        },
+        {
+            "name": "Governance",
+            "path": "./src/contracts/governance/jetton-minter.tact",
+            "output": "./src/output",
+            "mode": "full",
+            "options": {
+                "external": false,
+                "debug": false,
+                "ipfsAbiGetter": false,
+                "interfacesGetter": false,
+                "experimental": {
+                    "inline": true
+                },
+                "optimizations": {
+                    "alwaysSaveContractData": false
                 }
             }
         }

@@ -71,6 +71,19 @@
                 "claimWallet": "3984"
             },
             "summary": "61191"
+        },
+        {
+            "label": "new forward payload check",
+            "pr": "https://github.com/tact-lang/jetton/pull/106",
+            "gas": {
+                "transfer": "15677",
+                "mint": "18562",
+                "burn": "12880",
+                "discovery": "6023",
+                "reportBalance": "4308",
+                "claimWallet": "3984"
+            },
+            "summary": "61434"
         }
     ]
 }

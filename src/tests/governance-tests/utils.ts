@@ -1,5 +1,4 @@
-import {Address, toNano, Cell, Builder, beginCell} from "@ton/core"
-import {randomBytes} from "crypto"
+import {Address, toNano, Cell} from "@ton/core"
 
 export const randomAddress = (wc: number = 0) => {
     const buf = Buffer.alloc(32)
@@ -16,43 +15,6 @@ export const differentAddress = (old: Address) => {
     } while (newAddr.equals(old))
 
     return newAddr
-}
-
-export const getNetworkFromEnv = () => {
-    const envNetwork = process.env.NETWORK
-    if (envNetwork === "mainnet" || envNetwork === "testnet") {
-        return envNetwork
-    } else {
-        return "testnet"
-    }
-}
-
-const getNetworkSubdomain = (network: "mainnet" | "testnet") => {
-    return network === "mainnet" ? "" : network + "."
-}
-
-type HttpJettonLink = "tonviewer" | "tonapi" | "toncenter" | "tonscan"
-
-export const getJettonHttpLink = (
-    network: "mainnet" | "testnet",
-    minterAddress: Address,
-    linkType: HttpJettonLink,
-) => {
-    const subdomain = getNetworkSubdomain(network)
-    const address = minterAddress.toString({urlSafe: true})
-
-    switch (linkType) {
-        case "tonviewer":
-            return `https://${subdomain}tonviewer.com/${address}`
-        case "tonapi":
-            return `https://${subdomain}tonapi.io/v2/jettons/${address}`
-        case "toncenter":
-            return `https://${subdomain}toncenter.com/api/v3/metadata?address=${address}`
-        case "tonscan":
-            return `https://${subdomain}tonscan.org/address/${address}`
-        default:
-            throw new Error("Invalid link type")
-    }
 }
 
 const getRandom = (min: number, max: number) => {
@@ -105,7 +67,11 @@ export const parseInternalTransfer = (body: Cell) => {
         payload: ts.loadMaybeRef(),
     }
 }
-
+type JettonTransferNotification = {
+    amount: bigint
+    from: Address | null
+    payload: Cell | null
+}
 export const parseTransferNotification = (body: Cell) => {
     const bs = body.beginParse().skip(64 + 32)
     return {
@@ -115,6 +81,11 @@ export const parseTransferNotification = (body: Cell) => {
     }
 }
 
+type JettonBurnNotification = {
+    amount: bigint
+    from: Address
+    response_address: Address | null
+}
 export const parseBurnNotification = (body: Cell) => {
     const ds = body.beginParse().skip(64 + 32)
     const res = {
@@ -126,23 +97,46 @@ export const parseBurnNotification = (body: Cell) => {
     return res
 }
 
-export const storeBigPayload = (curBuilder: Builder, maxDepth: number = 5) => {
-    let rootBuilder = curBuilder
-
-    function dfs(builder: Builder, currentDepth: number) {
-        if (currentDepth >= maxDepth) {
-            return
+const testPartial = (cmp: any, match: any) => {
+    for (let key in match) {
+        if (!(key in cmp)) {
+            throw Error(`Unknown key ${key} in ${cmp}`)
         }
-        // Cell has a capacity of 1023 bits, so we can store 127 bytes max
-        builder.storeBuffer(randomBytes(127))
-        // Store all 4 references
-        for (let i = 0; i < 4; i++) {
-            let newBuilder = beginCell()
-            dfs(newBuilder, currentDepth + 1)
-            builder.storeRef(newBuilder.endCell())
+
+        if (match[key] instanceof Address) {
+            if (!(cmp[key] instanceof Address)) {
+                return false
+            }
+            if (!(match[key] as Address).equals(cmp[key])) {
+                return false
+            }
+        } else if (match[key] instanceof Cell) {
+            if (!(cmp[key] instanceof Cell)) {
+                return false
+            }
+            if (!(match[key] as Cell).equals(cmp[key])) {
+                return false
+            }
+        } else if (match[key] !== cmp[key]) {
+            return false
         }
     }
+    return true
+}
+export const testJettonBurnNotification = (body: Cell, match: Partial<JettonBurnNotification>) => {
+    const res = parseBurnNotification(body)
+    return testPartial(res, match)
+}
 
-    dfs(rootBuilder, 0) // Start DFS with depth 0
-    return rootBuilder
+export const testJettonTransfer = (body: Cell, match: Partial<JettonTransfer>) => {
+    const res = parseTransfer(body)
+    return testPartial(res, match)
+}
+export const testJettonInternalTransfer = (body: Cell, match: Partial<InternalTransfer>) => {
+    const res = parseInternalTransfer(body)
+    return testPartial(res, match)
+}
+export const testJettonNotification = (body: Cell, match: Partial<JettonTransferNotification>) => {
+    const res = parseTransferNotification(body)
+    return testPartial(res, match)
 }
