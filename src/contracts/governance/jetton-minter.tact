@@ -96,7 +96,7 @@ contract GovernanceJettonMinter(
         self.nextAdminAddress = null;
     }
 
-    // can be used to lock, unlock or reedem funds
+    // can be used to lock, unlock or redeem funds
     receive(msg: CallTo) {
         require(sender() == self.adminAddress, "Incorrect sender");
         let masterMsgSlice = msg.masterMsg.beginParse();

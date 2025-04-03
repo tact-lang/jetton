@@ -15,7 +15,7 @@
         "verify-deployment": "jest src/e2e-tests/verify-deployment.spec.ts",
         "fmt": "yarn prettier -l -w .",
         "fmt:check": "yarn prettier --check .",
-        "spell": "cspell \"**/*.{ts,js,json,md,yml}\" --no-progress",
+        "spell": "cspell \"**/*.{ts,js,json,md,yml,tact}\"",
         "spell:check": "cspell --no-progress \"**/*.{ts,js,json,md,yml}\"",
         "bench": "yarn build && cross-env PRINT_TABLE=true ts-node ./src/benchmarks/benchmarks.ts",
         "bench:ci": "yarn build && cross-env PRINT_TABLE=false ts-node ./src/benchmarks/benchmarks.ts",

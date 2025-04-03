@@ -1,11 +1,16 @@
 {
     "version": "0.2",
     "language": "en",
-    "dictionaries": ["typescript", "node", "npm", "custom-dictionary"],
+    "dictionaries": ["typescript", "node", "npm", "custom-dictionary", "tvm-instructions"],
     "dictionaryDefinitions": [
         {
             "name": "custom-dictionary",
             "path": "./spell/custom-dictionary.txt",
+            "addWords": true
+        },
+        {
+            "name": "tvm-instructions",
+            "path": "./spell/tvm-instructions.txt",
             "addWords": true
         }
     ],
