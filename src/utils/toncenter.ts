@@ -1,5 +1,6 @@
 import {z} from "zod"
 import {Address} from "@ton/ton"
+import {getJettonHttpLink, getNetworkFromEnv} from "./utils"
 
 const tokenSchema = z.object({
     type: z.string(),
@@ -16,21 +17,21 @@ const tokenMetadataSchema = z.object({
 
 const tonCenterResponseSchema = z.record(tokenMetadataSchema)
 
-export type TonCenterResponse = z.infer<typeof tonCenterResponseSchema>
+type TonCenterResponse = z.infer<typeof tonCenterResponseSchema>
+export type TonCenterJettonMetadata = z.infer<typeof tokenMetadataSchema>
 
 export const callGetMetadataFromTonCenter = async (
     address: Address,
 ): Promise<TonCenterResponse> => {
-    const network = process.env.NETWORK ?? "testnet"
-    const url = new URL(`https://${network}.toncenter.com/api/v3/metadata`)
-    url.searchParams.append("address", address.toString({urlSafe: true}))
+    const network = getNetworkFromEnv()
+    const url = getJettonHttpLink(network, address, "toncenter")
 
     const TONCENTER_KEY = process.env[`TONCENTER_${network.toUpperCase()}_KEY`]
     if (!TONCENTER_KEY) {
         throw new Error(`TONCENTER_${network.toUpperCase()}_KEY is not set`)
     }
 
-    const response = await fetch(url.toString(), {
+    const response = await fetch(url, {
         headers: {
             "X-API-Key": TONCENTER_KEY,
             Accept: "application/json",
