@@ -87,7 +87,7 @@
         },
         {
           "label": "reordered fields in JettonWallet",
-          "pr": "https://github.com/tact-lang/jetton/pull/123",
+          "pr": "https://github.com/tact-lang/jetton/pull/122",
           "gas": {
             "transfer": "15667",
             "mint": "18544",
