@@ -2,9 +2,9 @@ import "./messages";
 import "./constants";
 
 contract JettonWallet(
-    balance: Int as coins,
     owner: Address,
     minter: Address,
+    balance: Int as coins,
 ) {
     receive(msg: JettonTransfer) {
         forceBasechain(msg.destination);
@@ -36,7 +36,7 @@ contract JettonWallet(
                 forwardTonAmount: msg.forwardTonAmount,
                 forwardPayload: msg.forwardPayload,
             }.toCell(),
-            init: initOf JettonWallet(0, msg.destination, self.minter),
+            init: initOf JettonWallet(msg.destination, self.minter, 0),
         });
     }
 
@@ -44,7 +44,7 @@ contract JettonWallet(
         self.balance += msg.amount;
 
         // This message should come only from master, or from other JettonWallet
-        let wallet: StateInit = initOf JettonWallet(0, msg.sender, self.minter);
+        let wallet: StateInit = initOf JettonWallet(msg.sender, self.minter, 0);
         if (!wallet.hasSameBasechainAddress(sender())) {
             require(self.minter == sender(), "Incorrect sender");
         }

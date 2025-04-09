@@ -57,7 +57,7 @@ describe("Contract Deployment Verification", () => {
             totalSupply: toNano(Number(process.env.JETTON_SUPPLY ?? 1000000000)),
             owner: deployerWalletAddress,
             jettonWalletCode: (
-                await JettonWallet.init(0n, deployerWalletAddress, jettonMinter.address)
+                await JettonWallet.init(deployerWalletAddress, jettonMinter.address, 0n)
             ).code,
         }
     })
