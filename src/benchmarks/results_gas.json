@@ -86,17 +86,17 @@
             "summary": "61434"
         },
         {
-          "label": "reordered fields in JettonWallet",
-          "pr": "https://github.com/tact-lang/jetton/pull/122",
-          "gas": {
-            "transfer": "15667",
-            "mint": "18544",
-            "burn": "12862",
-            "discovery": "6015",
-            "reportBalance": "4308",
-            "claimWallet": "3984"
-          },
-          "summary": "61380"
+            "label": "reordered fields in JettonWallet",
+            "pr": "https://github.com/tact-lang/jetton/pull/122",
+            "gas": {
+                "transfer": "15667",
+                "mint": "18544",
+                "burn": "12862",
+                "discovery": "6015",
+                "reportBalance": "4308",
+                "claimWallet": "3984"
+            },
+            "summary": "61380"
         }
     ]
 }
