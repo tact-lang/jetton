@@ -69,7 +69,7 @@ describe("Jetton Minter Extended", () => {
         }
 
         jettonWallet = blockchain.openContract(
-            await ExtendedJettonWallet.fromInit(0n, deployer.address, jettonMinter.address),
+            await ExtendedJettonWallet.fromInit(deployer.address, jettonMinter.address, 0n),
         )
         const walletCode = jettonWallet.init?.code
         if (walletCode === undefined) {

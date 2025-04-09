@@ -7,8 +7,8 @@ export class ExtendedJettonWallet extends JettonWallet {
         super(address, init)
     }
 
-    static async fromInit(balance: bigint, owner: Address, minter: Address) {
-        const base = await JettonWallet.fromInit(balance, owner, minter)
+    static async fromInit(owner: Address, minter: Address, balance: bigint) {
+        const base = await JettonWallet.fromInit(owner, minter, balance)
         if (base.init === undefined) {
             throw new Error("JettonWallet init is not defined")
         }
