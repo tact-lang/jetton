@@ -1005,10 +1005,7 @@ describe("JettonWallet", () => {
                 .storeBuilder(forwardTail)
                 .endCell()
 
-            let errCodes = [
-                9,
-                ExtendedGovernanceJettonMinter.errors["Invalid forward payload in message"],
-            ]
+            let errCodes = [9]
             let res = await sendTransferPayload(
                 deployer.address,
                 deployerJettonWallet.address,
@@ -1074,10 +1071,7 @@ describe("JettonWallet", () => {
                 .storeAddress(deployer.address)
                 .storeMaybeRef(null)
                 .storeCoins(toNano("0.05")) // No forward payload indication
-            let errCodes = [
-                9,
-                ExtendedGovernanceJettonMinter.errors["Invalid forward payload in message"],
-            ]
+            let errCodes = [9]
             let res = await sendTransferPayload(
                 deployer.address,
                 deployerJettonWallet.address,
