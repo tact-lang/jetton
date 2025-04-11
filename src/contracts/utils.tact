@@ -1,9 +1,3 @@
-inline fun checkEitherForwardPayloadOld(forwardPayload: Slice) {
-    if (forwardPayload.preloadUint(1) == 1) {
-        let bitsAndRefs = calculateSliceBitsAndRefs(forwardPayload);
-        require(bitsAndRefs.refs == 1 && bitsAndRefs.bits == 1, "Invalid forward payload in message");
-    }
-}
 asm fun checkEitherForwardPayload(forwardPayload: Slice) {
     LDDICT // Throws 9 if Either bit = 1 and ref is not present
     SWAP
