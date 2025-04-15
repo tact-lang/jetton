@@ -98,7 +98,7 @@ export const parseBurnNotification = (body: Cell) => {
 }
 
 const testPartial = (cmp: any, match: any) => {
-    for (let key in match) {
+    for (const key in match) {
         if (!(key in cmp)) {
             throw Error(`Unknown key ${key} in ${cmp}`)
         }

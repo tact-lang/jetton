@@ -3,7 +3,8 @@ import {strict as assert} from "assert"
 import {generateResults, printBenchmarkTable} from "../utils/gas"
 import benchmarkResults from "./results_gas.json"
 import {
-    runTransferBenchmark,
+    runTransferBenchmarkWithForwardPayload,
+    runTransferBenchmarkWithoutForwardPayload,
     runMintBenchmark,
     runBurnBenchmark,
     runDiscoveryBenchmark,
@@ -15,7 +16,9 @@ const main = async () => {
     const results = generateResults(benchmarkResults)
     const expectedResult = results.at(-1)!
 
-    const gasUsedForTransfer = await runTransferBenchmark()
+    const gasUsedForTransferWithFwd = await runTransferBenchmarkWithForwardPayload()
+    const gasUsedForTransferWithoutFwd = await runTransferBenchmarkWithoutForwardPayload()
+    const gasUsedForTransfer = gasUsedForTransferWithFwd + gasUsedForTransferWithoutFwd
     assert.equal(gasUsedForTransfer, expectedResult.gas["transfer"])
 
     const gasUsedForMint = await runMintBenchmark()

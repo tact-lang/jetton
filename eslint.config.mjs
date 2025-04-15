@@ -51,6 +51,13 @@ export default [
                     varsIgnorePattern: "^_",
                 },
             ],
+            "prefer-const": [
+                "error",
+                {
+                    destructuring: "all",
+                    ignoreReadBeforeAssign: false,
+                },
+            ],
             "@typescript-eslint/prefer-optional-chain": "off",
             "@typescript-eslint/no-extraneous-class": "off",
             "@typescript-eslint/no-magic-numbers": "off",

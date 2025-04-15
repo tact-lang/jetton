@@ -1,7 +1,8 @@
 import {createInterface} from "readline/promises"
 import benchmarkResults from "./results_gas.json"
 import {
-    runTransferBenchmark,
+    runTransferBenchmarkWithForwardPayload,
+    runTransferBenchmarkWithoutForwardPayload,
     runMintBenchmark,
     runBurnBenchmark,
     runDiscoveryBenchmark,
@@ -36,7 +37,9 @@ const main = async () => {
         ? {label: expectedResult.label, prNumber: expectedResult.pr}
         : await readInput()
 
-    const gasUsedForTransfer = await runTransferBenchmark()
+    const gasUsedForTransfer =
+        (await runTransferBenchmarkWithForwardPayload()) +
+        (await runTransferBenchmarkWithoutForwardPayload())
     const gasUsedForMint = await runMintBenchmark()
     const gasUsedForBurn = await runBurnBenchmark()
     const gasUsedForDiscovery = await runDiscoveryBenchmark()

@@ -127,7 +127,7 @@ export const parseBurnNotification = (body: Cell) => {
 }
 
 export const storeBigPayload = (curBuilder: Builder, maxDepth: number = 5) => {
-    let rootBuilder = curBuilder
+    const rootBuilder = curBuilder
 
     function dfs(builder: Builder, currentDepth: number) {
         if (currentDepth >= maxDepth) {
@@ -137,7 +137,7 @@ export const storeBigPayload = (curBuilder: Builder, maxDepth: number = 5) => {
         builder.storeBuffer(randomBytes(127))
         // Store all 4 references
         for (let i = 0; i < 4; i++) {
-            let newBuilder = beginCell()
+            const newBuilder = beginCell()
             dfs(newBuilder, currentDepth + 1)
             builder.storeRef(newBuilder.endCell())
         }

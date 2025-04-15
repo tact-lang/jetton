@@ -2,12 +2,11 @@ asm fun checkEitherForwardPayload(forwardPayload: Slice) {
     LDDICT // Throws 9 if Either bit = 1 and ref is not present
     SWAP
     ISNULL
-    NOT
-    <{
-        ENDS // Also throws 9 if slice is not empty
-    }> PUSHCONT
     <{
         DROP
+    }> PUSHCONT
+    <{
+        ENDS // Also throws 9 if slice is not empty
     }> PUSHCONT
     IFELSE
 }

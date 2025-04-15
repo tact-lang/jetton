@@ -55,7 +55,7 @@ export class ExtendedGovernanceJettonWallet extends JettonWalletGovernance {
     }
 
     async getWalletData(provider: ContractProvider) {
-        let {stack} = await provider.get("get_wallet_data", [])
+        const {stack} = await provider.get("get_wallet_data", [])
         return {
             balance: stack.readBigNumber(),
             owner: stack.readAddress(),
@@ -64,19 +64,19 @@ export class ExtendedGovernanceJettonWallet extends JettonWalletGovernance {
         }
     }
     async getJettonBalance(provider: ContractProvider) {
-        let state = await provider.getState()
+        const state = await provider.getState()
         if (state.state.type !== "active") {
             return 0n
         }
-        let res = await provider.get("get_wallet_data", [])
+        const res = await provider.get("get_wallet_data", [])
         return res.stack.readBigNumber()
     }
     async getWalletStatus(provider: ContractProvider) {
-        let state = await provider.getState()
+        const state = await provider.getState()
         if (state.state.type !== "active") {
             return 0
         }
-        let res = await provider.get("get_status", [])
+        const res = await provider.get("get_status", [])
         return res.stack.readNumber()
     }
     static transferMessage(
