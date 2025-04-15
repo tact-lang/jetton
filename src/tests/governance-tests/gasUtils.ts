@@ -27,7 +27,7 @@ export class StorageStats {
     add(...stats: StorageStats[]) {
         let cells = this.cells,
             bits = this.bits
-        for (let stat of stats) {
+        for (const stat of stats) {
             bits += stat.bits
             cells += stat.cells
         }
@@ -36,7 +36,7 @@ export class StorageStats {
     sub(...stats: StorageStats[]) {
         let cells = this.cells,
             bits = this.bits
-        for (let stat of stats) {
+        for (const stat of stats) {
             bits -= stat.bits
             cells -= stat.cells
         }
@@ -77,7 +77,7 @@ export function storageGeneric<T extends Transaction>(transaction: T) {
 }
 
 function shr16ceil(src: bigint) {
-    let rem = src % BigInt(65536)
+    const rem = src % BigInt(65536)
     let res = src / 65536n // >> BigInt(16);
     if (rem != BigInt(0)) {
         res += BigInt(1)
@@ -92,15 +92,15 @@ export function collectCellStats(
 ): StorageStats {
     let bits = skipRoot ? 0n : BigInt(cell.bits.length)
     let cells = skipRoot ? 0n : 1n
-    let hash = cell.hash().toString()
+    const hash = cell.hash().toString()
     if (visited.includes(hash)) {
         // We should not account for current cell data if visited
         return new StorageStats()
     } else {
         visited.push(hash)
     }
-    for (let ref of cell.refs) {
-        let r = collectCellStats(ref, visited)
+    for (const ref of cell.refs) {
+        const r = collectCellStats(ref, visited)
         cells += r.cells
         bits += r.bits
     }
@@ -216,7 +216,7 @@ export function computeDefaultForwardFee(msgPrices: MsgPrices) {
 }
 
 export function computeCellForwardFees(msgPrices: MsgPrices, msg: Cell) {
-    let storageStats = collectCellStats(msg, [], true)
+    const storageStats = collectCellStats(msg, [], true)
     return computeFwdFees(msgPrices, storageStats.cells, storageStats.bits)
 }
 export function computeMessageForwardFees(msgPrices: MsgPrices, msg: Message) {
@@ -236,7 +236,7 @@ export function computeMessageForwardFees(msgPrices: MsgPrices, msg: Message) {
             stats: storageStats,
         }
     }
-    let visited: Array<string> = []
+    const visited: Array<string> = []
     // Init
     if (msg.init) {
         let addBits = 5n // Minimal additional bits
@@ -293,7 +293,7 @@ export function computeMessageForwardFees(msgPrices: MsgPrices, msg: Message) {
 }
 
 export const configParseMsgPrices = (sc: Slice) => {
-    let magic = sc.loadUint(8)
+    const magic = sc.loadUint(8)
 
     if (magic != 0xea) {
         throw Error("Invalid message prices magic number!")

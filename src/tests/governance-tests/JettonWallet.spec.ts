@@ -92,7 +92,7 @@ let burn_notification_fee: bigint
 let min_tons_for_storage: bigint
 
 function _printTransactions(txs: Transaction[]) {
-    for (let tx of txs) {
+    for (const tx of txs) {
         console.log(flattenTransaction(tx))
     }
 }
@@ -205,7 +205,7 @@ describe("JettonWallet", () => {
         _libs.set(BigInt(`0x${jwallet_code_raw.hash().toString("hex")}`), jwallet_code_raw)
         const libs = beginCell().storeDictDirect(_libs).endCell()
         blockchain.libs = libs
-        let lib_prep = beginCell().storeUint(2, 8).storeBuffer(jwallet_code_raw.hash()).endCell()
+        const lib_prep = beginCell().storeUint(2, 8).storeBuffer(jwallet_code_raw.hash()).endCell()
         jwallet_code = new Cell({exotic: true, bits: lib_prep.bits, refs: lib_prep.refs})
 
         console.log("jetton minter code hash = ", minter_code.hash().toString("hex"))
@@ -311,9 +311,9 @@ describe("JettonWallet", () => {
 
         testBurnFees = async (fees, to, amount, exp, custom_payload, prices) => {
             const burnWallet = await userWallet(deployer.address)
-            let initialJettonBalance = await burnWallet.getJettonBalance()
-            let initialTotalSupply = await jettonMinter.getTotalSupply()
-            let burnTxs: Array<BlockchainTransaction> = []
+            const initialJettonBalance = await burnWallet.getJettonBalance()
+            const initialTotalSupply = await jettonMinter.getTotalSupply()
+            const burnTxs: Array<BlockchainTransaction> = []
             const burnBody = ExtendedGovernanceJettonWallet.burnMessage(amount, to, custom_payload)
             const _minterSender = blockchain.sender(jettonMinter.address)
             const sendRes = await blockchain.sendMessage(
@@ -367,11 +367,11 @@ describe("JettonWallet", () => {
         }
         testSendFees = async (fees, fwd_amount, fwd_payload, custom_payload, exp) => {
             const deployerJettonWallet = await userWallet(deployer.address)
-            let initialJettonBalance = await deployerJettonWallet.getJettonBalance()
+            const initialJettonBalance = await deployerJettonWallet.getJettonBalance()
             const someUserAddr = randomAddress(0)
             const someWallet = await userWallet(someUserAddr)
 
-            let jettonAmount = 1n
+            const jettonAmount = 1n
             const sendResult = await deployerJettonWallet.sendTransfer(
                 deployer.getSender(),
                 fees,
@@ -436,8 +436,8 @@ describe("JettonWallet", () => {
             const to = randomAddress(0)
             const srcWallet = await userWallet(from)
             const dstWallet = await userWallet(to)
-            let initialFromBalance = await srcWallet.getJettonBalance()
-            let initialToBalance = await dstWallet.getJettonBalance()
+            const initialFromBalance = await srcWallet.getJettonBalance()
+            const initialToBalance = await dstWallet.getJettonBalance()
 
             const sendResult = await jettonMinter.sendForceTransfer(
                 deployer.getSender(),
@@ -514,7 +514,7 @@ describe("JettonWallet", () => {
                 response_addr,
                 ton_amount,
             )
-            let burnTxs: Array<BlockchainTransaction> = []
+            const burnTxs: Array<BlockchainTransaction> = []
             expect(res.transactions).toHaveTransaction({
                 from: deployer.address,
                 on: jettonMinter.address,
@@ -594,7 +594,7 @@ describe("JettonWallet", () => {
         // can mint from deployer
         let initialTotalSupply = await jettonMinter.getTotalSupply()
         const deployerJettonWallet = await userWallet(deployer.address)
-        let initialJettonBalance = toNano("1000.23")
+        const initialJettonBalance = toNano("1000.23")
         const mintResult = await jettonMinter.sendMint(
             deployer.getSender(),
             deployer.address,
@@ -628,7 +628,7 @@ describe("JettonWallet", () => {
         )
         initialTotalSupply += initialJettonBalance
         // can mint from deployer again
-        let additionalJettonBalance = toNano("2.31")
+        const additionalJettonBalance = toNano("2.31")
         await jettonMinter.sendMint(
             deployer.getSender(),
             deployer.address,
@@ -647,7 +647,7 @@ describe("JettonWallet", () => {
         )
         initialTotalSupply += additionalJettonBalance
         // can mint to other address
-        let otherJettonBalance = toNano("3.12")
+        const otherJettonBalance = toNano("3.12")
         await jettonMinter.sendMint(
             deployer.getSender(),
             notDeployer.address,
@@ -665,9 +665,9 @@ describe("JettonWallet", () => {
 
     // implementation detail
     it("not a minter admin should not be able to mint jettons", async () => {
-        let initialTotalSupply = await jettonMinter.getTotalSupply()
+        const initialTotalSupply = await jettonMinter.getTotalSupply()
         const deployerJettonWallet = await userWallet(deployer.address)
-        let initialJettonBalance = await deployerJettonWallet.getJettonBalance()
+        const initialJettonBalance = await deployerJettonWallet.getJettonBalance()
         const unAuthMintResult = await jettonMinter.sendMint(
             notDeployer.getSender(),
             deployer.address,
@@ -716,7 +716,7 @@ describe("JettonWallet", () => {
     it("not a minter admin can not change admin", async () => {
         const adminBefore = await jettonMinter.getAdminAddress()
         expect(adminBefore).toEqualAddress(deployer.address)
-        let changeAdmin = await jettonMinter.sendChangeAdmin(
+        const changeAdmin = await jettonMinter.sendChangeAdmin(
             notDeployer.getSender(),
             notDeployer.address,
         )
@@ -753,7 +753,7 @@ describe("JettonWallet", () => {
     })
 
     describe.skip("Content tests", () => {
-        let newContent: JettonMinterContent = {
+        const newContent: JettonMinterContent = {
             uri: `https://some_super_l${Buffer.alloc(200, "0")}ng_stable.org/`,
         }
         const snakeString: DictionaryValue<string> = {
@@ -761,7 +761,7 @@ describe("JettonWallet", () => {
                 builder.storeUint(0, 8).storeStringTail(src)
             },
             parse: function (src) {
-                let outStr = src.loadStringTail()
+                const outStr = src.loadStringTail()
                 if (outStr.charCodeAt(0) !== 0) {
                     throw new Error("No snake prefix")
                 }
@@ -803,7 +803,7 @@ describe("JettonWallet", () => {
         })
         it("not a minter admin can not change content", async () => {
             const oldContent = loadContent(await jettonMinter.getContent())
-            let changeContent = await jettonMinter.sendChangeContent(
+            const changeContent = await jettonMinter.sendChangeContent(
                 notDeployer.getSender(),
                 newContent,
             )
@@ -847,14 +847,14 @@ describe("JettonWallet", () => {
     })
     it("wallet owner should be able to send jettons", async () => {
         const deployerJettonWallet = await userWallet(deployer.address)
-        let initialJettonBalance = await deployerJettonWallet.getJettonBalance()
-        let initialTotalSupply = await jettonMinter.getTotalSupply()
+        const initialJettonBalance = await deployerJettonWallet.getJettonBalance()
+        const initialTotalSupply = await jettonMinter.getTotalSupply()
         const notDeployerJettonWallet = await userWallet(notDeployer.address)
         const balanceBefore = (await blockchain.getContract(notDeployerJettonWallet.address))
             .balance
-        let initialJettonBalance2 = await notDeployerJettonWallet.getJettonBalance()
-        let sentAmount = toNano("0.5")
-        let forwardAmount = toNano("0.05")
+        const initialJettonBalance2 = await notDeployerJettonWallet.getJettonBalance()
+        const sentAmount = toNano("0.5")
+        const forwardAmount = toNano("0.05")
         const sendResult = await deployerJettonWallet.sendTransfer(
             deployer.getSender(),
             toNano("0.17"), //tons
@@ -894,11 +894,11 @@ describe("JettonWallet", () => {
 
     it("not wallet owner should not be able to send jettons", async () => {
         const deployerJettonWallet = await userWallet(deployer.address)
-        let initialJettonBalance = await deployerJettonWallet.getJettonBalance()
-        let initialTotalSupply = await jettonMinter.getTotalSupply()
+        const initialJettonBalance = await deployerJettonWallet.getJettonBalance()
+        const initialTotalSupply = await jettonMinter.getTotalSupply()
         const notDeployerJettonWallet = await userWallet(notDeployer.address)
-        let initialJettonBalance2 = await notDeployerJettonWallet.getJettonBalance()
-        let sentAmount = toNano("0.5")
+        const initialJettonBalance2 = await notDeployerJettonWallet.getJettonBalance()
+        const sentAmount = toNano("0.5")
         const sendResult = await deployerJettonWallet.sendTransfer(
             notDeployer.getSender(),
             toNano("0.1"), //tons
@@ -922,11 +922,11 @@ describe("JettonWallet", () => {
 
     it("impossible to send too much jettons", async () => {
         const deployerJettonWallet = await userWallet(deployer.address)
-        let initialJettonBalance = await deployerJettonWallet.getJettonBalance()
+        const initialJettonBalance = await deployerJettonWallet.getJettonBalance()
         const notDeployerJettonWallet = await userWallet(notDeployer.address)
-        let initialJettonBalance2 = await notDeployerJettonWallet.getJettonBalance()
-        let sentAmount = initialJettonBalance + 1n
-        let forwardAmount = toNano("0.05")
+        const initialJettonBalance2 = await notDeployerJettonWallet.getJettonBalance()
+        const sentAmount = initialJettonBalance + 1n
+        const forwardAmount = toNano("0.05")
         const sendResult = await deployerJettonWallet.sendTransfer(
             deployer.getSender(),
             toNano("0.1"), //tons
@@ -988,11 +988,13 @@ describe("JettonWallet", () => {
             const deployerJettonWallet = await userWallet(deployer.address)
             const _notDeployerJettonWallet = await userWallet(notDeployer.address)
 
-            let sentAmount = toNano("0.5")
-            let forwardPayload = beginCell().storeUint(getRandomInt(100000, 200000), 128).endCell()
-            let customPayload = beginCell().storeUint(getRandomInt(100000, 200000), 128).endCell()
+            const sentAmount = toNano("0.5")
+            const forwardPayload = beginCell()
+                .storeUint(getRandomInt(100000, 200000), 128)
+                .endCell()
+            const customPayload = beginCell().storeUint(getRandomInt(100000, 200000), 128).endCell()
 
-            let forwardTail = beginCell().storeCoins(toNano("0.05")).storeMaybeRef(forwardPayload)
+            const forwardTail = beginCell().storeCoins(toNano("0.05")).storeMaybeRef(forwardPayload)
             const msgTemplate = beginCell()
                 .storeUint(0xf8a7ea5, 32)
                 .storeUint(0, 64) // op, queryId
@@ -1005,10 +1007,7 @@ describe("JettonWallet", () => {
                 .storeBuilder(forwardTail)
                 .endCell()
 
-            let errCodes = [
-                9,
-                ExtendedGovernanceJettonMinter.errors["Invalid forward payload in message"],
-            ]
+            const errCodes = [9]
             let res = await sendTransferPayload(
                 deployer.address,
                 deployerJettonWallet.address,
@@ -1063,10 +1062,10 @@ describe("JettonWallet", () => {
             const deployerJettonWallet = await userWallet(deployer.address)
             const _notDeployerJettonWallet = await userWallet(notDeployer.address)
 
-            let sentAmount = toNano("0.5")
-            let _forwardAmount = getRandomTon(0.01, 0.05) // toNano('0.05');
-            let forwardPayload = beginCell().storeUint(0x1234567890n, 128).endCell()
-            let msgTemplate = beginCell()
+            const sentAmount = toNano("0.5")
+            const _forwardAmount = getRandomTon(0.01, 0.05) // toNano('0.05');
+            const forwardPayload = beginCell().storeUint(0x1234567890n, 128).endCell()
+            const msgTemplate = beginCell()
                 .storeUint(0xf8a7ea5, 32)
                 .storeUint(0, 64) // op, queryId
                 .storeCoins(sentAmount)
@@ -1074,10 +1073,7 @@ describe("JettonWallet", () => {
                 .storeAddress(deployer.address)
                 .storeMaybeRef(null)
                 .storeCoins(toNano("0.05")) // No forward payload indication
-            let errCodes = [
-                9,
-                ExtendedGovernanceJettonMinter.errors["Invalid forward payload in message"],
-            ]
+            const errCodes = [9]
             let res = await sendTransferPayload(
                 deployer.address,
                 deployerJettonWallet.address,
@@ -1129,14 +1125,14 @@ describe("JettonWallet", () => {
 
     it("correctly sends forward_payload", async () => {
         const deployerJettonWallet = await userWallet(deployer.address)
-        let initialJettonBalance = await deployerJettonWallet.getJettonBalance()
+        const initialJettonBalance = await deployerJettonWallet.getJettonBalance()
         const notDeployerJettonWallet = await userWallet(notDeployer.address)
-        let initialJettonBalance2 = await notDeployerJettonWallet.getJettonBalance()
-        let sentAmount = toNano("0.5")
-        let forwardAmount = toNano("0.05")
-        let forwardPayload = beginCell().storeUint(0x1234567890n, 128).endCell()
+        const initialJettonBalance2 = await notDeployerJettonWallet.getJettonBalance()
+        const sentAmount = toNano("0.5")
+        const forwardAmount = toNano("0.05")
+        const forwardPayload = beginCell().storeUint(0x1234567890n, 128).endCell()
         // Make sure payload is different, so cell load is charged for each individual payload.
-        let customPayload = beginCell().storeUint(0x0987654321n, 128).endCell()
+        const customPayload = beginCell().storeUint(0x0987654321n, 128).endCell()
         // Let's use this case for fees calculation
         // Put the forward payload into custom payload, to make sure maximum possible gas used during computation
         const sendResult = await deployerJettonWallet.sendTransfer(
@@ -1201,12 +1197,12 @@ describe("JettonWallet", () => {
 
     it("no forward_ton_amount - no forward", async () => {
         const deployerJettonWallet = await userWallet(deployer.address)
-        let initialJettonBalance = await deployerJettonWallet.getJettonBalance()
+        const initialJettonBalance = await deployerJettonWallet.getJettonBalance()
         const notDeployerJettonWallet = await userWallet(notDeployer.address)
-        let initialJettonBalance2 = await notDeployerJettonWallet.getJettonBalance()
-        let sentAmount = toNano("0.5")
-        let forwardAmount = 0n
-        let forwardPayload = beginCell().storeUint(0x1234567890n, 128).endCell()
+        const initialJettonBalance2 = await notDeployerJettonWallet.getJettonBalance()
+        const sentAmount = toNano("0.5")
+        const forwardAmount = 0n
+        const forwardPayload = beginCell().storeUint(0x1234567890n, 128).endCell()
         const sendResult = await deployerJettonWallet.sendTransfer(
             deployer.getSender(),
             toNano("0.1"), //tons
@@ -1238,11 +1234,11 @@ describe("JettonWallet", () => {
 
     it("check revert on not enough tons for forward", async () => {
         const deployerJettonWallet = await userWallet(deployer.address)
-        let initialJettonBalance = await deployerJettonWallet.getJettonBalance()
+        const initialJettonBalance = await deployerJettonWallet.getJettonBalance()
         await deployer.send({value: toNano("1"), bounce: false, to: deployerJettonWallet.address})
-        let sentAmount = toNano("0.1")
-        let forwardAmount = toNano("0.3")
-        let forwardPayload = beginCell().storeUint(0x1234567890n, 128).endCell()
+        const sentAmount = toNano("0.1")
+        const forwardAmount = toNano("0.3")
+        const forwardPayload = beginCell().storeUint(0x1234567890n, 128).endCell()
         const sendResult = await deployerJettonWallet.sendTransfer(
             deployer.getSender(),
             forwardAmount, // not enough tons, no tons for gas
@@ -1279,15 +1275,15 @@ describe("JettonWallet", () => {
         // implementation detail
         it("works with minimal ton amount", async () => {
             // No forward_amount and forward_
-            let jettonAmount = 1n
-            let forwardAmount = 0n
-            let minFwdFee = estimateTransferFwd(jettonAmount, forwardAmount, null, null)
+            const jettonAmount = 1n
+            const forwardAmount = 0n
+            const minFwdFee = estimateTransferFwd(jettonAmount, forwardAmount, null, null)
             /*
                      forward_ton_amount +
                      fwd_count * fwd_fee +
                      (2 * gas_consumption + min_tons_for_storage));
         */
-            let minimalFee = calcSendFees(
+            const minimalFee = calcSendFees(
                 send_gas_fee,
                 receive_gas_fee,
                 minFwdFee,
@@ -1301,8 +1297,8 @@ describe("JettonWallet", () => {
             console.log("Minimal transfer fee:", fromNano(minimalFee))
         })
         it("forward_payload should impact transfer fees", async () => {
-            let jettonAmount = 1n
-            let forwardAmount = 0n
+            const jettonAmount = 1n
+            const forwardAmount = 0n
             let forwardPayload = beginCell().storeUint(0x123456789abcdef, 128).endCell()
 
             // We estimate without forward payload
@@ -1352,11 +1348,11 @@ describe("JettonWallet", () => {
         */
         })
         it("forward amount > 0 should account for forward fee twice", async () => {
-            let jettonAmount = 1n
-            let forwardAmount = toNano("0.05")
-            let forwardPayload = beginCell().storeUint(0x123456789abcdef, 128).endCell()
+            const jettonAmount = 1n
+            const forwardAmount = toNano("0.05")
+            const forwardPayload = beginCell().storeUint(0x123456789abcdef, 128).endCell()
 
-            let minFwdFee = estimateTransferFwd(jettonAmount, forwardAmount, forwardPayload, null)
+            const minFwdFee = estimateTransferFwd(jettonAmount, forwardAmount, forwardPayload, null)
             // We estimate without forward amount
             let minimalFee = calcSendFees(
                 send_gas_fee,
@@ -1375,11 +1371,11 @@ describe("JettonWallet", () => {
             await testSendFees(minimalFee - 1n, forwardAmount, forwardPayload, null, false)
         })
         it("forward fees should be calculated using actual config values", async () => {
-            let jettonAmount = 1n
-            let forwardAmount = toNano("0.05")
-            let forwardPayload = beginCell().storeUint(0x123456789abcdef, 128).endCell()
+            const jettonAmount = 1n
+            const forwardAmount = toNano("0.05")
+            const forwardPayload = beginCell().storeUint(0x123456789abcdef, 128).endCell()
 
-            let minFwdFee = estimateTransferFwd(jettonAmount, forwardAmount, forwardPayload, null)
+            const minFwdFee = estimateTransferFwd(jettonAmount, forwardAmount, forwardPayload, null)
             // We estimate everything correctly
             let minimalFee = calcSendFees(
                 send_gas_fee,
@@ -1427,11 +1423,11 @@ describe("JettonWallet", () => {
             blockchain.setConfig(oldConfig)
         })
         it("gas fees for transfer should be calculated from actual config", async () => {
-            let jettonAmount = 1n
-            let forwardAmount = toNano("0.05")
-            let forwardPayload = beginCell().storeUint(0x123456789abcdef, 128).endCell()
+            const jettonAmount = 1n
+            const forwardAmount = toNano("0.05")
+            const forwardPayload = beginCell().storeUint(0x123456789abcdef, 128).endCell()
 
-            let minFwdFee = estimateTransferFwd(jettonAmount, forwardAmount, forwardPayload, null)
+            const minFwdFee = estimateTransferFwd(jettonAmount, forwardAmount, forwardPayload, null)
             // We estimate everything correctly
             let minimalFee = calcSendFees(
                 send_gas_fee,
@@ -1464,11 +1460,11 @@ describe("JettonWallet", () => {
             blockchain.setConfig(oldConfig)
         })
         it("storage fee for transfer should be calculated from actual config", async () => {
-            let jettonAmount = 1n
-            let forwardAmount = toNano("0.05")
-            let forwardPayload = beginCell().storeUint(0x123456789abcdef, 128).endCell()
+            const jettonAmount = 1n
+            const forwardAmount = toNano("0.05")
+            const forwardPayload = beginCell().storeUint(0x123456789abcdef, 128).endCell()
 
-            let minFwdFee = estimateTransferFwd(jettonAmount, forwardAmount, forwardPayload, null)
+            const minFwdFee = estimateTransferFwd(jettonAmount, forwardAmount, forwardPayload, null)
             // We estimate everything correctly
             let minimalFee = calcSendFees(
                 send_gas_fee,
@@ -1558,7 +1554,7 @@ describe("JettonWallet", () => {
     // implementation detail
     it("wallet does not accept internal_transfer not from wallet", async () => {
         const deployerJettonWallet = await userWallet(deployer.address)
-        let initialJettonBalance = await deployerJettonWallet.getJettonBalance()
+        const initialJettonBalance = await deployerJettonWallet.getJettonBalance()
         /*
   internal_transfer  query_id:uint64 amount:(VarUInteger 16) from:MsgAddress
                      response_address:MsgAddress
@@ -1566,7 +1562,7 @@ describe("JettonWallet", () => {
                      forward_payload:(Either Cell ^Cell)
                      = InternalMsgBody;
 */
-        let internalTransfer = beginCell()
+        const internalTransfer = beginCell()
             .storeUint(0x178d4519, 32)
             .storeUint(0, 64) //default queryId
             .storeCoins(toNano("0.01"))
@@ -1596,9 +1592,9 @@ describe("JettonWallet", () => {
     // Wallet owner should not be able to burn it's jettons
     it("wallet owner should not be able to burn jettons", async () => {
         const deployerJettonWallet = await userWallet(deployer.address)
-        let initialJettonBalance = await deployerJettonWallet.getJettonBalance()
-        let initialTotalSupply = await jettonMinter.getTotalSupply()
-        let burnAmount = toNano("0.01")
+        const initialJettonBalance = await deployerJettonWallet.getJettonBalance()
+        const initialTotalSupply = await jettonMinter.getTotalSupply()
+        const burnAmount = toNano("0.01")
         const sendResult = await deployerJettonWallet.sendBurn(
             deployer.getSender(),
             toNano("0.1"), // ton amount
@@ -1618,9 +1614,9 @@ describe("JettonWallet", () => {
 
     it("not wallet owner should not be able to burn jettons", async () => {
         const deployerJettonWallet = await userWallet(deployer.address)
-        let initialJettonBalance = await deployerJettonWallet.getJettonBalance()
-        let initialTotalSupply = await jettonMinter.getTotalSupply()
-        let burnAmount = toNano("0.01")
+        const initialJettonBalance = await deployerJettonWallet.getJettonBalance()
+        const initialTotalSupply = await jettonMinter.getTotalSupply()
+        const burnAmount = toNano("0.01")
         const sendResult = await deployerJettonWallet.sendBurn(
             notDeployer.getSender(),
             toNano("0.1"), // ton amount
@@ -1657,10 +1653,10 @@ describe("JettonWallet", () => {
     })
     it("wallet owner can not burn more jettons than it has", async () => {
         const deployerJettonWallet = await userWallet(deployer.address)
-        let initialJettonBalance = await deployerJettonWallet.getJettonBalance()
-        let _initialTotalSupply = await jettonMinter.getTotalSupply()
-        let burnAmount = initialJettonBalance + 1n
-        let msgValue = toNano("1")
+        const initialJettonBalance = await deployerJettonWallet.getJettonBalance()
+        const _initialTotalSupply = await jettonMinter.getTotalSupply()
+        const burnAmount = initialJettonBalance + 1n
+        const msgValue = toNano("1")
         await testBurnFees(
             msgValue,
             deployer.address,
@@ -1678,9 +1674,9 @@ describe("JettonWallet", () => {
      */
     describe.skip("Burn dynamic fees", () => {
         it("minimal burn message fee", async () => {
-            let burnAmount = toNano("0.01")
+            const burnAmount = toNano("0.01")
             const burnFwd = estimateBurnFwd()
-            let minimalFee = burnFwd + burn_gas_fee + burn_notification_fee + 1n
+            const minimalFee = burnFwd + burn_gas_fee + burn_notification_fee + 1n
 
             // Off by one
             await testBurnFees(
@@ -1696,15 +1692,15 @@ describe("JettonWallet", () => {
         })
         // Now custom payload does impact forward fee, because it is calculated from input message fwdFee
         it("burn custom payload should not impact fees", async () => {
-            let burnAmount = toNano("0.01")
+            const burnAmount = toNano("0.01")
             const customPayload = beginCell().storeUint(getRandomInt(1000, 2000), 256).endCell()
             const burnFwd = estimateBurnFwd()
-            let minimalFee = burnFwd + burn_gas_fee + burn_notification_fee + 1n
+            const minimalFee = burnFwd + burn_gas_fee + burn_notification_fee + 1n
             await testBurnFees(minimalFee, deployer.address, burnAmount, 0, customPayload)
         })
         it("burn forward fee should be calculated from actual config values", async () => {
-            let burnAmount = toNano("0.01")
-            let burnFwd = estimateBurnFwd()
+            const burnAmount = toNano("0.01")
+            const burnFwd = estimateBurnFwd()
             let minimalFee = burnFwd + burn_gas_fee + burn_notification_fee + 1n
             // Succeeds initially
 
@@ -1742,7 +1738,7 @@ describe("JettonWallet", () => {
             blockchain.setConfig(oldConfig)
         })
         it("burn gas fees should be calculated from actual config values", async () => {
-            let burnAmount = toNano("0.01")
+            const burnAmount = toNano("0.01")
             const burnFwd = estimateBurnFwd()
             let minimalFee = burnFwd + burn_gas_fee + burn_notification_fee + 1n
             // Succeeds initially
@@ -2022,8 +2018,8 @@ describe("JettonWallet", () => {
     // implementation detail
     it("can not send to masterchain", async () => {
         const deployerJettonWallet = await userWallet(deployer.address)
-        let sentAmount = toNano("0.5")
-        let forwardAmount = toNano("0.05")
+        const sentAmount = toNano("0.5")
+        const forwardAmount = toNano("0.05")
         const sendResult = await deployerJettonWallet.sendTransfer(
             deployer.getSender(),
             toNano("0.1"), //tons
@@ -2061,11 +2057,11 @@ describe("JettonWallet", () => {
                 const lockWallet = await userWallet(addr)
                 let i = 0
 
-                for (let type of lockTypes) {
+                for (const type of lockTypes) {
                     //(await blockchain.getContract(jettonMinter.address)).verbosity.vmLogs = "vm_logs_verbose";
                     await jettonMinter.sendLockWallet(from, addr, type)
 
-                    let status = await lockWallet.getWalletStatus()
+                    const status = await lockWallet.getWalletStatus()
                     expect(Boolean(status & ++i)).toBe(exp)
                 }
             }
@@ -2073,8 +2069,8 @@ describe("JettonWallet", () => {
                 const lockTypes: Array<LockType> = ["unlock", "out", "in", "full"]
                 const lockWallet = await userWallet(addr)
 
-                for (let mode of locks) {
-                    let _res = await jettonMinter.sendLockWallet(deployer.getSender(), addr, mode)
+                for (const mode of locks) {
+                    const _res = await jettonMinter.sendLockWallet(deployer.getSender(), addr, mode)
                     expect(await lockWallet.getWalletStatus()).toEqual(
                         lockTypes.findIndex(t => t == mode),
                     )
@@ -2093,7 +2089,7 @@ describe("JettonWallet", () => {
 
                 let i = 0
 
-                for (let type of lockTypes) {
+                for (const type of lockTypes) {
                     let _res = await jettonMinter.sendLockWallet(deployer.getSender(), addr, type)
                     expect(await lockWallet.getWalletStatus()).toEqual(++i)
                     // Now try unlock from that state
@@ -2233,7 +2229,7 @@ describe("JettonWallet", () => {
                 const balanceBefore = await notDeployerJettonWallet.getJettonBalance()
                 const deployerBefore = await deployerJettonWallet.getJettonBalance()
 
-                let res = await deployerJettonWallet.sendTransfer(
+                const res = await deployerJettonWallet.sendTransfer(
                     deployer.getSender(),
                     toNano("1"),
                     1n,
@@ -2341,7 +2337,7 @@ describe("JettonWallet", () => {
             it("not admin should not be able to force transfer", async () => {
                 const txAmount = BigInt(getRandomInt(1, 100))
 
-                let res = await jettonMinter.sendForceTransfer(
+                const res = await jettonMinter.sendForceTransfer(
                     notDeployer.getSender(),
                     txAmount,
                     notDeployer.address, // To
@@ -2405,9 +2401,9 @@ describe("JettonWallet", () => {
             describe.skip("Force transfer fees", () => {
                 it("force transfer works with minimal ton amount", async () => {
                     // No forward_amount and forward_
-                    let jettonAmount = 1n
-                    let forwardAmount = 0n
-                    let minFwdFee = estimateAdminTransferFwd(
+                    const jettonAmount = 1n
+                    const forwardAmount = 0n
+                    const minFwdFee = estimateAdminTransferFwd(
                         jettonAmount,
                         null,
                         forwardAmount,
@@ -2419,7 +2415,7 @@ describe("JettonWallet", () => {
                          fwd_count * fwd_fee +
                          (2 * gas_consumption + min_tons_for_storage));
             */
-                    let minimalFee = calcSendFees(
+                    const minimalFee = calcSendFees(
                         send_gas_fee,
                         receive_gas_fee,
                         minFwdFee,
@@ -2451,8 +2447,8 @@ describe("JettonWallet", () => {
                     console.log("Minimal admin transfer fee:", fromNano(minimalFee))
                 })
                 it("forward_payload should impact transfer fees", async () => {
-                    let jettonAmount = 1n
-                    let forwardAmount = 0n
+                    const jettonAmount = 1n
+                    const forwardAmount = 0n
                     let forwardPayload = beginCell().storeUint(0x123456789abcdef, 128).endCell()
 
                     // We estimate without forward payload
@@ -2552,11 +2548,11 @@ describe("JettonWallet", () => {
             */
                 })
                 it("forward amount > 0 should account for forward fee twice", async () => {
-                    let jettonAmount = 1n
-                    let forwardAmount = toNano("0.05")
-                    let forwardPayload = beginCell().storeUint(0x123456789abcdef, 128).endCell()
+                    const jettonAmount = 1n
+                    const forwardAmount = toNano("0.05")
+                    const forwardPayload = beginCell().storeUint(0x123456789abcdef, 128).endCell()
 
-                    let minFwdFee = estimateAdminTransferFwd(
+                    const minFwdFee = estimateAdminTransferFwd(
                         jettonAmount,
                         null,
                         forwardAmount,
@@ -2608,11 +2604,11 @@ describe("JettonWallet", () => {
                     )
                 })
                 it("forward fees should be calculated using actual config values", async () => {
-                    let jettonAmount = 1n
-                    let forwardAmount = toNano("0.05")
-                    let forwardPayload = beginCell().storeUint(0x123456789abcdef, 128).endCell()
+                    const jettonAmount = 1n
+                    const forwardAmount = toNano("0.05")
+                    const forwardPayload = beginCell().storeUint(0x123456789abcdef, 128).endCell()
 
-                    let minFwdFee = estimateAdminTransferFwd(
+                    const minFwdFee = estimateAdminTransferFwd(
                         jettonAmount,
                         null,
                         forwardAmount,
@@ -2700,11 +2696,11 @@ describe("JettonWallet", () => {
                     blockchain.setConfig(oldConfig)
                 })
                 it("gas fees for transfer should be calculated from actual config", async () => {
-                    let jettonAmount = 1n
-                    let forwardAmount = toNano("0.05")
-                    let forwardPayload = beginCell().storeUint(0x123456789abcdef, 128).endCell()
+                    const jettonAmount = 1n
+                    const forwardAmount = toNano("0.05")
+                    const forwardPayload = beginCell().storeUint(0x123456789abcdef, 128).endCell()
 
-                    let minFwdFee = estimateAdminTransferFwd(
+                    const minFwdFee = estimateAdminTransferFwd(
                         jettonAmount,
                         null,
                         forwardAmount,
@@ -2778,11 +2774,11 @@ describe("JettonWallet", () => {
                     blockchain.setConfig(oldConfig)
                 })
                 it("storage fee for transfer should be calculated from actual config", async () => {
-                    let jettonAmount = 1n
-                    let forwardAmount = toNano("0.05")
-                    let forwardPayload = beginCell().storeUint(0x123456789abcdef, 128).endCell()
+                    const jettonAmount = 1n
+                    const forwardAmount = toNano("0.05")
+                    const forwardPayload = beginCell().storeUint(0x123456789abcdef, 128).endCell()
 
-                    let minFwdFee = estimateAdminTransferFwd(
+                    const minFwdFee = estimateAdminTransferFwd(
                         jettonAmount,
                         null,
                         forwardAmount,
@@ -2932,9 +2928,9 @@ describe("JettonWallet", () => {
             })
             describe.skip("Burn fees", () => {
                 it("minimal burn message fee", async () => {
-                    let burnAmount = toNano("0.01")
+                    const burnAmount = toNano("0.01")
                     const burnFwd = estimateBurnFwd()
-                    let minimalFee = burnFwd + burn_gas_fee + burn_notification_fee + 1n
+                    const minimalFee = burnFwd + burn_gas_fee + burn_notification_fee + 1n
 
                     // Off by one
                     await testAdminBurn(
@@ -2960,12 +2956,12 @@ describe("JettonWallet", () => {
                 })
                 // Now custom payload does impact forward fee, because it is calculated from input message fwdFee
                 it("burn custom payload should not impact fees", async () => {
-                    let burnAmount = toNano("0.01")
+                    const burnAmount = toNano("0.01")
                     const customPayload = beginCell()
                         .storeUint(getRandomInt(1000, 2000), 256)
                         .endCell()
                     const burnFwd = estimateBurnFwd()
-                    let minimalFee = burnFwd + burn_gas_fee + burn_notification_fee + 1n
+                    const minimalFee = burnFwd + burn_gas_fee + burn_notification_fee + 1n
                     // Would fail if it impacts fees
                     await testAdminBurn(
                         minimalFee,
@@ -2977,8 +2973,8 @@ describe("JettonWallet", () => {
                     )
                 })
                 it("burn forward fee should be calculated from actual config values", async () => {
-                    let burnAmount = toNano("0.01")
-                    let burnFwd = estimateBurnFwd()
+                    const burnAmount = toNano("0.01")
+                    const burnFwd = estimateBurnFwd()
                     let minimalFee = burnFwd + burn_gas_fee + burn_notification_fee + 1n
                     // Succeeds initially
 
@@ -3037,7 +3033,7 @@ describe("JettonWallet", () => {
                     blockchain.setConfig(oldConfig)
                 })
                 it("burn gas fees should be calculated from actual config values", async () => {
-                    let burnAmount = toNano("0.01")
+                    const burnAmount = toNano("0.01")
                     const burnFwd = estimateBurnFwd()
                     let minimalFee = burnFwd + burn_gas_fee + burn_notification_fee + 1n
                     // Succeeds initially
@@ -3118,7 +3114,7 @@ describe("JettonWallet", () => {
             const minterSmc = await blockchain.getContract(jettonMinter.address)
 
             // Sending message but only processing first step of tx chain
-            let res = await minterSmc.receiveMessage(
+            const res = await minterSmc.receiveMessage(
                 internal({
                     from: deployer.address,
                     to: jettonMinter.address,
@@ -3319,15 +3315,15 @@ describe("JettonWallet", () => {
     it.skip("owner can withdraw excesses", async () => {
         const deployerJettonWallet = await userWallet(deployer.address)
         await deployer.send({value: toNano("1"), bounce: false, to: deployerJettonWallet.address})
-        let initialBalance = (await blockchain.getContract(deployer.address)).balance
+        const initialBalance = (await blockchain.getContract(deployer.address)).balance
         const withdrawResult = await deployerJettonWallet.sendWithdrawTons(deployer.getSender())
         expect(withdrawResult.transactions).toHaveTransaction({
             //excesses
             from: deployerJettonWallet.address,
             to: deployer.address,
         })
-        let finalBalance = (await blockchain.getContract(deployer.address)).balance
-        let finalWalletBalance = (await blockchain.getContract(deployerJettonWallet.address))
+        const finalBalance = (await blockchain.getContract(deployer.address)).balance
+        const finalWalletBalance = (await blockchain.getContract(deployerJettonWallet.address))
             .balance
         expect(finalWalletBalance).toEqual(min_tons_for_storage)
         expect(finalBalance - initialBalance).toBeGreaterThan(toNano("0.99"))
@@ -3336,15 +3332,15 @@ describe("JettonWallet", () => {
     it.skip("not owner can not withdraw excesses", async () => {
         const deployerJettonWallet = await userWallet(deployer.address)
         await deployer.send({value: toNano("1"), bounce: false, to: deployerJettonWallet.address})
-        let initialBalance = (await blockchain.getContract(deployer.address)).balance
+        const initialBalance = (await blockchain.getContract(deployer.address)).balance
         const withdrawResult = await deployerJettonWallet.sendWithdrawTons(notDeployer.getSender())
         expect(withdrawResult.transactions).not.toHaveTransaction({
             //excesses
             from: deployerJettonWallet.address,
             to: deployer.address,
         })
-        let finalBalance = (await blockchain.getContract(deployer.address)).balance
-        let finalWalletBalance = (await blockchain.getContract(deployerJettonWallet.address))
+        const finalBalance = (await blockchain.getContract(deployer.address)).balance
+        const finalWalletBalance = (await blockchain.getContract(deployerJettonWallet.address))
             .balance
         expect(finalWalletBalance).toBeGreaterThan(toNano("1"))
         expect(finalBalance - initialBalance).toBeLessThan(toNano("0.1"))
@@ -3352,8 +3348,8 @@ describe("JettonWallet", () => {
     // implementation detail
     it.skip("owner can withdraw jettons owned by JettonWallet", async () => {
         const deployerJettonWallet = await userWallet(deployer.address)
-        let sentAmount = toNano("0.5")
-        let forwardAmount = toNano("0.05")
+        const sentAmount = toNano("0.5")
+        const forwardAmount = toNano("0.05")
         await deployerJettonWallet.sendTransfer(
             deployer.getSender(),
             toNano("0.1"), //tons
@@ -3365,10 +3361,10 @@ describe("JettonWallet", () => {
             null,
         )
         const childJettonWallet = await userWallet(deployerJettonWallet.address)
-        let initialJettonBalance = await deployerJettonWallet.getJettonBalance()
-        let initialChildJettonBalance = await childJettonWallet.getJettonBalance()
+        const initialJettonBalance = await deployerJettonWallet.getJettonBalance()
+        const initialChildJettonBalance = await childJettonWallet.getJettonBalance()
         expect(initialChildJettonBalance).toEqual(toNano("0.5"))
-        let _withdrawResult = await deployerJettonWallet.sendWithdrawJettons(
+        const _withdrawResult = await deployerJettonWallet.sendWithdrawJettons(
             deployer.getSender(),
             childJettonWallet.address,
             toNano("0.4"),
@@ -3387,8 +3383,8 @@ describe("JettonWallet", () => {
     // implementation detail
     it.skip("not owner can not withdraw jettons owned by JettonWallet", async () => {
         const deployerJettonWallet = await userWallet(deployer.address)
-        let sentAmount = toNano("0.5")
-        let forwardAmount = toNano("0.05")
+        const sentAmount = toNano("0.5")
+        const forwardAmount = toNano("0.05")
         await deployerJettonWallet.sendTransfer(
             deployer.getSender(),
             toNano("0.1"), //tons
@@ -3400,10 +3396,10 @@ describe("JettonWallet", () => {
             null,
         )
         const childJettonWallet = await userWallet(deployerJettonWallet.address)
-        let initialJettonBalance = await deployerJettonWallet.getJettonBalance()
-        let initialChildJettonBalance = await childJettonWallet.getJettonBalance()
+        const initialJettonBalance = await deployerJettonWallet.getJettonBalance()
+        const initialChildJettonBalance = await childJettonWallet.getJettonBalance()
         expect(initialChildJettonBalance).toEqual(toNano("0.5"))
-        let _withdrawResult = await deployerJettonWallet.sendWithdrawJettons(
+        const _withdrawResult = await deployerJettonWallet.sendWithdrawJettons(
             notDeployer.getSender(),
             childJettonWallet.address,
             toNano("0.4"),

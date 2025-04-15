@@ -1,8 +1,14 @@
-inline fun checkEitherForwardPayload(forwardPayload: Slice) {
-    if (forwardPayload.preloadUint(1) == 1) {
-        let bitsAndRefs = calculateSliceBitsAndRefs(forwardPayload);
-        require(bitsAndRefs.refs == 1 && bitsAndRefs.bits == 1, "Invalid forward payload in message");
-    }
+asm fun checkEitherForwardPayload(forwardPayload: Slice) {
+    LDDICT // Throws 9 if Either bit = 1 and ref is not present
+    SWAP
+    ISNULL
+    <{
+        DROP
+    }> PUSHCONT
+    <{
+        ENDS // Also throws 9 if slice is not empty
+    }> PUSHCONT
+    IFELSE
 }
 
 asm fun emptyAddress(): Address { b{00} PUSHSLICE }

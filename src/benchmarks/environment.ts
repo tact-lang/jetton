@@ -60,7 +60,7 @@ const loadJettonEnvironment = initializeJettonEnvironment()
 const lengthEqualsEither = (either: number, or: number) => (chainLength: number) =>
     chainLength === either || chainLength === or
 
-export const runTransferBenchmark = async () => {
+export const runTransferBenchmarkWithoutForwardPayload = async () => {
     const {deployer, jettonMinter, getJettonWallet} = await loadJettonEnvironment.then(v => v())
 
     const mintResult = await jettonMinter.sendMint(
@@ -90,6 +90,47 @@ export const runTransferBenchmark = async () => {
 
     // external -> transfer -> transfer internal -> excesses <could fail>
     assertTransactionChainWasSuccessful(transferResult.transactions, lengthEqualsEither(3, 4))
+
+    // benchmark [transfer -> transfer internal]
+    return getUsedGasInternal(transferResult, {type: "chain", chainLength: 2})
+}
+
+export const runTransferBenchmarkWithForwardPayload = async () => {
+    const {deployer, jettonMinter, getJettonWallet} = await loadJettonEnvironment.then(v => v())
+
+    const mintResult = await jettonMinter.sendMint(
+        deployer.getSender(),
+        deployer.address,
+        toNano(100000),
+        toNano("0.1"),
+        toNano("1"),
+    )
+
+    // external -> mint -> transfer internal -> excesses <could fail> + notification
+    assertTransactionChainWasSuccessful(mintResult.transactions, lengthEqualsEither(4, 5))
+
+    const deployerWallet = await getJettonWallet(deployer.address)
+    const someAddress = Address.parse("EQD__________________________________________0vo")
+
+    const transferResult = await deployerWallet.sendTransfer(
+        deployer.getSender(),
+        toNano(1),
+        1n,
+        someAddress,
+        deployer.address,
+        null,
+        1n, //Enough to send forward payload
+        beginCell()
+            .storeMaybeRef(
+                beginCell()
+                    .storeBuffer(Buffer.from("Hello, world!")) // Random bytes
+                    .endCell(),
+            )
+            .endCell(),
+    )
+
+    // external -> transfer -> transfer internal -> jettonNotify + excesses <could fail>
+    assertTransactionChainWasSuccessful(transferResult.transactions, lengthEqualsEither(4, 5))
 
     // benchmark [transfer -> transfer internal]
     return getUsedGasInternal(transferResult, {type: "chain", chainLength: 2})

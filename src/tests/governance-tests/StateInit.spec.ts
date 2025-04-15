@@ -40,7 +40,7 @@ describe("State init tests", () => {
         const _libs = Dictionary.empty(Dictionary.Keys.BigUint(256), Dictionary.Values.Cell())
         _libs.set(BigInt(`0x${jwallet_code_raw.hash().toString("hex")}`), jwallet_code_raw)
         blockchain.libs = beginCell().storeDictDirect(_libs).endCell()
-        let lib_prep = beginCell().storeUint(2, 8).storeBuffer(jwallet_code_raw.hash()).endCell()
+        const lib_prep = beginCell().storeUint(2, 8).storeBuffer(jwallet_code_raw.hash()).endCell()
         jwallet_code = new Cell({exotic: true, bits: lib_prep.bits, refs: lib_prep.refs})
 
         console.log("jetton minter code hash = ", minter_code.hash().toString("hex"))

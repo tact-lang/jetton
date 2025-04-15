@@ -636,12 +636,12 @@ export class ExtendedGovernanceJettonMinter extends GovernanceJettonMinter {
     }
 
     async getJettonData(provider: ContractProvider) {
-        let res = await provider.get("get_jetton_data", [])
-        let totalSupply = res.stack.readBigNumber()
-        let mintable = res.stack.readBoolean()
-        let adminAddress = res.stack.readAddress()
-        let content = res.stack.readCell()
-        let walletCode = res.stack.readCell()
+        const res = await provider.get("get_jetton_data", [])
+        const totalSupply = res.stack.readBigNumber()
+        const mintable = res.stack.readBoolean()
+        const adminAddress = res.stack.readAddress()
+        const content = res.stack.readCell()
+        const walletCode = res.stack.readCell()
         return {
             totalSupply,
             mintable,
@@ -652,17 +652,17 @@ export class ExtendedGovernanceJettonMinter extends GovernanceJettonMinter {
     }
 
     async getTotalSupply(provider: ContractProvider) {
-        let res = await this.getJettonData(provider)
+        const res = await this.getJettonData(provider)
         return res.totalSupply
     }
 
     async getAdminAddress(provider: ContractProvider) {
-        let res = await this.getJettonData(provider)
+        const res = await this.getJettonData(provider)
         return res.adminAddress
     }
 
     async getContent(provider: ContractProvider) {
-        let res = await this.getJettonData(provider)
+        const res = await this.getJettonData(provider)
         return res.content
     }
 
