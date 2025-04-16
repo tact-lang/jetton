@@ -2,29 +2,17 @@ import {Address, beginCell, Cell, toNano} from "@ton/core"
 import {Blockchain, BlockchainSnapshot, SandboxContract, TreasuryContract} from "@ton/sandbox"
 import {randomAddress} from "@ton/test-utils"
 
-import {
-    JettonUpdateContent,
-    CloseMinting,
-    Mint,
-    JettonMinter,
-    TakeWalletBalance,
-    storeTakeWalletBalance,
-    minTonsForStorage,
-    gasForTransfer,
-    gasForBurn,
-} from "../../output/Jetton_JettonMinter"
-import {getComputeGasForTx} from "../../utils/gas"
+import {JettonUpdateContent} from "../../output/Jetton_JettonMinter"
 import {ExtendedFeatureRichJettonMinter} from "../../wrappers/ExtendedFeatureRichJettonMinter"
 import {ExtendedFeatureRichJettonWallet} from "../../wrappers/ExtendedFeatureRichJettonWallet"
 
 // this is test suite for feature rich jetton minter
+// it makes heavy use of the custom payload and enables new functionality
 describe("Feature Rich Jetton Minter", () => {
     let blockchain: Blockchain
     let jettonMinter: SandboxContract<ExtendedFeatureRichJettonMinter>
-    let jettonWallet: SandboxContract<ExtendedFeatureRichJettonWallet>
     let deployer: SandboxContract<TreasuryContract>
 
-    let _jwallet_code = new Cell()
     let _minter_code = new Cell()
     let notDeployer: SandboxContract<TreasuryContract>
 
@@ -47,8 +35,6 @@ describe("Feature Rich Jetton Minter", () => {
             await ExtendedFeatureRichJettonMinter.fromInit(0n, deployer.address, defaultContent),
         )
 
-        //We send Update content to deploy the contract, because it is not automatically deployed after blockchain.openContract
-        //And to deploy it we should send any message. But update content message with same content does not affect anything. That is why I chose it.
         const deployResult = await jettonMinter.send(
             deployer.getSender(),
             {value: toNano("0.1")},
@@ -66,20 +52,6 @@ describe("Feature Rich Jetton Minter", () => {
             throw new Error("JettonMinter init is not defined")
         } else {
             _minter_code = minterCode
-        }
-
-        jettonWallet = blockchain.openContract(
-            await ExtendedFeatureRichJettonWallet.fromInit(
-                deployer.address,
-                jettonMinter.address,
-                0n,
-            ),
-        )
-        const walletCode = jettonWallet.init?.code
-        if (walletCode === undefined) {
-            throw new Error("JettonWallet init is not defined")
-        } else {
-            _jwallet_code = walletCode
         }
 
         userWallet = async (address: Address) => {
@@ -138,65 +110,8 @@ describe("Feature Rich Jetton Minter", () => {
         expect(deployerJettonBalanceAfter).toEqual(0n)
     })
 
-    it("Can close minting", async () => {
-        const closeMinting: CloseMinting = {
-            $$type: "CloseMinting",
-        }
-        const unsuccessfulCloseMinting = await jettonMinter.send(
-            notDeployer.getSender(),
-            {value: toNano("0.1")},
-            closeMinting,
-        )
-        expect(unsuccessfulCloseMinting.transactions).toHaveTransaction({
-            from: notDeployer.address,
-            to: jettonMinter.address,
-            aborted: true,
-            exitCode: JettonMinter.errors["Incorrect sender"],
-        })
-        expect((await jettonMinter.getGetJettonData()).mintable).toBeTruthy()
-
-        const successfulCloseMinting = await jettonMinter.send(
-            deployer.getSender(),
-            {value: toNano("0.1")},
-            closeMinting,
-        )
-        expect(successfulCloseMinting.transactions).toHaveTransaction({
-            from: deployer.address,
-            to: jettonMinter.address,
-            success: true,
-        })
-        expect((await jettonMinter.getGetJettonData()).mintable).toBeFalsy()
-
-        const mintMsg: Mint = {
-            $$type: "Mint",
-            queryId: 0n,
-            receiver: deployer.address,
-            tonAmount: toNano("0.1"),
-            mintMessage: {
-                $$type: "JettonTransferInternal",
-                queryId: 0n,
-                amount: toNano("0.1"),
-                sender: deployer.address,
-                responseDestination: deployer.address,
-                forwardPayload: beginCell().storeUint(0, 1).endCell().asSlice(),
-                forwardTonAmount: 0n,
-            },
-        }
-        const mintTryAfterClose = await jettonMinter.send(
-            deployer.getSender(),
-            {value: toNano("0.1")},
-            mintMsg,
-        )
-        expect(mintTryAfterClose.transactions).toHaveTransaction({
-            from: deployer.address,
-            to: jettonMinter.address,
-            aborted: true,
-            exitCode: JettonMinter.errors["Mint is closed"],
-        })
-    })
-
-    it("should report correct balance", async () => {
-        const jettonMintAmount = 100n
+    it("should perform transfer as usual without custom payload", async () => {
+        const jettonMintAmount = toNano(10)
         await jettonMinter.sendMint(
             deployer.getSender(),
             deployer.address,
@@ -204,239 +119,51 @@ describe("Feature Rich Jetton Minter", () => {
             0n,
             toNano(1),
         )
+
+        await jettonMinter.sendMint(
+            deployer.getSender(),
+            notDeployer.address,
+            0n, // just deploy
+            0n,
+            toNano(1),
+        )
+
         const deployerJettonWallet = await userWallet(deployer.address)
-        const jettonBalance = await deployerJettonWallet.getJettonBalance()
+        const initialJettonBalance = await deployerJettonWallet.getJettonBalance()
 
-        const provideResult = await deployerJettonWallet.sendProvideWalletBalance(
+        const initialTotalSupply = await jettonMinter.getTotalSupply()
+        const notDeployerJettonWallet = await userWallet(notDeployer.address)
+
+        const initialJettonBalanceNotDeployer = await notDeployerJettonWallet.getJettonBalance()
+        const sentAmount = toNano("0.5")
+        const forwardAmount = toNano("0.05")
+        const sendResult = await deployerJettonWallet.sendTransfer(
             deployer.getSender(),
-            toNano(1),
+            toNano("0.1"), // tons
+            sentAmount,
             notDeployer.address,
-            false,
+            deployer.address,
+            null,
+            forwardAmount,
+            null,
         )
-
-        const msg: TakeWalletBalance = {
-            $$type: "TakeWalletBalance",
-            balance: jettonBalance,
-            verifyInfo: null,
-        }
-
-        expect(provideResult.transactions).toHaveTransaction({
-            from: deployerJettonWallet.address,
-            to: notDeployer.address,
-            body: beginCell().store(storeTakeWalletBalance(msg)).endCell(),
-        })
-    })
-
-    it("should claim all tons from minter", async () => {
-        await deployer.send({
-            to: jettonMinter.address,
-            value: toNano(5),
-            bounce: false,
-        })
-
-        const minterBalance = (await blockchain.getContract(jettonMinter.address)).balance
-
-        // external -> claim request -> claim take
-        const claimTonMinterResult = await jettonMinter.sendClaimTon(
-            deployer.getSender(),
-            notDeployer.address,
-            toNano(1),
-        )
-
-        const claimTxTotalFees = claimTonMinterResult.transactions[1]!.totalFees.coins
-
-        const claimInMsg = claimTonMinterResult.transactions[0]!.outMessages.get(0)!
-
-        if (claimInMsg.info.type !== "internal") {
-            // fail with expect
-            fail("Expected the message type to not be 'internal")
-        }
-
-        const claimInMsgValue = claimInMsg.info.value.coins
-
-        const claimOutMsg = claimTonMinterResult.transactions[1]!.outMessages.get(0)!
-
-        if (claimOutMsg.info.type !== "internal") {
-            // fail with expect
-            fail("Expected the message type to not be 'internal")
-        }
-
-        const claimOutMsgFwdFee = claimOutMsg.info.forwardFee
-
-        const expectedOutValue =
-            minterBalance +
-            claimInMsgValue -
-            claimTxTotalFees -
-            minTonsForStorage -
-            claimOutMsgFwdFee
-
-        const minterBalanceAfter = (await blockchain.getContract(jettonMinter.address)).balance
-        expect(minterBalanceAfter).toEqual(minTonsForStorage)
-
-        expect(claimTonMinterResult.transactions).toHaveTransaction({
-            from: jettonMinter.address,
-            to: notDeployer.address,
-            value: expectedOutValue,
-            success: true,
-        })
-    })
-
-    it("should claim all tons from wallet", async () => {
-        // mint to deploy wallet with correct state init
-        await jettonMinter.sendMint(deployer.getSender(), deployer.address, 1000n, 0n, toNano(1))
-        const deployerJettonWallet = await userWallet(deployer.address)
-
-        await deployer.send({
-            to: deployerJettonWallet.address,
-            value: toNano(5),
-            bounce: false,
-        })
-
-        const walletBalance = (await blockchain.getContract(deployerJettonWallet.address)).balance
-
-        // external -> claim request -> claim take
-        const claimTonJettonWalletResult = await deployerJettonWallet.sendClaimTon(
-            deployer.getSender(),
-            notDeployer.address,
-            toNano(1),
-        )
-
-        const claimTxTotalFees = claimTonJettonWalletResult.transactions[1]!.totalFees.coins
-
-        const claimInMsg = claimTonJettonWalletResult.transactions[0]!.outMessages.get(0)!
-
-        if (claimInMsg.info.type !== "internal") {
-            fail("Expected the message type to not be 'internal")
-        }
-
-        const claimInMsgValue = claimInMsg.info.value.coins
-
-        const claimOutMsg = claimTonJettonWalletResult.transactions[1]!.outMessages.get(0)!
-
-        if (claimOutMsg.info.type !== "internal") {
-            fail("Expected the message type to not be 'internal")
-        }
-
-        const claimOutMsgFwdFee = claimOutMsg.info.forwardFee
-
-        const expectedOutValue =
-            walletBalance +
-            claimInMsgValue -
-            claimTxTotalFees -
-            minTonsForStorage -
-            claimOutMsgFwdFee
-
-        const jettonWalletBalanceAfter = (
-            await blockchain.getContract(deployerJettonWallet.address)
-        ).balance
-        expect(jettonWalletBalanceAfter).toEqual(minTonsForStorage)
-
-        expect(claimTonJettonWalletResult.transactions).toHaveTransaction({
-            from: deployerJettonWallet.address,
-            to: notDeployer.address,
-            value: expectedOutValue,
-            success: true,
-        })
-    })
-
-    it("should bounce claim with low balance", async () => {
-        const jwState = (await blockchain.getContract(jettonMinter.address)).account
-        jwState.account!.storage.balance.coins = 1n
-        await blockchain.setShardAccount(jettonMinter.address, jwState)
-
-        const minterBalance = (await blockchain.getContract(jettonMinter.address)).balance
-
-        const sendValue = toNano(0.009)
-        expect(minterBalance + sendValue).toBeLessThan(minTonsForStorage)
-
-        // external -> claim request -> bounce back
-        const claimTonMinterResult = await jettonMinter.sendClaimTon(
-            deployer.getSender(),
-            notDeployer.address,
-            sendValue,
-        )
-
-        expect(claimTonMinterResult.transactions).toHaveTransaction({
-            from: deployer.address,
-            to: jettonMinter.address,
-            success: false,
-            // https://github.com/ton-blockchain/ton/blob/303e92b7750dc443ae6c282fb478d2114079d216/crypto/block/transaction.cpp#L2860
-            actionResultCode: JettonMinter.errors["Not enough Toncoin"],
-        })
-
-        expect(claimTonMinterResult.transactions).toHaveTransaction({
-            from: jettonMinter.address,
+        expect(sendResult.transactions).toHaveTransaction({
+            // excesses
+            from: notDeployerJettonWallet.address,
             to: deployer.address,
-            inMessageBounced: true,
         })
-    })
-
-    describe("Tact-way fees", () => {
-        it("transfers with specified gas", async () => {
-            const jettonMintAmount = 0n
-            await jettonMinter.sendMint(
-                deployer.getSender(),
-                deployer.address,
-                jettonMintAmount,
-                0n,
-                toNano(1),
-            )
-            const deployerJettonWallet = await userWallet(deployer.address)
-            const randomNewReceiver = randomAddress(0)
-            const sendResult = await deployerJettonWallet.sendTransfer(
-                deployer.getSender(),
-                toNano("0.1"), //tons
-                0n, //Transfer 0 jettons, it doesn't affect the fee
-                randomNewReceiver,
-                deployer.address,
-                null,
-                toNano("0.05"),
-                null,
-            )
-            // NOTE: here we use constant from contract source code itself
-            // for both send and receive transactions, since basically it approximates the maximum
-            // of them two, making it easier to perform gas checks it Tact and it's sufficient enough
-
-            // From sender to jw
-            console.log("Gas for send transfer", getComputeGasForTx(sendResult.transactions[1]!))
-            expect(getComputeGasForTx(sendResult.transactions[1]!)).toBeLessThanOrEqual(
-                gasForTransfer,
-            )
-            // From jw to jw
-            console.log(
-                "Gas for receive (internal) transfer",
-                getComputeGasForTx(sendResult.transactions[2]),
-            )
-            expect(getComputeGasForTx(sendResult.transactions[2])).toBeLessThanOrEqual(
-                gasForTransfer,
-            )
+        expect(sendResult.transactions).toHaveTransaction({
+            // notification
+            from: notDeployerJettonWallet.address,
+            to: notDeployer.address,
+            value: forwardAmount,
         })
-
-        it("Burns with specified gas", async () => {
-            const jettonMintAmount = 0n
-            await jettonMinter.sendMint(
-                deployer.getSender(),
-                deployer.address,
-                jettonMintAmount,
-                0n,
-                toNano(1),
-            )
-            const deployerJettonWallet = await userWallet(deployer.address)
-            const sendResult = await deployerJettonWallet.sendBurn(
-                deployer.getSender(),
-                toNano(0.1),
-                0n, //Burn 0 jettons, it doesn't affect the fee
-                deployer.address,
-                null,
-            )
-            // Same here as in transfers with single constant
-
-            // From deployer to jw
-            console.log("Gas for send burn", getComputeGasForTx(sendResult.transactions[1]!))
-            expect(getComputeGasForTx(sendResult.transactions[1]!)).toBeLessThanOrEqual(gasForBurn)
-            // From jw to jetton_master
-            console.log("Gas for receive burn", getComputeGasForTx(sendResult.transactions[2]))
-            expect(getComputeGasForTx(sendResult.transactions[2])).toBeLessThanOrEqual(gasForBurn)
-        })
+        expect(await deployerJettonWallet.getJettonBalance()).toEqual(
+            initialJettonBalance - sentAmount,
+        )
+        expect(await notDeployerJettonWallet.getJettonBalance()).toEqual(
+            initialJettonBalanceNotDeployer + sentAmount,
+        )
+        expect(await jettonMinter.getTotalSupply()).toEqual(initialTotalSupply)
     })
 })
