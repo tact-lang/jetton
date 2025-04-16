@@ -1,5 +1,3 @@
-// Huge thanks to Howard Peng for the original code of deploy script. https://github.com/howardpen9/jetton-implementation-in-tact
-
 import {beginCell, toNano, TonClient, WalletContractV4, internal, fromNano} from "@ton/ton"
 import {getHttpEndpoint} from "@orbs-network/ton-access"
 import {mnemonicToPrivateKey} from "@ton/crypto"
@@ -11,6 +9,8 @@ import "dotenv/config"
 import {getJettonHttpLink, getNetworkFromEnv} from "../utils/utils"
 
 /*
+    This is deployment script for basic jetton, compatible with TEP-74 and TEP-89
+
     (Remember to install dependencies by running "yarn install" in the terminal)
     Here are the instructions to deploy the contract:
     1. Create new walletV4r2 or use existing one.
@@ -22,8 +22,8 @@ import {getJettonHttpLink, getNetworkFromEnv} from "../utils/utils"
     5. In .env file specify the total supply of the Jetton. It will be automatically converted to nano - jettons.
     Note: All supply will be automatically minted to your wallet.
 
-    6. Run "yarn build" to compile the contract.
-    7. Run this script by "yarn deploy"
+    6. Build the contracts
+    7. Run this script
  */
 const main = async () => {
     const mnemonics = process.env.MNEMONICS
@@ -52,7 +52,7 @@ const main = async () => {
 
     const deployerWalletContract = client.open(deployerWallet)
 
-    const jettonMinter = await buildJettonMinterFromEnv(deployerWalletContract.address)
+    const jettonMinter = await buildJettonMinterFromEnv(deployerWalletContract.address, "base")
     const deployAmount = toNano("0.15")
 
     const supply = toNano(Number(process.env.JETTON_SUPPLY ?? 1000000000)) // 1_000_000_000 jettons
@@ -80,6 +80,7 @@ const main = async () => {
 
     // send a message on new address contract to deploy it
     const seqno: number = await deployerWalletContract.getSeqno()
+    console.log(`Running deploy script for ${network} network and for Base Jetton Minter`)
     console.log(
         "🛠️Preparing new outgoing massage from deployment wallet. \n" +
             deployerWalletContract.address,
@@ -91,6 +92,11 @@ const main = async () => {
     const balance: bigint = await deployerWalletContract.getBalance()
 
     console.log("Current deployment wallet balance = ", fromNano(balance).toString(), "💎TON")
+    if (balance < deployAmount) {
+        console.error("Not enough balance to deploy the contract")
+        throw new Error("Not enough balance to deploy the contract")
+    }
+
     console.log("Minting:: ", fromNano(supply))
     printSeparator()
 
