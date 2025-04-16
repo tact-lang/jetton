@@ -1,4 +1,4 @@
-//Huge thanks to Howard Peng for the original code of deploy script. https://github.com/howardpen9/jetton-implementation-in-tact
+// Huge thanks to Howard Peng for the original code of deploy script. https://github.com/howardpen9/jetton-implementation-in-tact
 
 import {beginCell, toNano, TonClient, WalletContractV4, internal, fromNano} from "@ton/ton"
 import {getHttpEndpoint} from "@orbs-network/ton-access"
@@ -44,7 +44,7 @@ const main = async () => {
     })
     const keyPair = await mnemonicToPrivateKey(mnemonics.split(" "))
     const secretKey = keyPair.secretKey
-    const workchain = 0 //we are working in basechain.
+    const workchain = 0 // we are working in basechain.
     const deployerWallet = WalletContractV4.create({
         workchain: workchain,
         publicKey: keyPair.publicKey,
