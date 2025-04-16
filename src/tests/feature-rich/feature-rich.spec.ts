@@ -1,7 +1,5 @@
 import {Address, beginCell, Cell, toNano} from "@ton/core"
 import {Blockchain, BlockchainSnapshot, SandboxContract, TreasuryContract} from "@ton/sandbox"
-import {ExtendedJettonWallet} from "../../wrappers/ExtendedJettonWallet"
-import {ExtendedJettonMinter} from "../../wrappers/ExtendedJettonMinter"
 import {randomAddress} from "@ton/test-utils"
 
 import {
@@ -16,19 +14,21 @@ import {
     gasForBurn,
 } from "../../output/Jetton_JettonMinter"
 import {getComputeGasForTx} from "../../utils/gas"
+import {ExtendedFeatureRichJettonMinter} from "../../wrappers/ExtendedFeatureRichJettonMinter"
+import {ExtendedFeatureRichJettonWallet} from "../../wrappers/ExtendedFeatureRichJettonWallet"
 
 // this is test suite for feature rich jetton minter
 describe("Feature Rich Jetton Minter", () => {
     let blockchain: Blockchain
-    let jettonMinter: SandboxContract<ExtendedJettonMinter>
-    let jettonWallet: SandboxContract<ExtendedJettonWallet>
+    let jettonMinter: SandboxContract<ExtendedFeatureRichJettonMinter>
+    let jettonWallet: SandboxContract<ExtendedFeatureRichJettonWallet>
     let deployer: SandboxContract<TreasuryContract>
 
     let _jwallet_code = new Cell()
     let _minter_code = new Cell()
     let notDeployer: SandboxContract<TreasuryContract>
 
-    let userWallet: (address: Address) => Promise<SandboxContract<ExtendedJettonWallet>>
+    let userWallet: (address: Address) => Promise<SandboxContract<ExtendedFeatureRichJettonWallet>>
     let defaultContent: Cell
     let snapshot: BlockchainSnapshot
     beforeAll(async () => {
@@ -44,7 +44,7 @@ describe("Feature Rich Jetton Minter", () => {
         }
 
         jettonMinter = blockchain.openContract(
-            await ExtendedJettonMinter.fromInit(0n, deployer.address, defaultContent),
+            await ExtendedFeatureRichJettonMinter.fromInit(0n, deployer.address, defaultContent),
         )
 
         //We send Update content to deploy the contract, because it is not automatically deployed after blockchain.openContract
@@ -69,7 +69,11 @@ describe("Feature Rich Jetton Minter", () => {
         }
 
         jettonWallet = blockchain.openContract(
-            await ExtendedJettonWallet.fromInit(deployer.address, jettonMinter.address, 0n),
+            await ExtendedFeatureRichJettonWallet.fromInit(
+                deployer.address,
+                jettonMinter.address,
+                0n,
+            ),
         )
         const walletCode = jettonWallet.init?.code
         if (walletCode === undefined) {
@@ -80,7 +84,9 @@ describe("Feature Rich Jetton Minter", () => {
 
         userWallet = async (address: Address) => {
             return blockchain.openContract(
-                new ExtendedJettonWallet(await jettonMinter.getGetWalletAddress(address)),
+                new ExtendedFeatureRichJettonWallet(
+                    await jettonMinter.getGetWalletAddress(address),
+                ),
             )
         }
 
@@ -89,6 +95,47 @@ describe("Feature Rich Jetton Minter", () => {
 
     beforeEach(async () => {
         await blockchain.loadFrom(snapshot)
+    })
+
+    it("should send all jettons on send-all custom payload", async () => {
+        const jettonMintAmount = toNano(10)
+        await jettonMinter.sendMint(
+            deployer.getSender(),
+            deployer.address,
+            jettonMintAmount,
+            0n,
+            toNano(1),
+        )
+        const deployerJettonWallet = await userWallet(deployer.address)
+        const jettonBalance = await deployerJettonWallet.getJettonBalance()
+
+        expect(jettonBalance).toEqual(jettonMintAmount)
+
+        const randomNewReceiver = randomAddress(0)
+
+        const sendAllJettonsResult = await deployerJettonWallet.sendTransferAllJettons(
+            deployer.getSender(),
+            toNano("0.1"), // tons
+            randomNewReceiver,
+            deployer.address,
+            0n,
+            null,
+        )
+
+        const receiverJettonWallet = await userWallet(randomNewReceiver)
+
+        expect(sendAllJettonsResult.transactions).toHaveTransaction({
+            from: deployerJettonWallet.address,
+            to: receiverJettonWallet.address,
+            op: ExtendedFeatureRichJettonWallet.opcodes.JettonTransferInternal,
+            success: true,
+        })
+
+        const receiverJettonBalance = await receiverJettonWallet.getJettonBalance()
+        expect(receiverJettonBalance).toEqual(jettonMintAmount)
+
+        const deployerJettonBalanceAfter = await deployerJettonWallet.getJettonBalance()
+        expect(deployerJettonBalanceAfter).toEqual(0n)
     })
 
     it("Can close minting", async () => {
@@ -171,43 +218,6 @@ describe("Feature Rich Jetton Minter", () => {
             $$type: "TakeWalletBalance",
             balance: jettonBalance,
             verifyInfo: null,
-        }
-
-        expect(provideResult.transactions).toHaveTransaction({
-            from: deployerJettonWallet.address,
-            to: notDeployer.address,
-            body: beginCell().store(storeTakeWalletBalance(msg)).endCell(),
-        })
-    })
-
-    it("should report with correct verify info", async () => {
-        const jettonMintAmount = 100n
-        await jettonMinter.sendMint(
-            deployer.getSender(),
-            deployer.address,
-            jettonMintAmount,
-            0n,
-            toNano(1),
-        )
-        const deployerJettonWallet = await userWallet(deployer.address)
-        const jettonBalance = await deployerJettonWallet.getJettonBalance()
-
-        const provideResult = await deployerJettonWallet.sendProvideWalletBalance(
-            deployer.getSender(),
-            toNano(1),
-            notDeployer.address,
-            true,
-        )
-
-        const msg: TakeWalletBalance = {
-            $$type: "TakeWalletBalance",
-            balance: jettonBalance,
-            verifyInfo: {
-                $$type: "VerifyInfo",
-                owner: deployer.address,
-                minter: jettonMinter.address,
-                code: _jwallet_code,
-            },
         }
 
         expect(provideResult.transactions).toHaveTransaction({

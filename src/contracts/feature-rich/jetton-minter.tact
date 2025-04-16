@@ -12,7 +12,7 @@ struct JettonMinterState {
     jettonWalletCode: Cell;
 }
 
-contract JettonMinterFeatureRichExtended(
+contract JettonMinterFeatureRich(
     totalSupply: Int as coins,
     owner: Address,
     jettonContent: Cell,
