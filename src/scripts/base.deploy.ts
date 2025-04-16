@@ -1,5 +1,3 @@
-//Huge thanks to Howard Peng for the original code of deploy script. https://github.com/howardpen9/jetton-implementation-in-tact
-
 import {beginCell, toNano, TonClient, WalletContractV4, internal, fromNano} from "@ton/ton"
 import {getHttpEndpoint} from "@orbs-network/ton-access"
 import {mnemonicToPrivateKey} from "@ton/crypto"
@@ -11,7 +9,7 @@ import "dotenv/config"
 import {getJettonHttpLink, getNetworkFromEnv} from "../utils/utils"
 
 /*
-    This is deploy script for basic jetton, compatible with TEP-74 and TEP-89
+    This is deployment script for basic jetton, compatible with TEP-74 and TEP-89
 
     (Remember to install dependencies by running "yarn install" in the terminal)
     Here are the instructions to deploy the contract:
@@ -24,8 +22,8 @@ import {getJettonHttpLink, getNetworkFromEnv} from "../utils/utils"
     5. In .env file specify the total supply of the Jetton. It will be automatically converted to nano - jettons.
     Note: All supply will be automatically minted to your wallet.
 
-    6. Run "yarn build" to compile the contract.
-    7. Run this script by "yarn deploy"
+    6. Build the contracts
+    7. Run this script
  */
 const main = async () => {
     const mnemonics = process.env.MNEMONICS

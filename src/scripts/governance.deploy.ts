@@ -9,7 +9,7 @@ import {getJettonHttpLink, getNetworkFromEnv} from "../utils/utils"
 import {storeMint} from "../output/Governance_GovernanceJettonMinter"
 
 /*
-    This is deploy script for governance jetton, which is standard, used for USDT on TON
+    This is the deployment script for governance jetton, which has same functionality as USDT on TON
 
     (Remember to install dependencies by running "yarn install" in the terminal)
     Here are the instructions to deploy the contract:
@@ -22,8 +22,8 @@ import {storeMint} from "../output/Governance_GovernanceJettonMinter"
     5. In .env file specify the total supply of the Jetton. It will be automatically converted to nano - jettons.
     Note: All supply will be automatically minted to your wallet.
 
-    6. Run "yarn build" to compile the contract.
-    7. Run this script by "yarn deploy"
+    6. Build the contracts
+    7. Run this script
  */
 const main = async () => {
     const mnemonics = process.env.MNEMONICS
