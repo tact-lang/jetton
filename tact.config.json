@@ -32,6 +32,24 @@
                     "alwaysSaveContractData": false
                 }
             }
+        },
+        {
+            "name": "FeatureRich",
+            "path": "./src/contracts/feature-rich/jetton-minter.tact",
+            "output": "./src/output",
+            "mode": "full",
+            "options": {
+                "external": false,
+                "debug": false,
+                "ipfsAbiGetter": false,
+                "interfacesGetter": false,
+                "experimental": {
+                    "inline": true
+                },
+                "optimizations": {
+                    "alwaysSaveContractData": false
+                }
+            }
         }
     ]
 }
