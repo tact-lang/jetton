@@ -31,7 +31,7 @@ export class ExtendedFeatureRichJettonWallet extends ExtendedJettonWallet {
         forwardTonAmount: bigint,
         forwardPayload: Cell | null,
     ): Promise<void> => {
-        const sendAllJettonsCustomPaylaod =
+        const sendAllJettonsCustomPayload =
             ExtendedFeatureRichJettonWallet.buildSendAllJettonsPayload()
 
         return await this.sendTransfer(
@@ -41,7 +41,7 @@ export class ExtendedFeatureRichJettonWallet extends ExtendedJettonWallet {
             0n,
             to,
             responseAddress,
-            sendAllJettonsCustomPaylaod,
+            sendAllJettonsCustomPayload,
             forwardTonAmount,
             forwardPayload,
         )
