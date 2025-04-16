@@ -13,7 +13,6 @@ describe("Feature Rich Jetton Minter", () => {
     let jettonMinter: SandboxContract<ExtendedFeatureRichJettonMinter>
     let deployer: SandboxContract<TreasuryContract>
 
-    let _minter_code = new Cell()
     let notDeployer: SandboxContract<TreasuryContract>
 
     let userWallet: (address: Address) => Promise<SandboxContract<ExtendedFeatureRichJettonWallet>>
@@ -47,12 +46,6 @@ describe("Feature Rich Jetton Minter", () => {
             deploy: true,
             success: true,
         })
-        const minterCode = jettonMinter.init?.code
-        if (minterCode === undefined) {
-            throw new Error("JettonMinter init is not defined")
-        } else {
-            _minter_code = minterCode
-        }
 
         userWallet = async (address: Address) => {
             return blockchain.openContract(
