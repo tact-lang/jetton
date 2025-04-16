@@ -85,7 +85,7 @@ const main = async () => {
 
     // send a message on new address contract to deploy it
     const seqno: number = await deployerWalletContract.getSeqno()
-    console.log(`Running deploy script for ${network} network and for Governancew Jetton Minter`)
+    console.log(`Running deploy script for ${network} network and for Governance Jetton Minter`)
     console.log(
         "🛠️Preparing new outgoing massage from deployment wallet. \n" +
             deployerWalletContract.address,
