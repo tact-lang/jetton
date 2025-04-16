@@ -11,6 +11,8 @@ import "dotenv/config"
 import {getJettonHttpLink, getNetworkFromEnv} from "../utils/utils"
 
 /*
+    This is deploy script for basic jetton, compatible with TEP-74 and TEP-89
+
     (Remember to install dependencies by running "yarn install" in the terminal)
     Here are the instructions to deploy the contract:
     1. Create new walletV4r2 or use existing one.
@@ -44,7 +46,7 @@ const main = async () => {
     })
     const keyPair = await mnemonicToPrivateKey(mnemonics.split(" "))
     const secretKey = keyPair.secretKey
-    const workchain = 0 //we are working in basechain.
+    const workchain = 0 // we are working in basechain.
     const deployerWallet = WalletContractV4.create({
         workchain: workchain,
         publicKey: keyPair.publicKey,
@@ -52,7 +54,7 @@ const main = async () => {
 
     const deployerWalletContract = client.open(deployerWallet)
 
-    const jettonMinter = await buildJettonMinterFromEnv(deployerWalletContract.address)
+    const jettonMinter = await buildJettonMinterFromEnv(deployerWalletContract.address, "base")
     const deployAmount = toNano("0.15")
 
     const supply = toNano(Number(process.env.JETTON_SUPPLY ?? 1000000000)) // 1_000_000_000 jettons
@@ -80,6 +82,7 @@ const main = async () => {
 
     // send a message on new address contract to deploy it
     const seqno: number = await deployerWalletContract.getSeqno()
+    console.log(`Running deploy script for ${network} network and for Base Jetton Minter`)
     console.log(
         "🛠️Preparing new outgoing massage from deployment wallet. \n" +
             deployerWalletContract.address,
@@ -91,6 +94,11 @@ const main = async () => {
     const balance: bigint = await deployerWalletContract.getBalance()
 
     console.log("Current deployment wallet balance = ", fromNano(balance).toString(), "💎TON")
+    if (balance < deployAmount) {
+        console.error("Not enough balance to deploy the contract")
+        throw new Error("Not enough balance to deploy the contract")
+    }
+
     console.log("Minting:: ", fromNano(supply))
     printSeparator()
 

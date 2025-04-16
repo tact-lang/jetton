@@ -40,4 +40,4 @@ jobs:
           GIST_UPLOAD_ENABLED: "true"
           GIST_SECRET: ${{ secrets.GIST_JETTON_DEPLOY_SECRET }}
           GIST_ID: "3d2f2d0b3e2f5a81f77d8e490e3b2807"
-        run: yarn deploy && yarn verify-deployment
+        run: yarn deploy:base && yarn verify-deployment

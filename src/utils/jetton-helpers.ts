@@ -3,6 +3,7 @@ import {Dictionary, beginCell, Cell, Address} from "@ton/core"
 import {JettonMinter} from "../output/Jetton_JettonMinter"
 import {TonClient} from "@ton/ton"
 import chalk from "chalk"
+import {GovernanceJettonMinter} from "../output/Governance_GovernanceJettonMinter"
 
 const ONCHAIN_CONTENT_PREFIX = 0x00
 const SNAKE_PREFIX = 0x00
@@ -121,7 +122,10 @@ export async function validateJettonParams(
     expect(realMetadata.image).toBe(metadata.image)
 }
 
-export async function buildJettonMinterFromEnv(deployerAddress: Address) {
+export async function buildJettonMinterFromEnv(
+    deployerAddress: Address,
+    type: "base" | "governance",
+) {
     const jettonParams = {
         name: process.env.JETTON_NAME ?? "TactJetton",
         description:
@@ -131,9 +135,10 @@ export async function buildJettonMinterFromEnv(deployerAddress: Address) {
             process.env.JETTON_IMAGE ??
             "https://raw.githubusercontent.com/tact-lang/tact/refs/heads/main/docs/public/logomark-light.svg",
     }
-    console.log(jettonParams)
     // Create content Cell
     const content = buildOnchainMetadata(jettonParams)
 
-    return await JettonMinter.fromInit(0n, deployerAddress, content, true)
+    return type === "base"
+        ? await JettonMinter.fromInit(0n, deployerAddress, content, true)
+        : await GovernanceJettonMinter.fromInit(0n, deployerAddress, null, content)
 }
