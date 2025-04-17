@@ -119,4 +119,4 @@ message(0x0393b1ce) ClaimTON {
 
 // extended messages, encoded in customPayload
 
-const SendAllJettonsOpcode: Int = 0x1;
+const SendAllJettonsMode: Int = 0x1;

@@ -1,6 +1,6 @@
 import {Address, beginCell, Cell, ContractProvider, Sender} from "@ton/core"
 import {ExtendedJettonWallet} from "./ExtendedJettonWallet"
-import {SendAllJettonsOpcode} from "../output/FeatureRich_JettonMinterFeatureRich"
+import {SendAllJettonsMode} from "../output/FeatureRich_JettonMinterFeatureRich"
 
 export class ExtendedFeatureRichJettonWallet extends ExtendedJettonWallet {
     constructor(address: Address, init?: {code: Cell; data: Cell}) {
@@ -19,7 +19,7 @@ export class ExtendedFeatureRichJettonWallet extends ExtendedJettonWallet {
     }
 
     static buildSendAllJettonsPayload() {
-        return beginCell().storeUint(SendAllJettonsOpcode, 32).endCell()
+        return beginCell().storeUint(SendAllJettonsMode, 32).endCell()
     }
 
     sendTransferAllJettons = async (

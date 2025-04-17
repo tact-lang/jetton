@@ -45,19 +45,16 @@ contract JettonWalletFeatureRich(
 
         let payload = msg.customPayload!!.beginParse();
 
-        let extendedActionOpcode = payload.loadUint(32);
+        let extendedActionMode = payload.loadUint(32);
 
-        if (extendedActionOpcode == SendAllJettonsOpcode) {
-            let currentBalance = self.balance;
-            self.balance = 0;
-
+        if ((extendedActionMode & SendAllJettonsMode) == 1) {
             deploy(DeployParameters {
                 value: 0,
                 mode: SendRemainingValue,
                 bounce: true,
                 body: JettonTransferInternal {
                     queryId: msg.queryId,
-                    amount: currentBalance,
+                    amount: self.balance,
                     sender: self.owner,
                     responseDestination: msg.responseDestination,
                     forwardTonAmount: msg.forwardTonAmount,
@@ -65,6 +62,8 @@ contract JettonWalletFeatureRich(
                 }.toCell(),
                 init: initOf JettonWalletFeatureRich(msg.destination, self.minter, 0),
             });
+
+            self.balance = 0;
         }
     }
 
@@ -103,7 +102,7 @@ contract JettonWalletFeatureRich(
             message(MessageParameters {
                 to: msg.responseDestination!!,
                 value: msgValue,
-                mode: SendRemainingBalance + SendIgnoreErrors,
+                mode: SendRemainingBalance | SendIgnoreErrors,
                 bounce: false,
                 body: JettonExcesses { queryId: msg.queryId }.toCell(),
             });
