@@ -10,10 +10,11 @@ import {callGetMetadataFromTonApi} from "../utils/tonapi"
 import {expect} from "@jest/globals"
 import {uploadDeployResultToGist} from "../utils/gist"
 import {getNetworkFromEnv} from "../utils/utils"
+import {GovernanceJettonMinter} from "../output/Governance_GovernanceJettonMinter"
 
 describe("Contract Deployment Verification", () => {
     let client: TonClient
-    let jettonMinter: JettonMinter
+    let jettonMinter: JettonMinter | GovernanceJettonMinter
     let deployerWalletAddress: Address
     let jettonParams: JettonParams
 
@@ -50,7 +51,7 @@ describe("Contract Deployment Verification", () => {
                 "https://raw.githubusercontent.com/tact-lang/tact/refs/heads/main/docs/public/logomark-light.svg",
         }
 
-        jettonMinter = await buildJettonMinterFromEnv(deployerWalletAddress)
+        jettonMinter = await buildJettonMinterFromEnv(deployerWalletAddress, "base")
         jettonParams = {
             address: jettonMinter.address,
             metadata: metadata,
