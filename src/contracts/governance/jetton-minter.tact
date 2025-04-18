@@ -32,11 +32,12 @@ contract GovernanceJettonMinter(
 
         let fwdCount = 1 + sign(msg.masterMsg.forwardTonAmount);
         let ctx = context();
-        require(ctx.value >
+        require(
+            ctx.value >
             msg.masterMsg.forwardTonAmount +
             fwdCount * ctx.readForwardFee() +
             (2 * getComputeFee(gasForTransfer, false) + minTonsForStorage),
-            "Insufficient amount of TON attached"
+            "Insufficient amount of TON attached",
         );
 
         self.totalSupply += msg.masterMsg.amount;
@@ -109,14 +110,15 @@ contract GovernanceJettonMinter(
 
             let ctx = context();
             let fwdCount = 1 + sign(msgToSend.forwardTonAmount);
-            require(ctx.value >
+            require(
+                ctx.value >
                 msgToSend.forwardTonAmount +
                 fwdCount * ctx.readForwardFee() +
                 (2 * getComputeFee(gasForTransfer, false) + minTonsForStorage),
-                "Insufficient amount of TON attached"
+                "Insufficient amount of TON attached",
             );
 
-            deploy(DeployParameters{
+            deploy(DeployParameters {
                 bounce: false,
                 value: msg.tonAmount,
                 mode: SendPayGasSeparately | SendBounceIfActionFail,
@@ -128,22 +130,23 @@ contract GovernanceJettonMinter(
             JettonBurn.fromSlice(masterMsgSlice);
 
             let ctx = context();
-            require(ctx.value > (ctx.readForwardFee() + 2 * getComputeFee(gasForBurn, false)), 
-            "Insufficient amount of TON attached");
-            
-            deploy(DeployParameters{
+            require(
+                ctx.value > (ctx.readForwardFee() + 2 * getComputeFee(gasForBurn, false)),
+                "Insufficient amount of TON attached",
+            );
+
+            deploy(DeployParameters {
                 bounce: false,
                 value: msg.tonAmount,
                 mode: SendPayGasSeparately | SendBounceIfActionFail,
                 body: msg.masterMsg,
                 init: getJettonWalletInit(msg.toAddress),
             });
-
         } else if (op == SetStatusOpcode) { // SetStatus opcode
             // It is needed to validate the message
             SetStatus.fromSlice(masterMsgSlice);
 
-            deploy(DeployParameters{
+            deploy(DeployParameters {
                 bounce: false,
                 value: msg.tonAmount,
                 mode: SendPayGasSeparately | SendBounceIfActionFail,
@@ -210,4 +213,3 @@ asm fun setData(newData: Cell) {
 asm fun setCode(newCode: Cell) {
     SETCODE
 }
-
