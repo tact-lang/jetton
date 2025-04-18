@@ -24,11 +24,12 @@ contract JettonWalletGovernance(
         let ctx = context();
         let fwdCount = 1 + sign(msg.forwardTonAmount); // msg.forwardTonAmount is coins, so it's non-negative
 
-        require(ctx.value >
+        require(
+            ctx.value >
             msg.forwardTonAmount +
             fwdCount * ctx.readForwardFee() +
             (2 * getComputeFee(gasForTransfer, false) + minTonsForStorage),
-            "Insufficient amount of TON attached"
+            "Insufficient amount of TON attached",
         );
 
         deploy(DeployParameters {

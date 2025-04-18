@@ -131,7 +131,6 @@ message(0xcb862902) ChangeMetadataUri {
     metadata: Slice as remaining;
 }
 
-
 // ============== Additional messages ==============
 
 // provide_wallet_balance#7ac8d559 receiver:MsgAddress include_verify_info:Bool = InternalMsgBody

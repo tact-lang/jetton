@@ -135,7 +135,6 @@ contract JettonMinter(
     }
 }
 
-
 inline fun getJettonWalletInit(address: Address): StateInit {
     return initOf JettonWallet(address, myAddress(), 0);
 }
