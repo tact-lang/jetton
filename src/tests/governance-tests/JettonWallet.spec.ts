@@ -82,7 +82,7 @@ type LockType = "unlock" | "out" | "in" | "full"
      prove pathway
 */
 
-//jetton params
+// jetton params
 
 let send_gas_fee: bigint
 let _send_fwd_fee: bigint
@@ -176,7 +176,7 @@ describe("JettonWallet", () => {
 
     beforeAll(async () => {
         blockchain = await Blockchain.create()
-        //blockchain.verbosity.vmLogs = "vm_logs_verbose";
+        // blockchain.verbosity.vmLogs = "vm_logs_verbose";
         deployer = await blockchain.treasury("deployer")
         jwallet_code_raw = (
             await ExtendedGovernanceJettonWallet.fromInit(
@@ -200,7 +200,7 @@ describe("JettonWallet", () => {
             uri: "https://some_stablecoin.org/meta.json",
         }
 
-        //jwallet_code is library
+        // jwallet_code is library
         const _libs = Dictionary.empty(Dictionary.Keys.BigUint(256), Dictionary.Values.Cell())
         _libs.set(BigInt(`0x${jwallet_code_raw.hash().toString("hex")}`), jwallet_code_raw)
         const libs = beginCell().storeDictDirect(_libs).endCell()
@@ -857,7 +857,7 @@ describe("JettonWallet", () => {
         const forwardAmount = toNano("0.05")
         const sendResult = await deployerJettonWallet.sendTransfer(
             deployer.getSender(),
-            toNano("0.17"), //tons
+            toNano("0.17"), // tons
             sentAmount,
             notDeployer.address,
             deployer.address,
@@ -866,7 +866,7 @@ describe("JettonWallet", () => {
             null,
         )
         expect(sendResult.transactions).toHaveTransaction({
-            //excesses
+            // excesses
             on: deployer.address,
             from: notDeployerJettonWallet.address,
             op: Op.excesses,
@@ -874,7 +874,7 @@ describe("JettonWallet", () => {
         })
 
         expect(sendResult.transactions).toHaveTransaction({
-            //notification
+            // notification
             from: notDeployerJettonWallet.address,
             to: notDeployer.address,
             value: forwardAmount,
@@ -901,7 +901,7 @@ describe("JettonWallet", () => {
         const sentAmount = toNano("0.5")
         const sendResult = await deployerJettonWallet.sendTransfer(
             notDeployer.getSender(),
-            toNano("0.1"), //tons
+            toNano("0.1"), // tons
             sentAmount,
             notDeployer.address,
             deployer.address,
@@ -913,7 +913,7 @@ describe("JettonWallet", () => {
             from: notDeployer.address,
             to: deployerJettonWallet.address,
             aborted: true,
-            exitCode: ExtendedGovernanceJettonMinter.errors["Incorrect sender"], //error::unauthorized_transfer
+            exitCode: ExtendedGovernanceJettonMinter.errors["Incorrect sender"], // error::unauthorized_transfer
         })
         expect(await deployerJettonWallet.getJettonBalance()).toEqual(initialJettonBalance)
         expect(await notDeployerJettonWallet.getJettonBalance()).toEqual(initialJettonBalance2)
@@ -929,7 +929,7 @@ describe("JettonWallet", () => {
         const forwardAmount = toNano("0.05")
         const sendResult = await deployerJettonWallet.sendTransfer(
             deployer.getSender(),
-            toNano("0.1"), //tons
+            toNano("0.1"), // tons
             sentAmount,
             notDeployer.address,
             deployer.address,
@@ -941,7 +941,7 @@ describe("JettonWallet", () => {
             from: deployer.address,
             to: deployerJettonWallet.address,
             aborted: true,
-            exitCode: ExtendedGovernanceJettonMinter.errors["Incorrect balance after send"], //error::not_enough_jettons
+            exitCode: ExtendedGovernanceJettonMinter.errors["Incorrect balance after send"], // error::not_enough_jettons
         })
         expect(await deployerJettonWallet.getJettonBalance()).toEqual(initialJettonBalance)
         expect(await notDeployerJettonWallet.getJettonBalance()).toEqual(initialJettonBalance2)
@@ -1137,7 +1137,7 @@ describe("JettonWallet", () => {
         // Put the forward payload into custom payload, to make sure maximum possible gas used during computation
         const sendResult = await deployerJettonWallet.sendTransfer(
             deployer.getSender(),
-            toNano("0.17"), //tons
+            toNano("0.17"), // tons
             sentAmount,
             notDeployer.address,
             deployer.address,
@@ -1146,7 +1146,7 @@ describe("JettonWallet", () => {
             forwardPayload,
         )
         expect(sendResult.transactions).toHaveTransaction({
-            //excesses
+            // excesses
             from: notDeployerJettonWallet.address,
             to: deployer.address,
         })
@@ -1156,13 +1156,13 @@ describe("JettonWallet", () => {
                                       = InternalMsgBody;
         */
         expect(sendResult.transactions).toHaveTransaction({
-            //notification
+            // notification
             from: notDeployerJettonWallet.address,
             to: notDeployer.address,
             value: forwardAmount,
             body: beginCell()
                 .storeUint(Op.transfer_notification, 32)
-                .storeUint(0, 64) //default queryId
+                .storeUint(0, 64) // default queryId
                 .storeCoins(sentAmount)
                 .storeAddress(deployer.address)
                 .storeUint(1, 1)
@@ -1205,7 +1205,7 @@ describe("JettonWallet", () => {
         const forwardPayload = beginCell().storeUint(0x1234567890n, 128).endCell()
         const sendResult = await deployerJettonWallet.sendTransfer(
             deployer.getSender(),
-            toNano("0.1"), //tons
+            toNano("0.1"), // tons
             sentAmount,
             notDeployer.address,
             deployer.address,
@@ -1214,13 +1214,13 @@ describe("JettonWallet", () => {
             forwardPayload,
         )
         expect(sendResult.transactions).toHaveTransaction({
-            //excesses
+            // excesses
             from: notDeployerJettonWallet.address,
             to: deployer.address,
         })
 
         expect(sendResult.transactions).not.toHaveTransaction({
-            //no notification
+            // no notification
             from: notDeployerJettonWallet.address,
             to: notDeployer.address,
         })
@@ -1253,7 +1253,7 @@ describe("JettonWallet", () => {
             from: deployer.address,
             on: deployerJettonWallet.address,
             aborted: true,
-            exitCode: ExtendedGovernanceJettonMinter.errors["Insufficient amount of TON attached"], //error::not_enough_tons
+            exitCode: ExtendedGovernanceJettonMinter.errors["Insufficient amount of TON attached"], // error::not_enough_tons
         })
         // Make sure value bounced
         expect(sendResult.transactions).toHaveTransaction({
@@ -1514,8 +1514,8 @@ describe("JettonWallet", () => {
             const randomNewReceiver = randomAddress(0)
             const sendResult = await deployerJettonWallet.sendTransfer(
                 deployer.getSender(),
-                toNano("0.1"), //tons
-                0n, //Transfer 0 jettons, it doesn't affect the fee
+                toNano("0.1"), // tons
+                0n, // Transfer 0 jettons, it doesn't affect the fee
                 randomNewReceiver,
                 deployer.address,
                 null,
@@ -1536,7 +1536,7 @@ describe("JettonWallet", () => {
         it("Burns with specified gas", async () => {
             const sendResult = await jettonMinter.sendForceBurn(
                 deployer.getSender(),
-                0n, //Burn 0 jettons, it doesn't affect the fee
+                0n, // Burn 0 jettons, it doesn't affect the fee
                 deployer.address,
                 deployer.address,
                 toNano(0.1),
@@ -1564,7 +1564,7 @@ describe("JettonWallet", () => {
 */
         const internalTransfer = beginCell()
             .storeUint(0x178d4519, 32)
-            .storeUint(0, 64) //default queryId
+            .storeUint(0, 64) // default queryId
             .storeCoins(toNano("0.01"))
             .storeAddress(deployer.address)
             .storeAddress(deployer.address)
@@ -1583,7 +1583,7 @@ describe("JettonWallet", () => {
             from: notDeployer.address,
             to: deployerJettonWallet.address,
             aborted: true,
-            exitCode: ExtendedGovernanceJettonMinter.errors["Incorrect sender"], //error::unauthorized_incoming_transfer
+            exitCode: ExtendedGovernanceJettonMinter.errors["Incorrect sender"], // error::unauthorized_incoming_transfer
         })
         expect(await deployerJettonWallet.getJettonBalance()).toEqual(initialJettonBalance)
     })
@@ -1606,7 +1606,7 @@ describe("JettonWallet", () => {
             from: deployer.address,
             to: deployerJettonWallet.address,
             aborted: true,
-            exitCode: ExtendedGovernanceJettonMinter.errors["Not owner"], //error::unauthorized_transfer
+            exitCode: ExtendedGovernanceJettonMinter.errors["Not owner"], // error::unauthorized_transfer
         })
         expect(await deployerJettonWallet.getJettonBalance()).toEqual(initialJettonBalance)
         expect(await jettonMinter.getTotalSupply()).toEqual(initialTotalSupply)
@@ -1628,7 +1628,7 @@ describe("JettonWallet", () => {
             from: notDeployer.address,
             to: deployerJettonWallet.address,
             aborted: true,
-            exitCode: ExtendedGovernanceJettonMinter.errors["Not owner"], //error::unauthorized_transfer
+            exitCode: ExtendedGovernanceJettonMinter.errors["Not owner"], // error::unauthorized_transfer
         })
         expect(await deployerJettonWallet.getJettonBalance()).toEqual(initialJettonBalance)
         expect(await jettonMinter.getTotalSupply()).toEqual(initialTotalSupply)
@@ -1963,7 +1963,7 @@ describe("JettonWallet", () => {
 
     // This test consume a lot of time: 18 sec
     // and is needed only for measuring ton accruing
-    /*it('jettonWallet can process 250 transfer', async () => {
+    /* it('jettonWallet can process 250 transfer', async () => {
         const deployerJettonWallet = await userWallet(deployer.address);
         let initialJettonBalance = await deployerJettonWallet.getJettonBalance();
         const notDeployerJettonWallet = await userWallet(notDeployer.address);
@@ -2022,7 +2022,7 @@ describe("JettonWallet", () => {
         const forwardAmount = toNano("0.05")
         const sendResult = await deployerJettonWallet.sendTransfer(
             deployer.getSender(),
-            toNano("0.1"), //tons
+            toNano("0.1"), // tons
             sentAmount,
             Address.parse("Ef8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADAU"),
             deployer.address,
@@ -2031,11 +2031,11 @@ describe("JettonWallet", () => {
             null,
         )
         expect(sendResult.transactions).toHaveTransaction({
-            //excesses
+            // excesses
             from: deployer.address,
             to: deployerJettonWallet.address,
             aborted: true,
-            exitCode: ExtendedGovernanceJettonMinter.errors["Not a basechain address"], //error::wrong_workchain
+            exitCode: ExtendedGovernanceJettonMinter.errors["Not a basechain address"], // error::wrong_workchain
         })
     })
 
@@ -2051,14 +2051,14 @@ describe("JettonWallet", () => {
 
         beforeAll(() => {
             prevState = blockchain.snapshot()
-            //blockchain.verbosity.vmLogs = "vm_logs_verbose"
+            // blockchain.verbosity.vmLogs = "vm_logs_verbose"
             testLockable = async (from, addr, exp) => {
                 const lockTypes: Array<LockType> = ["out", "in", "full"]
                 const lockWallet = await userWallet(addr)
                 let i = 0
 
                 for (const type of lockTypes) {
-                    //(await blockchain.getContract(jettonMinter.address)).verbosity.vmLogs = "vm_logs_verbose";
+                    // (await blockchain.getContract(jettonMinter.address)).verbosity.vmLogs = "vm_logs_verbose";
                     await jettonMinter.sendLockWallet(from, addr, type)
 
                     const status = await lockWallet.getWalletStatus()
@@ -3007,7 +3007,7 @@ describe("JettonWallet", () => {
                     const newFwd = estimateBurnFwd(newPrices)
                     minimalFee += newFwd - burnFwd
                     // Can't do that due to reverse fee calculation rounding errors
-                    //minimalFee += (burnFwd - msgPrices.lumpPrice) * 9n;
+                    // minimalFee += (burnFwd - msgPrices.lumpPrice) * 9n;
 
                     // Success again
                     await testAdminBurn(
@@ -3318,7 +3318,7 @@ describe("JettonWallet", () => {
         const initialBalance = (await blockchain.getContract(deployer.address)).balance
         const withdrawResult = await deployerJettonWallet.sendWithdrawTons(deployer.getSender())
         expect(withdrawResult.transactions).toHaveTransaction({
-            //excesses
+            // excesses
             from: deployerJettonWallet.address,
             to: deployer.address,
         })
@@ -3335,7 +3335,7 @@ describe("JettonWallet", () => {
         const initialBalance = (await blockchain.getContract(deployer.address)).balance
         const withdrawResult = await deployerJettonWallet.sendWithdrawTons(notDeployer.getSender())
         expect(withdrawResult.transactions).not.toHaveTransaction({
-            //excesses
+            // excesses
             from: deployerJettonWallet.address,
             to: deployer.address,
         })
@@ -3352,7 +3352,7 @@ describe("JettonWallet", () => {
         const forwardAmount = toNano("0.05")
         await deployerJettonWallet.sendTransfer(
             deployer.getSender(),
-            toNano("0.1"), //tons
+            toNano("0.1"), // tons
             sentAmount,
             deployerJettonWallet.address,
             deployer.address,
@@ -3373,7 +3373,7 @@ describe("JettonWallet", () => {
             toNano("0.4"),
         )
         expect(await childJettonWallet.getJettonBalance()).toEqual(toNano("0.1"))
-        //withdraw the rest
+        // withdraw the rest
         await deployerJettonWallet.sendWithdrawJettons(
             deployer.getSender(),
             childJettonWallet.address,
@@ -3387,7 +3387,7 @@ describe("JettonWallet", () => {
         const forwardAmount = toNano("0.05")
         await deployerJettonWallet.sendTransfer(
             deployer.getSender(),
-            toNano("0.1"), //tons
+            toNano("0.1"), // tons
             sentAmount,
             deployerJettonWallet.address,
             deployer.address,

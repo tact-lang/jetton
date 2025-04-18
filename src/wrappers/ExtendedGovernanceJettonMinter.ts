@@ -24,7 +24,7 @@ export type JettonMinterConfig = {
 export type JettonMinterConfigFull = {
     supply: bigint
     admin: Address
-    //Makes no sense to update transfer admin. ...Or is it?
+    // Makes no sense to update transfer admin. ...Or is it?
     transfer_admin: Address | null
     wallet_code: Cell
     jetton_content: Cell | JettonMinterContent
@@ -117,7 +117,7 @@ export function jettonMinterConfigToCell(config: JettonMinterConfig): Cell {
 
 export function jettonContentToCell(content: JettonMinterContent) {
     return beginCell()
-        .storeStringRefTail(content.uri) //Snake logic under the hood
+        .storeStringRefTail(content.uri) // Snake logic under the hood
         .endCell()
 }
 
