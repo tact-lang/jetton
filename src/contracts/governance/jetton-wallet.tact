@@ -14,6 +14,9 @@ contract JettonWalletGovernance(
         let outgoingTransfersAllowed = ((self.status & 1) == 0);
 
         require(outgoingTransfersAllowed || isFromMaster, "Contract is locked");
+
+        // Suppress next line because sender() == self.owner is much likely to be true, and it's cheaper to place it first
+        // @misti:suppress ShortCircuitCondition
         require(sender() == self.owner || isFromMaster, "Incorrect sender");
 
         self.balance -= msg.amount;
