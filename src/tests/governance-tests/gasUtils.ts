@@ -263,7 +263,7 @@ export function computeMessageForwardFees(msgPrices: MsgPrices, msg: Message) {
             storageStats = storageStats.add(collectCellStats(msg.init.data, visited))
         }
         if (refCount >= 2) {
-            //https://github.com/ton-blockchain/ton/blob/51baec48a02e5ba0106b0565410d2c2fd4665157/crypto/block/transaction.cpp#L2079
+            // https://github.com/ton-blockchain/ton/blob/51baec48a02e5ba0106b0565410d2c2fd4665157/crypto/block/transaction.cpp#L2079
             storageStats.cells++
             storageStats.bits += addBits
         }

@@ -47,8 +47,8 @@ describe("Jetton Minter Extended", () => {
             await ExtendedJettonMinter.fromInit(0n, deployer.address, defaultContent),
         )
 
-        //We send Update content to deploy the contract, because it is not automatically deployed after blockchain.openContract
-        //And to deploy it we should send any message. But update content message with same content does not affect anything. That is why I chose it.
+        // We send Update content to deploy the contract, because it is not automatically deployed after blockchain.openContract
+        // And to deploy it we should send any message. But update content message with same content does not affect anything. That is why I chose it.
         const deployResult = await jettonMinter.send(
             deployer.getSender(),
             {value: toNano("0.1")},
@@ -375,8 +375,8 @@ describe("Jetton Minter Extended", () => {
             const randomNewReceiver = randomAddress(0)
             const sendResult = await deployerJettonWallet.sendTransfer(
                 deployer.getSender(),
-                toNano("0.1"), //tons
-                0n, //Transfer 0 jettons, it doesn't affect the fee
+                toNano("0.1"), // tons
+                0n, // Transfer 0 jettons, it doesn't affect the fee
                 randomNewReceiver,
                 deployer.address,
                 null,
@@ -415,7 +415,7 @@ describe("Jetton Minter Extended", () => {
             const sendResult = await deployerJettonWallet.sendBurn(
                 deployer.getSender(),
                 toNano(0.1),
-                0n, //Burn 0 jettons, it doesn't affect the fee
+                0n, // Burn 0 jettons, it doesn't affect the fee
                 deployer.address,
                 null,
             )

@@ -36,7 +36,7 @@ describe("State init tests", () => {
             await ExtendedGovernanceJettonMinter.fromInit(0n, deployer.address, null, new Cell())
         ).init!.code
 
-        //jwallet_code is library
+        // jwallet_code is library
         const _libs = Dictionary.empty(Dictionary.Keys.BigUint(256), Dictionary.Values.Cell())
         _libs.set(BigInt(`0x${jwallet_code_raw.hash().toString("hex")}`), jwallet_code_raw)
         blockchain.libs = beginCell().storeDictDirect(_libs).endCell()
@@ -63,7 +63,7 @@ describe("State init tests", () => {
             )
     })
     it("should deploy", async () => {
-        //await blockchain.setVerbosityForAddress(jettonMinter.address, {blockchainLogs:true, vmLogs: 'vm_logs'});
+        // await blockchain.setVerbosityForAddress(jettonMinter.address, {blockchainLogs:true, vmLogs: 'vm_logs'});
         const deployResult = await jettonMinter.sendDeploy(deployer.getSender(), toNano("10"))
 
         expect(deployResult.transactions).toHaveTransaction({

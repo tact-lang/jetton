@@ -119,7 +119,7 @@ export const runTransferBenchmarkWithForwardPayload = async () => {
         someAddress,
         deployer.address,
         null,
-        1n, //Enough to send forward payload
+        1n, // Enough to send forward payload
         beginCell()
             .storeMaybeRef(
                 beginCell()
