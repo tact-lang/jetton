@@ -51,6 +51,7 @@ export default [
                     varsIgnorePattern: "^_",
                 },
             ],
+            "spaced-comment": ["error", "always"],
             "prefer-const": [
                 "error",
                 {
