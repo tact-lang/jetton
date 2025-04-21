@@ -115,14 +115,14 @@
             "label": "Optimized checkEitherForwardPayload",
             "pr": "https://github.com/tact-lang/jetton/pull/124",
             "gas": {
-                "transfer": "34179",
+                "transfer": "33953",
                 "mint": "18520",
-                "burn": "12862",
+                "burn": "12749",
                 "discovery": "6015",
                 "reportBalance": "4308",
                 "claimWallet": "3984"
             },
-            "summary": "79868"
+            "summary": "79529"
         }
     ]
 }
