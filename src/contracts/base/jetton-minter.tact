@@ -77,7 +77,6 @@ contract JettonMinter(
         self.totalSupply -= msg.amount;
 
         if (msg.responseDestination != null) {
-            // @misti:suppress SuboptimalSend
             message(MessageParameters {
                 to: msg.responseDestination!!,
                 body: JettonExcesses { queryId: msg.queryId }.toCell(),
