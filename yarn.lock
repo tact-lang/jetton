@@ -1099,13 +1099,13 @@
     "@nodelib/fs.scandir" "2.1.5"
     fastq "^1.6.0"
 
-"@nowarp/misti@^0.7.1":
-  version "0.7.1"
-  resolved "https://registry.yarnpkg.com/@nowarp/misti/-/misti-0.7.1.tgz#f78b13db27854199a1a3743e78a16bba78d9da2a"
-  integrity sha512-cgVq1p8ASFH4GTn1/h7ECn/bR5x0e/2L0zuTE9nUTjXsEJNaqXa2xfM24IlhI6D1O+EsDSOG2cqGbCIohIu3qw==
+"@nowarp/misti@^0.8.1":
+  version "0.8.1"
+  resolved "https://registry.yarnpkg.com/@nowarp/misti/-/misti-0.8.1.tgz#adaf865bfb64be157073f9ace650ff80d5bba905"
+  integrity sha512-rd+3B3FUlucPhRtYpi2vLddDwrIUt3DVo4R3sn1urUeh8mlGMwgha/hJpKQ4M9Vn48cxXy+e/1isz4Wkidlvrg==
   dependencies:
     "@nowarp/souffle" "^0.1.2"
-    "@tact-lang/compiler" "~1.6.1"
+    "@tact-lang/compiler" "~1.6.6"
     "@types/benchmark" "^2.1.5"
     "@types/fs-extra" "^11.0.4"
     "@types/json-bigint" "^1.0.4"
@@ -1235,7 +1235,7 @@
     "@smithy/util-buffer-from" "^2.2.0"
     tslib "^2.6.2"
 
-"@tact-lang/compiler@^1.6.6", "@tact-lang/compiler@~1.6.1":
+"@tact-lang/compiler@^1.6.6", "@tact-lang/compiler@~1.6.6":
   version "1.6.6"
   resolved "https://registry.yarnpkg.com/@tact-lang/compiler/-/compiler-1.6.6.tgz#e6b2dad0ac8f9b5a7de089307ba9b642a1d75492"
   integrity sha512-uBjUjlrDbB2NTPkMAtg/xhG0Ar5Uhnu09GVEkHoVkakgJHAO+ScMaRnPK69wGjEn9qCKKSPYjCyDflXFvi5DkQ==
