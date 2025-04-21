@@ -27,7 +27,7 @@
     },
     "dependencies": {
         "@aws-crypto/sha256-js": "^5.2.0",
-        "@nowarp/misti": "^0.8.0",
+        "@nowarp/misti": "^0.8.1",
         "@orbs-network/ton-access": "^2.3.3",
         "@tact-lang/compiler": "^1.6.5",
         "@tact-lang/ton-jest": "^0.0.4",
