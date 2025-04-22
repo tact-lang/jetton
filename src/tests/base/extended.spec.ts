@@ -3,23 +3,27 @@ import {Blockchain, BlockchainSnapshot, SandboxContract, TreasuryContract} from 
 import {ExtendedJettonWallet} from "../../wrappers/ExtendedJettonWallet"
 import {ExtendedJettonMinter} from "../../wrappers/ExtendedJettonMinter"
 import {findTransactionRequired, randomAddress} from "@ton/test-utils"
-
 import {
-    JettonUpdateContent,
+    computeGasFee,
+    getGasPrices,
+    getMsgPrices,
+    getOriginalFwdFee,
+} from "../governance-tests/gasUtils"
+import {
     CloseMinting,
-    Mint,
-    JettonMinter,
-    TakeWalletBalance,
-    storeTakeWalletBalance,
-    minTonsForStorage,
-    gasForTransfer,
     gasForBurn,
+    gasForTransfer,
+    JettonMinter,
+    JettonUpdateContent,
+    Mint,
+    minTonsForStorage,
+    storeJettonBurn,
     storeJettonTransfer,
     storeMint,
-    storeJettonBurn,
+    storeTakeWalletBalance,
+    TakeWalletBalance,
 } from "../../output/Jetton_JettonMinter"
 import {getComputeGasForTx} from "../../utils/gas"
-import {computeGasFee, getGasPrices} from "../governance-tests/gasUtils"
 
 // this test suite includes tests for the extended functionality
 describe("Jetton Minter Extended", () => {
@@ -467,17 +471,20 @@ describe("Jetton Minter Extended", () => {
             })
 
             const fwdTx = findTransactionRequired(transferForCalc.transactions, {
-                to: deployer.address,
+                from: deployer.address,
+                to: deployerJettonWallet.address,
             })
 
-            const fwdFeeCalc =
-                fwdTx.description.type === "generic"
-                    ? fwdTx.description.actionPhase?.totalFwdFees
-                    : 0n
-
-            // there is rounding error in the emulation, +1 nanoton to handle it
-            const roundedFwdFee = fwdFeeCalc! + 1n
-
+            const inFwdFee =
+                fwdTx.inMessage?.info.type === "internal"
+                    ? fwdTx.inMessage.info.forwardFee
+                    : undefined
+            if (inFwdFee === undefined) {
+                throw new Error("Could not find inFwdFee")
+            }
+            const prices = getMsgPrices(blockchain.config, 0)
+            // https://github.com/ton-blockchain/ton/commit/a11ffb1637032faabea9119020f6c80ed678d0e7#diff-660b8e8615c63abdc65b4dfb7dba42b4c3f71642ca33e5ee6ae4e344a7eb082dR371
+            const origFwdFee = getOriginalFwdFee(prices, inFwdFee)
             /*
             require(
                 ctx.value >
@@ -488,11 +495,7 @@ describe("Jetton Minter Extended", () => {
             );
             */
             const minimalTransferValue =
-                transferGasPrice * 2n +
-                minTonsForStorage +
-                roundedFwdFee * 2n +
-                forwardTonAmount +
-                1n // +1 to be greater than
+                transferGasPrice * 2n + minTonsForStorage + origFwdFee * 2n + forwardTonAmount + 1n // +1 to be greater than
 
             // mint to deploy jetton wallet
             const jettonMintAmount = 1000000n
@@ -556,16 +559,20 @@ describe("Jetton Minter Extended", () => {
             })
 
             const fwdTx = findTransactionRequired(mintForCalc.transactions, {
-                to: deployer.address,
+                from: deployer.address,
+                to: deployerJettonWallet.address,
             })
 
-            const fwdFeeCalc =
-                fwdTx.description.type === "generic"
-                    ? fwdTx.description.actionPhase?.totalFwdFees
-                    : 0n
-
-            // there is rounding error in the emulation, +1 nanoton to handle it
-            const roundedFwdFee = fwdFeeCalc! + 1n
+            const inFwdFee =
+                fwdTx.inMessage?.info.type === "internal"
+                    ? fwdTx.inMessage.info.forwardFee
+                    : undefined
+            if (inFwdFee === undefined) {
+                throw new Error("Could not find inFwdFee")
+            }
+            const prices = getMsgPrices(blockchain.config, 0)
+            // https://github.com/ton-blockchain/ton/commit/a11ffb1637032faabea9119020f6c80ed678d0e7#diff-660b8e8615c63abdc65b4dfb7dba42b4c3f71642ca33e5ee6ae4e344a7eb082dR371
+            const origFwdFee = getOriginalFwdFee(prices, inFwdFee)
 
             /*
             require(
@@ -577,11 +584,7 @@ describe("Jetton Minter Extended", () => {
             );
             */
             const minimalMintValue =
-                transferGasPrice * 2n +
-                minTonsForStorage +
-                roundedFwdFee * 2n +
-                forwardTonAmount +
-                1n // +1 to be greater than
+                transferGasPrice * 2n + minTonsForStorage + origFwdFee * 2n + forwardTonAmount + 1n // +1 to be greater than
 
             // actual send with minimal value
             const mintSendResult = await deployer.send({
@@ -626,16 +629,20 @@ describe("Jetton Minter Extended", () => {
             })
 
             const fwdTx = findTransactionRequired(burnForCalc.transactions, {
-                to: deployer.address,
+                from: deployer.address,
+                to: deployerJettonWallet.address,
             })
 
-            const fwdFeeCalc =
-                fwdTx.description.type === "generic"
-                    ? fwdTx.description.actionPhase?.totalFwdFees
-                    : 0n
-
-            // there is rounding error in the emulation, +1 nanoton to handle it
-            const roundedFwdFee = fwdFeeCalc! + 1n
+            const inFwdFee =
+                fwdTx.inMessage?.info.type === "internal"
+                    ? fwdTx.inMessage.info.forwardFee
+                    : undefined
+            if (inFwdFee === undefined) {
+                throw new Error("Could not find inFwdFee")
+            }
+            const prices = getMsgPrices(blockchain.config, 0)
+            // https://github.com/ton-blockchain/ton/commit/a11ffb1637032faabea9119020f6c80ed678d0e7#diff-660b8e8615c63abdc65b4dfb7dba42b4c3f71642ca33e5ee6ae4e344a7eb082dR371
+            const origFwdFee = getOriginalFwdFee(prices, inFwdFee)
 
             /*
             require(
@@ -644,7 +651,7 @@ describe("Jetton Minter Extended", () => {
                 "Insufficient amount of TON attached"
             );
             */
-            const minimalBurnValue = burnGasPrice * 2n + roundedFwdFee + 1n // +1 to be greater than
+            const minimalBurnValue = burnGasPrice * 2n + origFwdFee + 1n // +1 to be greater than
 
             // mint to deploy jetton wallet
             const jettonMintAmount = 1000000n
