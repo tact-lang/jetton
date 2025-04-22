@@ -504,7 +504,7 @@ describe("Jetton Minter Extended", () => {
                 toNano(1),
             )
 
-            // actuall send with minimal value
+            // actual send with minimal value
             const sendResult = await deployer.send({
                 to: deployerJettonWallet.address,
                 value: minimalTransferValue,
@@ -583,7 +583,7 @@ describe("Jetton Minter Extended", () => {
                 forwardTonAmount +
                 1n // +1 to be greater than
 
-            // actuall send with minimal value
+            // actual send with minimal value
             const mintSendResult = await deployer.send({
                 to: jettonMinter.address,
                 value: minimalMintValue,
@@ -656,7 +656,7 @@ describe("Jetton Minter Extended", () => {
                 toNano(1),
             )
 
-            // actuall send with minimal value
+            // actual send with minimal value
             const sendResult = await deployer.send({
                 to: deployerJettonWallet.address,
                 value: minimalBurnValue,
