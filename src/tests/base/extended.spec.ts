@@ -16,6 +16,7 @@ import {
     gasForBurn,
     storeJettonTransfer,
     storeMint,
+    storeJettonBurn,
 } from "../../output/Jetton_JettonMinter"
 import {getComputeGasForTx} from "../../utils/gas"
 import {computeGasFee, getGasPrices} from "../governance-tests/gasUtils"
@@ -519,7 +520,7 @@ describe("Jetton Minter Extended", () => {
 
         it("jetton mint with minimal required value passes", async () => {
             const deployerJettonWallet = await userWallet(deployer.address)
-            const jettonTransferAmount = 100n
+            const jettonMintAmount = 100n
             const forwardTonAmount = toNano(0.1)
 
             const gasPrices = getGasPrices(blockchain.config, 0)
@@ -535,7 +536,7 @@ describe("Jetton Minter Extended", () => {
                         mintMessage: {
                             $$type: "JettonTransferInternal",
                             queryId: 0n,
-                            amount: jettonTransferAmount,
+                            amount: jettonMintAmount,
                             sender: deployer.address,
                             responseDestination: deployer.address,
                             forwardPayload: beginCell().storeMaybeRef(null).endCell().asSlice(),
@@ -592,6 +593,79 @@ describe("Jetton Minter Extended", () => {
             })
 
             expect(mintSendResult.transactions).not.toHaveTransaction({
+                success: false,
+            })
+        })
+
+        it("jetton burn with minimal required value passes", async () => {
+            const deployerJettonWallet = await userWallet(deployer.address)
+            const jettonBurnAmount = 100n
+
+            const gasPrices = getGasPrices(blockchain.config, 0)
+            const burnGasPrice = computeGasFee(gasPrices, gasForBurn)
+
+            const burnMsg = beginCell()
+                .store(
+                    storeJettonBurn({
+                        $$type: "JettonBurn",
+                        amount: jettonBurnAmount,
+                        customPayload: null,
+                        queryId: 0n,
+                        responseDestination: deployer.address,
+                    }),
+                )
+                .endCell()
+
+            // make burn to get fwd fee from it
+            const burnForCalc = await deployer.send({
+                to: deployerJettonWallet.address,
+                value: toNano(10),
+                body: burnMsg,
+                bounce: false,
+                sendMode: SendMode.PAY_GAS_SEPARATELY,
+            })
+
+            const fwdTx = findTransactionRequired(burnForCalc.transactions, {
+                to: deployer.address,
+            })
+
+            const fwdFeeCalc =
+                fwdTx.description.type === "generic"
+                    ? fwdTx.description.actionPhase?.totalFwdFees
+                    : 0n
+
+            // there is rounding error in the emulation, +1 nanoton to handle it
+            const roundedFwdFee = fwdFeeCalc! + 1n
+
+            /*
+            require(
+                ctx.value > 
+                (fwdFee + 2 * getComputeFee(gasForBurn, false)),
+                "Insufficient amount of TON attached"
+            );
+            */
+            const minimalBurnValue = burnGasPrice * 2n + roundedFwdFee + 1n // +1 to be greater than
+
+            // mint to deploy jetton wallet
+            const jettonMintAmount = 1000000n
+            await jettonMinter.sendMint(
+                deployer.getSender(),
+                deployer.address,
+                jettonMintAmount,
+                0n,
+                toNano(1),
+            )
+
+            // actuall send with minimal value
+            const sendResult = await deployer.send({
+                to: deployerJettonWallet.address,
+                value: minimalBurnValue,
+                body: burnMsg,
+                bounce: false,
+                sendMode: SendMode.PAY_GAS_SEPARATELY,
+            })
+
+            expect(sendResult.transactions).not.toHaveTransaction({
                 success: false,
             })
         })
