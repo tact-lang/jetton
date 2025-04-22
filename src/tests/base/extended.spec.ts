@@ -545,8 +545,8 @@ describe("Jetton Minter Extended", () => {
                 )
                 .endCell()
 
-            // make transfer to get fwd fee from it
-            const transferForCalc = await deployer.send({
+            // send mint (it will fail but that's okay) to get fwd fee from it
+            const mintForCalc = await deployer.send({
                 to: deployerJettonWallet.address,
                 value: toNano(10),
                 body: mintMsg,
@@ -554,7 +554,7 @@ describe("Jetton Minter Extended", () => {
                 sendMode: SendMode.PAY_GAS_SEPARATELY,
             })
 
-            const fwdTx = findTransactionRequired(transferForCalc.transactions, {
+            const fwdTx = findTransactionRequired(mintForCalc.transactions, {
                 to: deployer.address,
             })
 
@@ -575,33 +575,23 @@ describe("Jetton Minter Extended", () => {
                 "Insufficient amount of TON attached",
             );
             */
-            const minimalTransferValue =
+            const minimalMintValue =
                 transferGasPrice * 2n +
                 minTonsForStorage +
                 roundedFwdFee * 2n +
                 forwardTonAmount +
                 1n // +1 to be greater than
 
-            // mint to deploy jetton wallet
-            const jettonMintAmount = 1000000n
-            await jettonMinter.sendMint(
-                deployer.getSender(),
-                deployer.address,
-                jettonMintAmount,
-                0n,
-                toNano(1),
-            )
-
             // actuall send with minimal value
-            const sendResult = await deployer.send({
-                to: deployerJettonWallet.address,
-                value: minimalTransferValue,
+            const mintSendResult = await deployer.send({
+                to: jettonMinter.address,
+                value: minimalMintValue,
                 body: mintMsg,
                 bounce: false,
                 sendMode: SendMode.PAY_GAS_SEPARATELY,
             })
 
-            expect(sendResult.transactions).not.toHaveTransaction({
+            expect(mintSendResult.transactions).not.toHaveTransaction({
                 success: false,
             })
         })
