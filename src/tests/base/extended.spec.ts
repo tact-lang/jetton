@@ -15,6 +15,7 @@ import {
     gasForTransfer,
     gasForBurn,
     storeJettonTransfer,
+    storeMint,
 } from "../../output/Jetton_JettonMinter"
 import {getComputeGasForTx} from "../../utils/gas"
 import {computeGasFee, getGasPrices} from "../governance-tests/gasUtils"
@@ -432,7 +433,7 @@ describe("Jetton Minter Extended", () => {
         })
 
         // add tests here that send with minimal required value passes
-        it("jetton Transfer with minimal required value passes", async () => {
+        it("jetton transfer with minimal required value passes", async () => {
             const deployerJettonWallet = await userWallet(deployer.address)
             const jettonTransferAmount = 100n
             const forwardTonAmount = toNano(0.1)
@@ -507,6 +508,95 @@ describe("Jetton Minter Extended", () => {
                 to: deployerJettonWallet.address,
                 value: minimalTransferValue,
                 body: transferMsg,
+                bounce: false,
+                sendMode: SendMode.PAY_GAS_SEPARATELY,
+            })
+
+            expect(sendResult.transactions).not.toHaveTransaction({
+                success: false,
+            })
+        })
+
+        it("jetton mint with minimal required value passes", async () => {
+            const deployerJettonWallet = await userWallet(deployer.address)
+            const jettonTransferAmount = 100n
+            const forwardTonAmount = toNano(0.1)
+
+            const gasPrices = getGasPrices(blockchain.config, 0)
+            const transferGasPrice = computeGasFee(gasPrices, gasForTransfer)
+
+            const mintMsg = beginCell()
+                .store(
+                    storeMint({
+                        $$type: "Mint",
+                        queryId: 0n,
+                        receiver: deployer.address,
+                        tonAmount: forwardTonAmount,
+                        mintMessage: {
+                            $$type: "JettonTransferInternal",
+                            queryId: 0n,
+                            amount: jettonTransferAmount,
+                            sender: deployer.address,
+                            responseDestination: deployer.address,
+                            forwardPayload: beginCell().storeMaybeRef(null).endCell().asSlice(),
+                            forwardTonAmount: forwardTonAmount,
+                        },
+                    }),
+                )
+                .endCell()
+
+            // make transfer to get fwd fee from it
+            const transferForCalc = await deployer.send({
+                to: deployerJettonWallet.address,
+                value: toNano(10),
+                body: mintMsg,
+                bounce: false,
+                sendMode: SendMode.PAY_GAS_SEPARATELY,
+            })
+
+            const fwdTx = findTransactionRequired(transferForCalc.transactions, {
+                to: deployer.address,
+            })
+
+            const fwdFeeCalc =
+                fwdTx.description.type === "generic"
+                    ? fwdTx.description.actionPhase?.totalFwdFees
+                    : 0n
+
+            // there is rounding error in the emulation, +1 nanoton to handle it
+            const roundedFwdFee = fwdFeeCalc! + 1n
+
+            /*
+            require(
+                ctx.value >
+                msg.forwardTonAmount +
+                fwdCount * ctx.readForwardFee() +
+                (2 * getComputeFee(gasForTransfer, false) + minTonsForStorage),
+                "Insufficient amount of TON attached",
+            );
+            */
+            const minimalTransferValue =
+                transferGasPrice * 2n +
+                minTonsForStorage +
+                roundedFwdFee * 2n +
+                forwardTonAmount +
+                1n // +1 to be greater than
+
+            // mint to deploy jetton wallet
+            const jettonMintAmount = 1000000n
+            await jettonMinter.sendMint(
+                deployer.getSender(),
+                deployer.address,
+                jettonMintAmount,
+                0n,
+                toNano(1),
+            )
+
+            // actuall send with minimal value
+            const sendResult = await deployer.send({
+                to: deployerJettonWallet.address,
+                value: minimalTransferValue,
+                body: mintMsg,
                 bounce: false,
                 sendMode: SendMode.PAY_GAS_SEPARATELY,
             })
