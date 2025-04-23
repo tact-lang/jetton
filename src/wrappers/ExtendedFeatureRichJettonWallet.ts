@@ -1,6 +1,7 @@
 import {Address, beginCell, Cell, ContractProvider, Sender} from "@ton/core"
 import {ExtendedJettonWallet} from "./ExtendedJettonWallet"
 import {SendAllJettonsMode} from "../output/FeatureRich_JettonMinterFeatureRich"
+import {JettonWalletFeatureRich} from "../output/FeatureRich_JettonWalletFeatureRich"
 
 export class ExtendedFeatureRichJettonWallet extends ExtendedJettonWallet {
     constructor(address: Address, init?: {code: Cell; data: Cell}) {
@@ -8,7 +9,7 @@ export class ExtendedFeatureRichJettonWallet extends ExtendedJettonWallet {
     }
 
     static async fromInit(owner: Address, minter: Address, balance: bigint) {
-        const base = await ExtendedJettonWallet.fromInit(owner, minter, balance)
+        const base = await JettonWalletFeatureRich.fromInit(owner, minter, balance)
         if (base.init === undefined) {
             throw new Error("JettonWallet init is not defined")
         }
