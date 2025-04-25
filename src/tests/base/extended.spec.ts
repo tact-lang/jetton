@@ -4,7 +4,6 @@ import {ExtendedJettonWallet} from "../../wrappers/ExtendedJettonWallet"
 import {ExtendedJettonMinter} from "../../wrappers/ExtendedJettonMinter"
 import {ExtendedFeatureRichJettonWallet} from "../../wrappers/ExtendedFeatureRichJettonWallet"
 import {ExtendedFeatureRichJettonMinter} from "../../wrappers/ExtendedFeatureRichJettonMinter"
-import {randomAddress} from "@ton/test-utils"
 import {findTransactionRequired, randomAddress} from "@ton/test-utils"
 import {
     computeGasFee,
