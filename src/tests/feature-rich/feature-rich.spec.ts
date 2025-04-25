@@ -162,6 +162,47 @@ describe("Feature Rich Jetton Minter", () => {
         })
     })
 
+    it("should handle bounce on not deploy receivers jetton wallet in custom payload", async () => {
+        const jettonMintAmount = toNano(10)
+        await jettonMinter.sendMint(
+            deployer.getSender(),
+            deployer.address,
+            jettonMintAmount,
+            0n,
+            toNano(1),
+        )
+        const deployerJettonWallet = await userWallet(deployer.address)
+        const jettonBalance = await deployerJettonWallet.getJettonBalance()
+
+        expect(jettonBalance).toEqual(jettonMintAmount)
+
+        const randomNewReceiver = randomAddress(0)
+
+        // we send transfer without deployed receiver jetton wallet
+        // so it will bounce
+        const sendAllJettonsResult = await deployerJettonWallet.sendTransferWithJettonMode(
+            deployer.getSender(),
+            toNano("0.1"), // tons
+            randomNewReceiver,
+            deployer.address,
+            0n,
+            null,
+            SendNotDeployReceiversJettonWallet,
+        )
+
+        const receiverJettonWallet = await userWallet(randomNewReceiver)
+
+        expect(sendAllJettonsResult.transactions).toHaveTransaction({
+            from: receiverJettonWallet.address,
+            to: deployerJettonWallet.address,
+            inMessageBounced: true,
+        })
+
+        // bounce handled, balance restored
+        const jettonBalanceAfterBounce = await deployerJettonWallet.getJettonBalance()
+        expect(jettonBalanceAfterBounce).toEqual(jettonBalance)
+    })
+
     it("should perform transfer as usual without custom payload", async () => {
         const jettonMintAmount = toNano(10)
         await jettonMinter.sendMint(
