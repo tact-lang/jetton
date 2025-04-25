@@ -5,6 +5,10 @@ import {randomAddress} from "@ton/test-utils"
 import {JettonUpdateContent} from "../../output/Jetton_JettonMinter"
 import {ExtendedFeatureRichJettonMinter} from "../../wrappers/ExtendedFeatureRichJettonMinter"
 import {ExtendedFeatureRichJettonWallet} from "../../wrappers/ExtendedFeatureRichJettonWallet"
+import {
+    SendAllJettonsMode,
+    SendNotDeployReceiversJettonWallet,
+} from "../../output/FeatureRich_JettonMinterFeatureRich"
 
 // this is test suite for feature rich jetton minter
 // it makes heavy use of the custom payload and enables new functionality
@@ -78,13 +82,14 @@ describe("Feature Rich Jetton Minter", () => {
 
         const randomNewReceiver = randomAddress(0)
 
-        const sendAllJettonsResult = await deployerJettonWallet.sendTransferAllJettons(
+        const sendAllJettonsResult = await deployerJettonWallet.sendTransferWithJettonMode(
             deployer.getSender(),
             toNano("0.1"), // tons
             randomNewReceiver,
             deployer.address,
             0n,
             null,
+            SendAllJettonsMode,
         )
 
         const receiverJettonWallet = await userWallet(randomNewReceiver)
@@ -101,6 +106,60 @@ describe("Feature Rich Jetton Minter", () => {
 
         const deployerJettonBalanceAfter = await deployerJettonWallet.getJettonBalance()
         expect(deployerJettonBalanceAfter).toEqual(0n)
+    })
+
+    it("should not deploy receivers jetton wallet on not-deploy custom payload", async () => {
+        const jettonMintAmount = toNano(10)
+        await jettonMinter.sendMint(
+            deployer.getSender(),
+            deployer.address,
+            jettonMintAmount,
+            0n,
+            toNano(1),
+        )
+        const deployerJettonWallet = await userWallet(deployer.address)
+        const jettonBalance = await deployerJettonWallet.getJettonBalance()
+
+        expect(jettonBalance).toEqual(jettonMintAmount)
+
+        const randomNewReceiver = randomAddress(0)
+
+        // deploy receiver jetton wallet, so it won't biunce later
+        await deployerJettonWallet.sendTransfer(
+            deployer.getSender(),
+            toNano("0.1"), // tons
+            0n, // no jettons
+            randomNewReceiver,
+            deployer.address,
+            null,
+            0n,
+            null,
+        )
+
+        const sendAllJettonsResult = await deployerJettonWallet.sendTransferWithJettonMode(
+            deployer.getSender(),
+            toNano("0.1"), // tons
+            randomNewReceiver,
+            deployer.address,
+            0n,
+            null,
+            SendNotDeployReceiversJettonWallet,
+        )
+
+        const receiverJettonWallet = await userWallet(randomNewReceiver)
+
+        expect(sendAllJettonsResult.transactions).toHaveTransaction({
+            from: deployerJettonWallet.address,
+            to: receiverJettonWallet.address,
+            op: ExtendedFeatureRichJettonWallet.opcodes.JettonTransferInternal,
+            initCode: (init?: Cell) => {
+                return typeof init === "undefined" || init === null
+            },
+            initData: (init?: Cell) => {
+                return typeof init === "undefined" || init === null
+            },
+            success: true,
+        })
     })
 
     it("should perform transfer as usual without custom payload", async () => {
