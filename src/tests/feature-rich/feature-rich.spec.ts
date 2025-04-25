@@ -1,6 +1,6 @@
-import {Address, beginCell, Cell, toNano} from "@ton/core"
+import {Address, beginCell, Cell, fromNano, toNano} from "@ton/core"
 import {Blockchain, BlockchainSnapshot, SandboxContract, TreasuryContract} from "@ton/sandbox"
-import {randomAddress} from "@ton/test-utils"
+import {findTransactionRequired, randomAddress} from "@ton/test-utils"
 
 import {JettonUpdateContent} from "../../output/Jetton_JettonMinter"
 import {ExtendedFeatureRichJettonMinter} from "../../wrappers/ExtendedFeatureRichJettonMinter"
@@ -85,13 +85,13 @@ describe("Feature Rich Jetton Minter", () => {
         const sendAllJettonsResult = await deployerJettonWallet.sendTransferWithJettonMode(
             deployer.getSender(),
             toNano("0.1"), // tons
+            0n,
             randomNewReceiver,
             deployer.address,
             0n,
             null,
             SendAllJettonsMode,
         )
-
         const receiverJettonWallet = await userWallet(randomNewReceiver)
 
         expect(sendAllJettonsResult.transactions).toHaveTransaction({
@@ -124,7 +124,7 @@ describe("Feature Rich Jetton Minter", () => {
 
         const randomNewReceiver = randomAddress(0)
 
-        // deploy receiver jetton wallet, so it won't biunce later
+        // deploy receiver jetton wallet, so it won't bounce later
         await deployerJettonWallet.sendTransfer(
             deployer.getSender(),
             toNano("0.1"), // tons
@@ -136,9 +136,10 @@ describe("Feature Rich Jetton Minter", () => {
             null,
         )
 
-        const sendAllJettonsResult = await deployerJettonWallet.sendTransferWithJettonMode(
+        const sendResult = await deployerJettonWallet.sendTransferWithJettonMode(
             deployer.getSender(),
             toNano("0.1"), // tons
+            0n,
             randomNewReceiver,
             deployer.address,
             0n,
@@ -148,7 +149,7 @@ describe("Feature Rich Jetton Minter", () => {
 
         const receiverJettonWallet = await userWallet(randomNewReceiver)
 
-        expect(sendAllJettonsResult.transactions).toHaveTransaction({
+        expect(sendResult.transactions).toHaveTransaction({
             from: deployerJettonWallet.address,
             to: receiverJettonWallet.address,
             op: ExtendedFeatureRichJettonWallet.opcodes.JettonTransferInternal,
@@ -160,6 +161,100 @@ describe("Feature Rich Jetton Minter", () => {
             },
             success: true,
         })
+    })
+
+    it("should be lower fwd fee with not-deploy on custom payload", async () => {
+        const jettonMintAmount = toNano(10)
+        await jettonMinter.sendMint(
+            deployer.getSender(),
+            deployer.address,
+            jettonMintAmount,
+            0n,
+            toNano(1),
+        )
+        const deployerJettonWallet = await userWallet(deployer.address)
+        const jettonBalance = await deployerJettonWallet.getJettonBalance()
+
+        expect(jettonBalance).toEqual(jettonMintAmount)
+
+        const randomNewReceiver = randomAddress(0)
+
+        // deploy receiver jetton wallet, so it won't bounce later
+        await deployerJettonWallet.sendTransfer(
+            deployer.getSender(),
+            toNano("0.1"), // tons
+            0n, // no jettons
+            randomNewReceiver,
+            deployer.address,
+            null,
+            0n,
+            null,
+        )
+
+        // ensure the messages expect the custom payload are the same
+        const sendTonValue = toNano("0.1")
+        const sendJettonValue = 0n
+        const responseAddress = deployer.address
+        const forwardTonAmount = 0n
+        const forwardPayload = null
+
+        const sendNotDeployResult = await deployerJettonWallet.sendTransferWithJettonMode(
+            deployer.getSender(),
+            sendTonValue, // tons
+            sendJettonValue,
+            randomNewReceiver,
+            responseAddress,
+            forwardTonAmount,
+            forwardPayload,
+            SendNotDeployReceiversJettonWallet,
+        )
+
+        const regularSendResult = await deployerJettonWallet.sendTransfer(
+            deployer.getSender(),
+            sendTonValue, // tons
+            sendJettonValue,
+            randomNewReceiver,
+            responseAddress,
+            null,
+            forwardTonAmount,
+            forwardPayload,
+        )
+
+        const receiverJettonWallet = await userWallet(randomNewReceiver)
+
+        const internalTransferWithoutDeploy = findTransactionRequired(
+            sendNotDeployResult.transactions,
+            {
+                from: deployerJettonWallet.address,
+                to: receiverJettonWallet.address,
+                op: ExtendedFeatureRichJettonWallet.opcodes.JettonTransferInternal,
+                success: true,
+            },
+        )
+
+        const regularInternalTransfer = findTransactionRequired(regularSendResult.transactions, {
+            from: deployerJettonWallet.address,
+            to: receiverJettonWallet.address,
+            op: ExtendedFeatureRichJettonWallet.opcodes.JettonTransferInternal,
+            success: true,
+        })
+
+        const internalTransferWithoutDeployFee =
+            internalTransferWithoutDeploy.inMessage?.info.type === "internal"
+                ? internalTransferWithoutDeploy.inMessage.info.forwardFee
+                : 0n
+        const regularInternalTransferFee =
+            regularInternalTransfer.inMessage?.info.type === "internal"
+                ? regularInternalTransfer.inMessage.info.forwardFee
+                : 0n
+
+        // 0.004030698 ton diff with current config
+        console.log(
+            "transfer without deploy diff",
+            fromNano(regularInternalTransferFee - internalTransferWithoutDeployFee),
+        )
+
+        expect(internalTransferWithoutDeployFee).toBeLessThan(regularInternalTransferFee)
     })
 
     it("should handle bounce on not deploy receivers jetton wallet in custom payload", async () => {
@@ -183,6 +278,7 @@ describe("Feature Rich Jetton Minter", () => {
         const sendAllJettonsResult = await deployerJettonWallet.sendTransferWithJettonMode(
             deployer.getSender(),
             toNano("0.1"), // tons
+            0n,
             randomNewReceiver,
             deployer.address,
             0n,

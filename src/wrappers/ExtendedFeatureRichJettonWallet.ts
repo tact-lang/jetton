@@ -22,6 +22,7 @@ export class ExtendedFeatureRichJettonWallet extends ExtendedJettonWallet {
         provider: ContractProvider,
         via: Sender,
         value: bigint,
+        amount: bigint,
         to: Address,
         responseAddress: Address,
         forwardTonAmount: bigint,
