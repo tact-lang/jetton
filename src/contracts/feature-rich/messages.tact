@@ -72,7 +72,6 @@ message(0x2c76b973) ProvideWalletAddress {
     includeAddress: Bool;
 }
 
-
 message(0xd1735400) TakeWalletAddress {
     queryId: Int as uint64;
     walletAddress: Address;
