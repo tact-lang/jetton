@@ -71,7 +71,6 @@ contract JettonMinterFeatureRich(
         let sender = parseStdAddress(sender().asSlice());
         let wallet = getJettonBasechainWalletByOwner(msg.sender);
 
-        // Workchain 0 is basechain
         require(sender.workchain == Basechain && sender.address == wallet.hash!!, "Unauthorized burn");
 
         self.totalSupply -= msg.amount;
