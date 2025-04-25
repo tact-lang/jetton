@@ -2,6 +2,8 @@ import {Address, beginCell, Cell, toNano} from "@ton/core"
 import {Blockchain, BlockchainSnapshot, SandboxContract, TreasuryContract} from "@ton/sandbox"
 import {ExtendedJettonWallet} from "../../wrappers/ExtendedJettonWallet"
 import {ExtendedJettonMinter} from "../../wrappers/ExtendedJettonMinter"
+import {ExtendedFeatureRichJettonWallet} from "../../wrappers/ExtendedFeatureRichJettonWallet"
+import {ExtendedFeatureRichJettonMinter} from "../../wrappers/ExtendedFeatureRichJettonMinter"
 import {randomAddress} from "@ton/test-utils"
 
 import {
@@ -17,20 +19,34 @@ import {
 } from "../../output/Jetton_JettonMinter"
 import {getComputeGasForTx} from "../../utils/gas"
 
-// this test suite includes tests for the extended functionality
-describe("Jetton Minter Extended", () => {
+// Use describe.each to parameterize the test suite for both base and feature-rich jetton versions
+describe.each([
+    {
+        name: "Base Jetton",
+        MinterWrapper: ExtendedJettonMinter,
+        WalletWrapper: ExtendedJettonWallet,
+    },
+    {
+        name: "Feature Rich Jetton",
+        MinterWrapper: ExtendedFeatureRichJettonMinter,
+        WalletWrapper: ExtendedFeatureRichJettonWallet,
+    },
+])("$name", ({MinterWrapper, WalletWrapper}) => {
     let blockchain: Blockchain
-    let jettonMinter: SandboxContract<ExtendedJettonMinter>
-    let jettonWallet: SandboxContract<ExtendedJettonWallet>
+    let jettonMinter: SandboxContract<InstanceType<typeof MinterWrapper>>
+    let jettonWallet: SandboxContract<InstanceType<typeof WalletWrapper>>
     let deployer: SandboxContract<TreasuryContract>
 
     let _jwallet_code = new Cell()
     let _minter_code = new Cell()
     let notDeployer: SandboxContract<TreasuryContract>
 
-    let userWallet: (address: Address) => Promise<SandboxContract<ExtendedJettonWallet>>
+    let userWallet: (
+        address: Address,
+    ) => Promise<SandboxContract<InstanceType<typeof WalletWrapper>>>
     let defaultContent: Cell
     let snapshot: BlockchainSnapshot
+
     beforeAll(async () => {
         blockchain = await Blockchain.create()
         deployer = await blockchain.treasury("deployer")
@@ -44,11 +60,9 @@ describe("Jetton Minter Extended", () => {
         }
 
         jettonMinter = blockchain.openContract(
-            await ExtendedJettonMinter.fromInit(0n, deployer.address, defaultContent),
+            await MinterWrapper.fromInit(0n, deployer.address, defaultContent),
         )
 
-        // We send Update content to deploy the contract, because it is not automatically deployed after blockchain.openContract
-        // And to deploy it we should send any message. But update content message with same content does not affect anything. That is why I chose it.
         const deployResult = await jettonMinter.send(
             deployer.getSender(),
             {value: toNano("0.1")},
@@ -61,6 +75,7 @@ describe("Jetton Minter Extended", () => {
             deploy: true,
             success: true,
         })
+
         const minterCode = jettonMinter.init?.code
         if (minterCode === undefined) {
             throw new Error("JettonMinter init is not defined")
@@ -69,7 +84,7 @@ describe("Jetton Minter Extended", () => {
         }
 
         jettonWallet = blockchain.openContract(
-            await ExtendedJettonWallet.fromInit(deployer.address, jettonMinter.address, 0n),
+            await WalletWrapper.fromInit(deployer.address, jettonMinter.address, 0n),
         )
         const walletCode = jettonWallet.init?.code
         if (walletCode === undefined) {
@@ -80,7 +95,7 @@ describe("Jetton Minter Extended", () => {
 
         userWallet = async (address: Address) => {
             return blockchain.openContract(
-                new ExtendedJettonWallet(await jettonMinter.getGetWalletAddress(address)),
+                new WalletWrapper(await jettonMinter.getGetWalletAddress(address)),
             )
         }
 
