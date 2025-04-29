@@ -103,7 +103,7 @@ contract GovernanceJettonMinter(
         let masterMsgSlice = msg.masterMsg.beginParse();
         let op = masterMsgSlice.preloadUint(32);
 
-        if (op == JettonTransferOpcode) {
+        if (op == JettonTransfer.opcode()) {
             let msgToSend = JettonTransfer.fromSlice(masterMsgSlice);
 
             checkEitherForwardPayload(msgToSend.forwardPayload);
@@ -125,7 +125,7 @@ contract GovernanceJettonMinter(
                 body: msg.masterMsg,
                 init: getJettonWalletInit(msg.toAddress),
             });
-        } else if (op == JettonBurnOpcode) {
+        } else if (op == JettonBurn.opcode()) {
             // It is needed to validate the message
             JettonBurn.fromSlice(masterMsgSlice);
 
@@ -142,7 +142,7 @@ contract GovernanceJettonMinter(
                 body: msg.masterMsg,
                 init: getJettonWalletInit(msg.toAddress),
             });
-        } else if (op == SetStatusOpcode) { // SetStatus opcode
+        } else if (op == SetStatus.opcode()) { // SetStatus opcode
             // It is needed to validate the message
             SetStatus.fromSlice(masterMsgSlice);
 
