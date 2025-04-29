@@ -119,3 +119,4 @@ message(0x0393b1ce) ClaimTON {
 // extended messages, encoded in customPayload
 
 const SendAllJettonsMode: Int = 0x1;
+const SendNotDeployReceiversJettonWallet: Int = 0x2;

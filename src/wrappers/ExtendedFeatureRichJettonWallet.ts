@@ -1,6 +1,5 @@
 import {Address, beginCell, Cell, ContractProvider, Sender} from "@ton/core"
 import {ExtendedJettonWallet} from "./ExtendedJettonWallet"
-import {SendAllJettonsMode} from "../output/FeatureRich_JettonMinterFeatureRich"
 import {JettonWalletFeatureRich} from "../output/FeatureRich_JettonWalletFeatureRich"
 
 export class ExtendedFeatureRichJettonWallet extends ExtendedJettonWallet {
@@ -19,22 +18,17 @@ export class ExtendedFeatureRichJettonWallet extends ExtendedJettonWallet {
         })
     }
 
-    static buildSendAllJettonsPayload() {
-        return beginCell().storeUint(SendAllJettonsMode, 32).endCell()
-    }
-
-    sendTransferAllJettons = async (
+    sendTransferWithJettonMode = async (
         provider: ContractProvider,
         via: Sender,
         value: bigint,
+        amount: bigint,
         to: Address,
         responseAddress: Address,
         forwardTonAmount: bigint,
         forwardPayload: Cell | null,
-    ): Promise<void> => {
-        const sendAllJettonsCustomPayload =
-            ExtendedFeatureRichJettonWallet.buildSendAllJettonsPayload()
-
+        jettonSendMode: bigint,
+    ) => {
         return await this.sendTransfer(
             provider,
             via,
@@ -42,7 +36,7 @@ export class ExtendedFeatureRichJettonWallet extends ExtendedJettonWallet {
             0n,
             to,
             responseAddress,
-            sendAllJettonsCustomPayload,
+            beginCell().storeUint(jettonSendMode, 32).endCell(), // custom payload as mode
             forwardTonAmount,
             forwardPayload,
         )

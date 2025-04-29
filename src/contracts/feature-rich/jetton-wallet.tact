@@ -44,27 +44,51 @@ contract JettonWalletFeatureRich(
         }
 
         let payload = msg.customPayload!!.beginParse();
-
         let extendedActionMode = payload.loadUint(32);
 
-        if ((extendedActionMode & SendAllJettonsMode) == 1) {
-            deploy(DeployParameters {
+        let sendAmount = msg.amount;
+
+        if ((extendedActionMode & SendAllJettonsMode) != 0) {
+            sendAmount = self.balance;
+        }
+
+        self.balance -= sendAmount;
+
+        if ((extendedActionMode & SendNotDeployReceiversJettonWallet) != 0) {
+            // this will bounce if the wallet wasn't already deployed, but it's okay and we handle it
+
+            message(MessageParameters {
                 value: 0,
                 mode: SendRemainingValue,
                 bounce: true,
                 body: JettonTransferInternal {
                     queryId: msg.queryId,
-                    amount: self.balance,
+                    amount: sendAmount,
                     sender: self.owner,
                     responseDestination: msg.responseDestination,
                     forwardTonAmount: msg.forwardTonAmount,
                     forwardPayload: msg.forwardPayload,
                 }.toCell(),
-                init: initOf JettonWalletFeatureRich(msg.destination, self.minter, 0),
+                to: contractAddress(initOf JettonWalletFeatureRich(msg.destination, self.minter, 0)),
             });
 
-            self.balance = 0;
+            return;
         }
+
+        deploy(DeployParameters {
+            value: 0,
+            mode: SendRemainingValue,
+            bounce: true,
+            body: JettonTransferInternal {
+                queryId: msg.queryId,
+                amount: sendAmount,
+                sender: self.owner,
+                responseDestination: msg.responseDestination,
+                forwardTonAmount: msg.forwardTonAmount,
+                forwardPayload: msg.forwardPayload,
+            }.toCell(),
+            init: initOf JettonWalletFeatureRich(msg.destination, self.minter, 0),
+        });
     }
 
     receive(msg: JettonTransferInternal) {
