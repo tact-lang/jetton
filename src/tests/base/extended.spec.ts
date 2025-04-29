@@ -1,21 +1,29 @@
-import {Address, beginCell, Cell, toNano} from "@ton/core"
+import {Address, beginCell, Cell, SendMode, toNano} from "@ton/core"
 import {Blockchain, BlockchainSnapshot, SandboxContract, TreasuryContract} from "@ton/sandbox"
 import {ExtendedJettonWallet} from "../../wrappers/ExtendedJettonWallet"
 import {ExtendedJettonMinter} from "../../wrappers/ExtendedJettonMinter"
 import {ExtendedFeatureRichJettonWallet} from "../../wrappers/ExtendedFeatureRichJettonWallet"
 import {ExtendedFeatureRichJettonMinter} from "../../wrappers/ExtendedFeatureRichJettonMinter"
-import {randomAddress} from "@ton/test-utils"
-
+import {findTransactionRequired, randomAddress} from "@ton/test-utils"
 import {
-    JettonUpdateContent,
+    computeGasFee,
+    getGasPrices,
+    getMsgPrices,
+    getOriginalFwdFee,
+} from "../governance-tests/gasUtils"
+import {
     CloseMinting,
-    Mint,
-    JettonMinter,
-    TakeWalletBalance,
-    storeTakeWalletBalance,
-    minTonsForStorage,
-    gasForTransfer,
     gasForBurn,
+    gasForTransfer,
+    JettonMinter,
+    JettonUpdateContent,
+    Mint,
+    minTonsForStorage,
+    storeJettonBurn,
+    storeJettonTransfer,
+    storeMint,
+    storeTakeWalletBalance,
+    TakeWalletBalance,
 } from "../../output/Jetton_JettonMinter"
 import {getComputeGasForTx} from "../../utils/gas"
 
@@ -442,6 +450,246 @@ describe.each([
             // From jw to jetton_master
             console.log("Gas for receive burn", getComputeGasForTx(sendResult.transactions[2]))
             expect(getComputeGasForTx(sendResult.transactions[2])).toBeLessThanOrEqual(gasForBurn)
+        })
+
+        // add tests here that send with minimal required value passes
+        it("jetton transfer with minimal required value passes", async () => {
+            const deployerJettonWallet = await userWallet(deployer.address)
+            const jettonTransferAmount = 100n
+            const forwardTonAmount = toNano(0.1)
+
+            const gasPrices = getGasPrices(blockchain.config, 0)
+            const transferGasPrice = computeGasFee(gasPrices, gasForTransfer)
+
+            const transferMsg = beginCell()
+                .store(
+                    storeJettonTransfer({
+                        $$type: "JettonTransfer",
+                        amount: jettonTransferAmount,
+                        customPayload: null,
+                        destination: notDeployer.address,
+                        queryId: 0n,
+                        forwardTonAmount: forwardTonAmount,
+                        forwardPayload: beginCell().storeMaybeRef(null).endCell().asSlice(),
+                        responseDestination: deployer.address,
+                    }),
+                )
+                .endCell()
+
+            // make transfer to get fwd fee from it
+            const transferForCalc = await deployer.send({
+                to: deployerJettonWallet.address,
+                value: toNano(10),
+                body: transferMsg,
+                bounce: false,
+                sendMode: SendMode.PAY_GAS_SEPARATELY,
+            })
+
+            const fwdTx = findTransactionRequired(transferForCalc.transactions, {
+                from: deployer.address,
+                to: deployerJettonWallet.address,
+            })
+
+            const inFwdFee =
+                fwdTx.inMessage?.info.type === "internal"
+                    ? fwdTx.inMessage.info.forwardFee
+                    : undefined
+            if (inFwdFee === undefined) {
+                throw new Error("Could not find inFwdFee")
+            }
+            const prices = getMsgPrices(blockchain.config, 0)
+            // https://github.com/ton-blockchain/ton/commit/a11ffb1637032faabea9119020f6c80ed678d0e7#diff-660b8e8615c63abdc65b4dfb7dba42b4c3f71642ca33e5ee6ae4e344a7eb082dR371
+            const origFwdFee = getOriginalFwdFee(prices, inFwdFee)
+            /*
+            require(
+                ctx.value >
+                msg.forwardTonAmount +
+                fwdCount * ctx.readForwardFee() +
+                (2 * getComputeFee(gasForTransfer, false) + minTonsForStorage),
+                "Insufficient amount of TON attached",
+            );
+            */
+            const minimalTransferValue =
+                transferGasPrice * 2n + minTonsForStorage + origFwdFee * 2n + forwardTonAmount + 1n // +1 to be greater than
+
+            // mint to deploy jetton wallet
+            const jettonMintAmount = 1000000n
+            await jettonMinter.sendMint(
+                deployer.getSender(),
+                deployer.address,
+                jettonMintAmount,
+                0n,
+                toNano(1),
+            )
+
+            // actual send with minimal value
+            const sendResult = await deployer.send({
+                to: deployerJettonWallet.address,
+                value: minimalTransferValue,
+                body: transferMsg,
+                bounce: false,
+                sendMode: SendMode.PAY_GAS_SEPARATELY,
+            })
+
+            expect(sendResult.transactions).not.toHaveTransaction({
+                success: false,
+            })
+        })
+
+        it("jetton mint with minimal required value passes", async () => {
+            const deployerJettonWallet = await userWallet(deployer.address)
+            const jettonMintAmount = 100n
+            const forwardTonAmount = toNano(0.1)
+
+            const gasPrices = getGasPrices(blockchain.config, 0)
+            const transferGasPrice = computeGasFee(gasPrices, gasForTransfer)
+
+            const mintMsg = beginCell()
+                .store(
+                    storeMint({
+                        $$type: "Mint",
+                        queryId: 0n,
+                        receiver: deployer.address,
+                        tonAmount: forwardTonAmount,
+                        mintMessage: {
+                            $$type: "JettonTransferInternal",
+                            queryId: 0n,
+                            amount: jettonMintAmount,
+                            sender: deployer.address,
+                            responseDestination: deployer.address,
+                            forwardPayload: beginCell().storeMaybeRef(null).endCell().asSlice(),
+                            forwardTonAmount: forwardTonAmount,
+                        },
+                    }),
+                )
+                .endCell()
+
+            // send mint (it will fail but that's okay) to get fwd fee from it
+            const mintForCalc = await deployer.send({
+                to: deployerJettonWallet.address,
+                value: toNano(10),
+                body: mintMsg,
+                bounce: false,
+                sendMode: SendMode.PAY_GAS_SEPARATELY,
+            })
+
+            const fwdTx = findTransactionRequired(mintForCalc.transactions, {
+                from: deployer.address,
+                to: deployerJettonWallet.address,
+            })
+
+            const inFwdFee =
+                fwdTx.inMessage?.info.type === "internal"
+                    ? fwdTx.inMessage.info.forwardFee
+                    : undefined
+            if (inFwdFee === undefined) {
+                throw new Error("Could not find inFwdFee")
+            }
+            const prices = getMsgPrices(blockchain.config, 0)
+            // https://github.com/ton-blockchain/ton/commit/a11ffb1637032faabea9119020f6c80ed678d0e7#diff-660b8e8615c63abdc65b4dfb7dba42b4c3f71642ca33e5ee6ae4e344a7eb082dR371
+            const origFwdFee = getOriginalFwdFee(prices, inFwdFee)
+
+            /*
+            require(
+                ctx.value >
+                msg.forwardTonAmount +
+                fwdCount * ctx.readForwardFee() +
+                (2 * getComputeFee(gasForTransfer, false) + minTonsForStorage),
+                "Insufficient amount of TON attached",
+            );
+            */
+            const minimalMintValue =
+                transferGasPrice * 2n + minTonsForStorage + origFwdFee * 2n + forwardTonAmount + 1n // +1 to be greater than
+
+            // actual send with minimal value
+            const mintSendResult = await deployer.send({
+                to: jettonMinter.address,
+                value: minimalMintValue,
+                body: mintMsg,
+                bounce: false,
+                sendMode: SendMode.PAY_GAS_SEPARATELY,
+            })
+
+            expect(mintSendResult.transactions).not.toHaveTransaction({
+                success: false,
+            })
+        })
+
+        it("jetton burn with minimal required value passes", async () => {
+            const deployerJettonWallet = await userWallet(deployer.address)
+            const jettonBurnAmount = 100n
+
+            const gasPrices = getGasPrices(blockchain.config, 0)
+            const burnGasPrice = computeGasFee(gasPrices, gasForBurn)
+
+            const burnMsg = beginCell()
+                .store(
+                    storeJettonBurn({
+                        $$type: "JettonBurn",
+                        amount: jettonBurnAmount,
+                        customPayload: null,
+                        queryId: 0n,
+                        responseDestination: deployer.address,
+                    }),
+                )
+                .endCell()
+
+            // make burn to get fwd fee from it
+            const burnForCalc = await deployer.send({
+                to: deployerJettonWallet.address,
+                value: toNano(10),
+                body: burnMsg,
+                bounce: false,
+                sendMode: SendMode.PAY_GAS_SEPARATELY,
+            })
+
+            const fwdTx = findTransactionRequired(burnForCalc.transactions, {
+                from: deployer.address,
+                to: deployerJettonWallet.address,
+            })
+
+            const inFwdFee =
+                fwdTx.inMessage?.info.type === "internal"
+                    ? fwdTx.inMessage.info.forwardFee
+                    : undefined
+            if (inFwdFee === undefined) {
+                throw new Error("Could not find inFwdFee")
+            }
+            const prices = getMsgPrices(blockchain.config, 0)
+            // https://github.com/ton-blockchain/ton/commit/a11ffb1637032faabea9119020f6c80ed678d0e7#diff-660b8e8615c63abdc65b4dfb7dba42b4c3f71642ca33e5ee6ae4e344a7eb082dR371
+            const origFwdFee = getOriginalFwdFee(prices, inFwdFee)
+
+            /*
+            require(
+                ctx.value > 
+                (fwdFee + 2 * getComputeFee(gasForBurn, false)),
+                "Insufficient amount of TON attached"
+            );
+            */
+            const minimalBurnValue = burnGasPrice * 2n + origFwdFee + 1n // +1 to be greater than
+
+            // mint to deploy jetton wallet
+            const jettonMintAmount = 1000000n
+            await jettonMinter.sendMint(
+                deployer.getSender(),
+                deployer.address,
+                jettonMintAmount,
+                0n,
+                toNano(1),
+            )
+
+            // actual send with minimal value
+            const sendResult = await deployer.send({
+                to: deployerJettonWallet.address,
+                value: minimalBurnValue,
+                body: burnMsg,
+                bounce: false,
+                sendMode: SendMode.PAY_GAS_SEPARATELY,
+            })
+
+            expect(sendResult.transactions).not.toHaveTransaction({
+                success: false,
+            })
         })
     })
 })

@@ -345,6 +345,11 @@ export function computeFwdFees(msgPrices: MsgPrices, cells: bigint, bits: bigint
     return msgPrices.lumpPrice + shr16ceil(msgPrices.bitPrice * bits + msgPrices.cellPrice * cells)
 }
 
+export function getOriginalFwdFee(msgPrices: MsgPrices, inFwdFee: bigint) {
+    // https://github.com/ton-blockchain/ton/commit/a11ffb1637032faabea9119020f6c80ed678d0e7#diff-660b8e8615c63abdc65b4dfb7dba42b4c3f71642ca33e5ee6ae4e344a7eb082dR371
+    return (inFwdFee * BigInt(1 << 16)) / (BigInt(1 << 16) - msgPrices.firstFrac)
+}
+
 export function computeFwdFeesVerbose(
     msgPrices: MsgPrices,
     cells: bigint | number,
