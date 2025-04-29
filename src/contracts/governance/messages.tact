@@ -21,8 +21,7 @@ struct MaybeAddress {
 // TEP - 74
 // https://github.com/ton-blockchain/TEPs/blob/master/text/0074-jettons-standard.md
 
-const JettonTransferOpcode: Int = 0xf8a7ea5;
-message(JettonTransferOpcode) JettonTransfer {
+message(0xf8a7ea5) JettonTransfer {
     queryId: Int as uint64;
     amount: Int as coins;
     destination: Address;
@@ -32,8 +31,7 @@ message(JettonTransferOpcode) JettonTransfer {
     forwardPayload: Slice as remaining;
 }
 
-const JettonBurnOpcode: Int = 0x595f07bc;
-message(JettonBurnOpcode) JettonBurn {
+message(0x595f07bc) JettonBurn {
     queryId: Int as uint64;
     amount: Int as coins;
     responseDestination: Address?;
@@ -51,8 +49,7 @@ message(0xd53276db) JettonExcesses {
     queryId: Int as uint64;
 }
 
-const JettonTransferInternalOpcode: Int = 0x178d4519;
-message(JettonTransferInternalOpcode) JettonTransferInternal {
+message(0x178d4519) JettonTransferInternal {
     queryId: Int as uint64;
     amount: Int as coins;
     sender: Address;
@@ -77,8 +74,7 @@ message(0x2c76b973) ProvideWalletAddress {
     includeAddress: Bool;
 }
 
-const TakeWalletAddressOpcode: Int = 0xd1735400;
-message(TakeWalletAddressOpcode) TakeWalletAddress {
+message(0xd1735400) TakeWalletAddress {
     queryId: Int as uint64;
     walletAddress: Address;
     ownerAddress: Cell?; // It is Maybe ^Address, just encoded it like this
@@ -91,8 +87,7 @@ message(0xd372158c) TopUp {
     queryId: Int as uint64;
 }
 
-const SetStatusOpcode: Int = 0xeed236d3;
-message(SetStatusOpcode) SetStatus {
+message(0xeed236d3) SetStatus {
     queryId: Int as uint64;
     status: Int as uint4;
 }
