@@ -123,6 +123,19 @@
                 "claimWallet": "3984"
             },
             "summary": "79529"
+        },
+        {
+            "label": "Tact bumped to 1.6.7",
+            "pr": "141",
+            "gas": {
+                "transfer": "33917",
+                "mint": "18502",
+                "burn": "12749",
+                "discovery": "6015",
+                "reportBalance": "4308",
+                "claimWallet": "3984"
+            },
+            "summary": "79475"
         }
     ]
 }
