@@ -28,7 +28,14 @@ export class ExtendedFeatureRichJettonWallet extends ExtendedJettonWallet {
         forwardTonAmount: bigint,
         forwardPayload: Cell | null,
         jettonSendMode: bigint,
+        forwardStateInit: Cell | null = null,
     ) => {
+        let customPayload = beginCell().storeUint(jettonSendMode, 32)
+
+        if (forwardStateInit !== null) {
+            customPayload = customPayload.storeRef(forwardStateInit)
+        }
+
         return await this.sendTransfer(
             provider,
             via,
@@ -36,7 +43,7 @@ export class ExtendedFeatureRichJettonWallet extends ExtendedJettonWallet {
             0n,
             to,
             responseAddress,
-            beginCell().storeUint(jettonSendMode, 32).endCell(), // custom payload as mode
+            customPayload.endCell(), // custom payload as mode
             forwardTonAmount,
             forwardPayload,
         )
