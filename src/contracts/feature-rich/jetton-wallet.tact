@@ -29,7 +29,7 @@ contract JettonWalletFeatureRich(
                 value: 0,
                 mode: SendRemainingValue,
                 bounce: true,
-                body: JettonTransferInternal {
+                body: JettonTransferInternalWithStateInit {
                     queryId: msg.queryId,
                     amount: msg.amount,
                     sender: self.owner,
@@ -52,6 +52,15 @@ contract JettonWalletFeatureRich(
             sendAmount = self.balance;
         }
 
+        let forwardStateInit: StateInit? = null;
+
+        if ((extendedActionMode & SendStateInitWithJettonNotification) != 0) {
+            // internal transfer body creation could fail because of
+            // ref overflow (forwardPayload as inline), but that's okay since
+            // it will just reject
+            forwardStateInit = StateInit.fromCell(payload.loadRef());
+        }
+
         self.balance -= sendAmount;
 
         if ((extendedActionMode & SendNotDeployReceiversJettonWallet) != 0) {
@@ -61,12 +70,13 @@ contract JettonWalletFeatureRich(
                 value: 0,
                 mode: SendRemainingValue,
                 bounce: true,
-                body: JettonTransferInternal {
+                body: JettonTransferInternalWithStateInit {
                     queryId: msg.queryId,
                     amount: sendAmount,
                     sender: self.owner,
                     responseDestination: msg.responseDestination,
                     forwardTonAmount: msg.forwardTonAmount,
+                    forwardStateInit,
                     forwardPayload: msg.forwardPayload,
                 }.toCell(),
                 to: contractAddress(initOf JettonWalletFeatureRich(msg.destination, self.minter, 0)),
@@ -79,19 +89,20 @@ contract JettonWalletFeatureRich(
             value: 0,
             mode: SendRemainingValue,
             bounce: true,
-            body: JettonTransferInternal {
+            body: JettonTransferInternalWithStateInit {
                 queryId: msg.queryId,
                 amount: sendAmount,
                 sender: self.owner,
                 responseDestination: msg.responseDestination,
                 forwardTonAmount: msg.forwardTonAmount,
+                forwardStateInit,
                 forwardPayload: msg.forwardPayload,
             }.toCell(),
             init: initOf JettonWalletFeatureRich(msg.destination, self.minter, 0),
         });
     }
 
-    receive(msg: JettonTransferInternal) {
+    receive(msg: JettonTransferInternalWithStateInit) {
         self.balance += msg.amount;
 
         // This message should come only from master, or from other JettonWallet
@@ -107,19 +118,40 @@ contract JettonWalletFeatureRich(
         if (msg.forwardTonAmount > 0) {
             let fwdFee: Int = ctx.readForwardFee();
             msgValue -= msg.forwardTonAmount + fwdFee;
-            message(MessageParameters {
-                to: self.owner,
-                value: msg.forwardTonAmount,
-                mode: SendPayGasSeparately,
-                bounce: false,
-                body: JettonNotification { // 0x7362d09c -- Remind the new Owner
-                    queryId: msg.queryId,
-                    amount: msg.amount,
-                    sender: msg.sender,
-                    forwardPayload: msg.forwardPayload,
-                }.toCell(),
-            });
+
+            if (msg.forwardStateInit != null) {
+                let deployAddress = contractAddress(msg.forwardStateInit!!);
+
+                require(deployAddress == self.owner, "Deploy address doesn't match owner address");
+
+                deploy(DeployParameters {
+                    value: msg.forwardTonAmount,
+                    mode: SendPayGasSeparately,
+                    bounce: false,
+                    init: msg.forwardStateInit!!,
+                    body: JettonNotification { // 0x7362d09c -- Remind the new Owner
+                        queryId: msg.queryId,
+                        amount: msg.amount,
+                        sender: msg.sender,
+                        forwardPayload: msg.forwardPayload,
+                    }.toCell(),
+                });
+            } else {
+                message(MessageParameters {
+                    to: self.owner,
+                    value: msg.forwardTonAmount,
+                    mode: SendPayGasSeparately,
+                    bounce: false,
+                    body: JettonNotification { // 0x7362d09c -- Remind the new Owner
+                        queryId: msg.queryId,
+                        amount: msg.amount,
+                        sender: msg.sender,
+                        forwardPayload: msg.forwardPayload,
+                    }.toCell(),
+                });
+            }
         }
+
         nativeReserve(max(tonBalanceBeforeMsg, minTonsForStorage), ReserveAtMost);
         // 0xd53276db -- Cashback to the original Sender
         if (msg.responseDestination != null && msgValue > 0) {
@@ -192,7 +224,7 @@ contract JettonWalletFeatureRich(
         });
     }
 
-    bounced(msg: bounced<JettonTransferInternal>) {
+    bounced(msg: bounced<JettonTransferInternalWithStateInit>) {
         self.balance += msg.amount;
     }
 
