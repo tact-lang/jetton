@@ -13,8 +13,6 @@ import {
 } from "../governance-tests/gasUtils"
 import {
     CloseMinting,
-    gasForBurn,
-    gasForTransfer,
     JettonMinter,
     JettonUpdateContent,
     Mint,
@@ -413,7 +411,7 @@ describe.each([
             // From sender to jw
             console.log("Gas for send transfer", getComputeGasForTx(sendResult.transactions[1]!))
             expect(getComputeGasForTx(sendResult.transactions[1]!)).toBeLessThanOrEqual(
-                gasForTransfer,
+                jettonMinter.loadGasForTransfer(),
             )
             // From jw to jw
             console.log(
@@ -421,7 +419,7 @@ describe.each([
                 getComputeGasForTx(sendResult.transactions[2]),
             )
             expect(getComputeGasForTx(sendResult.transactions[2])).toBeLessThanOrEqual(
-                gasForTransfer,
+                jettonMinter.loadGasForTransfer(),
             )
         })
 
@@ -446,10 +444,14 @@ describe.each([
 
             // From deployer to jw
             console.log("Gas for send burn", getComputeGasForTx(sendResult.transactions[1]!))
-            expect(getComputeGasForTx(sendResult.transactions[1]!)).toBeLessThanOrEqual(gasForBurn)
+            expect(getComputeGasForTx(sendResult.transactions[1]!)).toBeLessThanOrEqual(
+                jettonMinter.loadGasForBurn(),
+            )
             // From jw to jetton_master
             console.log("Gas for receive burn", getComputeGasForTx(sendResult.transactions[2]))
-            expect(getComputeGasForTx(sendResult.transactions[2])).toBeLessThanOrEqual(gasForBurn)
+            expect(getComputeGasForTx(sendResult.transactions[2])).toBeLessThanOrEqual(
+                jettonMinter.loadGasForBurn(),
+            )
         })
 
         // add tests here that send with minimal required value passes
@@ -459,7 +461,7 @@ describe.each([
             const forwardTonAmount = toNano(0.1)
 
             const gasPrices = getGasPrices(blockchain.config, 0)
-            const transferGasPrice = computeGasFee(gasPrices, gasForTransfer)
+            const transferGasPrice = computeGasFee(gasPrices, jettonMinter.loadGasForTransfer())
 
             const transferMsg = beginCell()
                 .store(
@@ -542,27 +544,16 @@ describe.each([
             const forwardTonAmount = toNano(0.1)
 
             const gasPrices = getGasPrices(blockchain.config, 0)
-            const transferGasPrice = computeGasFee(gasPrices, gasForTransfer)
+            const transferGasPrice = computeGasFee(gasPrices, jettonMinter.loadGasForTransfer())
 
-            const mintMsg = beginCell()
-                .store(
-                    storeMint({
-                        $$type: "Mint",
-                        queryId: 0n,
-                        receiver: deployer.address,
-                        tonAmount: forwardTonAmount,
-                        mintMessage: {
-                            $$type: "JettonTransferInternal",
-                            queryId: 0n,
-                            amount: jettonMintAmount,
-                            sender: deployer.address,
-                            responseDestination: deployer.address,
-                            forwardPayload: beginCell().storeMaybeRef(null).endCell().asSlice(),
-                            forwardTonAmount: forwardTonAmount,
-                        },
-                    }),
-                )
-                .endCell()
+            const mintMsg = jettonMinter.loadMintMessage(
+                jettonMintAmount,
+                deployer.address,
+                deployer.address,
+                deployer.address,
+                forwardTonAmount,
+                null,
+            )
 
             // send mint (it will fail but that's okay) to get fwd fee from it
             const mintForCalc = await deployer.send({
@@ -620,7 +611,7 @@ describe.each([
             const jettonBurnAmount = 100n
 
             const gasPrices = getGasPrices(blockchain.config, 0)
-            const burnGasPrice = computeGasFee(gasPrices, gasForBurn)
+            const burnGasPrice = computeGasFee(gasPrices, jettonMinter.loadGasForBurn())
 
             const burnMsg = beginCell()
                 .store(

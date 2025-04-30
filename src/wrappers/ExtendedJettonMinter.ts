@@ -1,9 +1,12 @@
 import {
     ChangeOwner,
     ClaimTON,
+    gasForBurn,
+    gasForTransfer,
     JettonMinter,
     JettonUpdateContent,
     Mint,
+    minTonsForStorage,
     ProvideWalletAddress,
     storeMint,
 } from "../output/Jetton_JettonMinter"
@@ -145,7 +148,14 @@ export class ExtendedJettonMinter extends JettonMinter {
         return this.send(provider, via, {value: value}, msg)
     }
 
-    loadMintMessage(mintAmount: bigint, deployerAddress: Address): Cell {
+    loadMintMessage(
+        mintAmount: bigint,
+        receiver: Address,
+        sender: Address,
+        responseDestination: Address,
+        forwardTonAmount: bigint,
+        forwardPayload: Cell | null,
+    ): Cell {
         return beginCell()
             .store(
                 storeMint({
@@ -153,17 +163,29 @@ export class ExtendedJettonMinter extends JettonMinter {
                     mintMessage: {
                         $$type: "JettonTransferInternal",
                         amount: mintAmount,
-                        sender: deployerAddress,
-                        responseDestination: deployerAddress,
+                        sender: sender,
+                        responseDestination: responseDestination,
                         queryId: 0n,
-                        forwardTonAmount: 0n,
-                        forwardPayload: beginCell().storeUint(0, 1).asSlice(),
+                        forwardTonAmount: forwardTonAmount,
+                        forwardPayload: beginCell().storeMaybeRef(forwardPayload).asSlice(),
                     },
                     queryId: 0n,
-                    receiver: deployerAddress,
-                    tonAmount: mintAmount,
+                    receiver: receiver,
+                    tonAmount: forwardTonAmount,
                 }),
             )
             .endCell()
+    }
+
+    loadGasForBurn(): bigint {
+        return gasForBurn
+    }
+
+    loadGasForTransfer(): bigint {
+        return gasForTransfer
+    }
+
+    loadMinTonsForStorage(): bigint {
+        return minTonsForStorage
     }
 }

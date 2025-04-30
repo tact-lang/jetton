@@ -1,6 +1,9 @@
 import {
+    gasForBurn,
+    gasForTransfer,
     JettonMinterFeatureRich,
     Mint,
+    minTonsForStorage,
     storeMint,
 } from "../output/FeatureRich_JettonMinterFeatureRich"
 import {Address, beginCell, Cell, ContractProvider, Sender, toNano} from "@ton/core"
@@ -57,7 +60,14 @@ export class ExtendedFeatureRichJettonMinter extends ExtendedJettonMinter {
         })
     }
 
-    override loadMintMessage(mintAmount: bigint, deployerAddress: Address): Cell {
+    override loadMintMessage(
+        mintAmount: bigint,
+        receiver: Address,
+        sender: Address,
+        responseDestination: Address,
+        forwardTonAmount: bigint,
+        forwardPayload: Cell | null,
+    ): Cell {
         return beginCell()
             .store(
                 storeMint({
@@ -65,18 +75,30 @@ export class ExtendedFeatureRichJettonMinter extends ExtendedJettonMinter {
                     mintMessage: {
                         $$type: "JettonTransferInternalWithStateInit",
                         amount: mintAmount,
-                        sender: deployerAddress,
-                        responseDestination: deployerAddress,
+                        sender: sender,
+                        responseDestination: responseDestination,
                         queryId: 0n,
-                        forwardTonAmount: 0n,
+                        forwardTonAmount: forwardTonAmount,
                         forwardStateInit: null,
-                        forwardPayload: beginCell().storeUint(0, 1).asSlice(),
+                        forwardPayload: beginCell().storeMaybeRef(forwardPayload).asSlice(),
                     },
                     queryId: 0n,
-                    receiver: deployerAddress,
-                    tonAmount: mintAmount,
+                    receiver: receiver,
+                    tonAmount: forwardTonAmount,
                 }),
             )
             .endCell()
+    }
+
+    override loadGasForBurn(): bigint {
+        return gasForBurn
+    }
+
+    override loadGasForTransfer(): bigint {
+        return gasForTransfer
+    }
+
+    override loadMinTonsForStorage(): bigint {
+        return minTonsForStorage
     }
 }
