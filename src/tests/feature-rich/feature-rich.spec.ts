@@ -414,7 +414,7 @@ describe("Feature Rich Jetton Minter", () => {
         })
     })
 
-    it("should revert if state init doesnt belong to the notification receiver", async () => {
+    it("should revert if state init doesn't belong to the notification receiver", async () => {
         const jettonMintAmount = toNano(10)
         await jettonMinter.sendMint(
             deployer.getSender(),
