@@ -413,4 +413,59 @@ describe("Feature Rich Jetton Minter", () => {
             deploy: true, // we deployed it ourself
         })
     })
+
+    it("should revert if state init doesnt belong to the notification receiver", async () => {
+        const jettonMintAmount = toNano(10)
+        await jettonMinter.sendMint(
+            deployer.getSender(),
+            deployer.address,
+            jettonMintAmount,
+            0n,
+            toNano(1),
+        )
+        const deployerJettonWallet = await userWallet(deployer.address)
+        const jettonBalance = await deployerJettonWallet.getJettonBalance()
+
+        expect(jettonBalance).toEqual(jettonMintAmount)
+
+        const snapBeforeTreasury = blockchain.snapshot()
+        const receiver = await blockchain.treasury("receiver")
+        const receiverBad = await blockchain.treasury("receiver-2")
+        // we want to deploy receiver jetton wallet ourself, so revert this
+        await blockchain.loadFrom(snapBeforeTreasury)
+
+        const receiversStateInit = receiverBad.init
+        const receiversStateInitCell = beginCell()
+            .store(
+                storeStateInit({
+                    $$type: "StateInit",
+                    code: receiversStateInit.code!,
+                    data: receiversStateInit.data!,
+                }),
+            )
+            .endCell()
+
+        const sendADeployNotificationReceiverResult =
+            await deployerJettonWallet.sendTransferWithJettonMode(
+                deployer.getSender(),
+                toNano("1.5"), // tons
+                0n,
+                receiver.address,
+                deployer.address,
+                toNano(1), // forward amount
+                null,
+                SendStateInitWithJettonNotification,
+                receiversStateInitCell,
+            )
+
+        const receiverJettonWallet = await userWallet(receiver.address)
+
+        expect(sendADeployNotificationReceiverResult.transactions).toHaveTransaction({
+            from: deployerJettonWallet.address,
+            to: receiverJettonWallet.address,
+            op: JettonMinterFeatureRich.opcodes.JettonTransferInternalWithStateInit,
+            success: false,
+            exitCode: JettonMinterFeatureRich.errors["Deploy address doesn't match owner address"],
+        })
+    })
 })
