@@ -5,6 +5,7 @@ import {
     JettonUpdateContent,
     Mint,
     ProvideWalletAddress,
+    storeMint,
 } from "../output/Jetton_JettonMinter"
 import {Address, beginCell, Cell, ContractProvider, Sender, toNano} from "@ton/core"
 
@@ -142,5 +143,27 @@ export class ExtendedJettonMinter extends JettonMinter {
             receiver: address,
         }
         return this.send(provider, via, {value: value}, msg)
+    }
+
+    loadMintMessage(mintAmount: bigint, deployerAddress: Address): Cell {
+        return beginCell()
+            .store(
+                storeMint({
+                    $$type: "Mint",
+                    mintMessage: {
+                        $$type: "JettonTransferInternal",
+                        amount: mintAmount,
+                        sender: deployerAddress,
+                        responseDestination: deployerAddress,
+                        queryId: 0n,
+                        forwardTonAmount: 0n,
+                        forwardPayload: beginCell().storeUint(0, 1).asSlice(),
+                    },
+                    queryId: 0n,
+                    receiver: deployerAddress,
+                    tonAmount: mintAmount,
+                }),
+            )
+            .endCell()
     }
 }

@@ -9,7 +9,6 @@ import {
     JettonUpdateContent,
     storeJettonBurn,
     storeJettonTransfer,
-    storeMint,
     JettonMinter,
     minTonsForStorage,
 } from "../../output/Jetton_JettonMinter"
@@ -530,25 +529,7 @@ describe.each([
         it("minter should restore supply on internal_transfer bounce", async () => {
             const deployerJettonWallet = await userWallet(deployer.address)
             const mintAmount = BigInt(getRandomInt(1000, 2000))
-            const mintMsg = beginCell()
-                .store(
-                    storeMint({
-                        $$type: "Mint",
-                        mintMessage: {
-                            $$type: "JettonTransferInternal",
-                            amount: mintAmount,
-                            sender: deployer.address,
-                            responseDestination: deployer.address,
-                            queryId: 0n,
-                            forwardTonAmount: 0n,
-                            forwardPayload: beginCell().storeUint(0, 1).asSlice(),
-                        },
-                        queryId: 0n,
-                        receiver: deployer.address,
-                        tonAmount: mintAmount,
-                    }),
-                )
-                .endCell()
+            const mintMsg = jettonMinter.loadMintMessage(mintAmount, deployer.address)
 
             const supplyBefore = await jettonMinter.getTotalSupply()
             const minterSmc = await blockchain.getContract(jettonMinter.address)
