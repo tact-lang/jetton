@@ -19,7 +19,6 @@ import {
     minTonsForStorage,
     storeJettonBurn,
     storeJettonTransfer,
-    storeMint,
     storeTakeWalletBalance,
     TakeWalletBalance,
 } from "../../output/Jetton_JettonMinter"
