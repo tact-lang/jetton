@@ -123,7 +123,7 @@ We decided to change the behavior of a few receivers.
 In other implementations, the `mint` TL-B looks like this:
 
 ```tlb
-mint#21
+mint#642b7d07
   query_id:uint64
   to_address:MsgAddressInt
   ton_amount:Coins

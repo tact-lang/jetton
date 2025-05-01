@@ -78,7 +78,7 @@ message(0xd1735400) TakeWalletAddress {
     ownerAddress: Cell?; //It is Maybe ^Address, just encoded it like this
 }
 
-message(21) Mint {
+message(0x642b7d07) Mint {
     queryId: Int as uint64;
     receiver: Address;
     tonAmount: Int as coins;
