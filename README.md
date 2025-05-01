@@ -21,7 +21,7 @@ This implementation is fully compatible with the following TON standards:
 
 You can use this implementation as an alternative to the reference Jetton contracts available in the [TON Blockchain repository](https://github.com/ton-blockchain/token-contract).
 
-You can read [Specification](./SPEC.md), that goes into the design choices and differences between this and other implementations
+You can read [Specification](./dev-docs/SPEC.md), that goes into the design choices and differences between this and other implementations
 
 ## Improvements and additional features
 
