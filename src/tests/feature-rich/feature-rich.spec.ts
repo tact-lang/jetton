@@ -11,6 +11,7 @@ import {
     SendNotDeployReceiversJettonWallet,
     SendStateInitWithJettonNotification,
 } from "../../output/FeatureRich_JettonMinterFeatureRich"
+import {storeJettonNotification} from "../../output/FeatureRich_JettonWalletFeatureRich"
 
 // this is test suite for feature rich jetton minter
 // it makes heavy use of the custom payload and enables new functionality
@@ -415,11 +416,24 @@ describe("Feature Rich Jetton Minter", () => {
                 },
             )
 
+        const expectedNotificationBody = beginCell()
+            .store(
+                storeJettonNotification({
+                    $$type: "JettonNotification",
+                    queryId: 0n,
+                    amount: 0n,
+                    sender: deployer.address,
+                    forwardPayload: beginCell().storeUint(0, 1).endCell().beginParse(),
+                }),
+            )
+            .endCell()
+
         const receiverJettonWallet = await userWallet(receiver.address)
 
         expect(sendADeployNotificationReceiverResult.transactions).toHaveTransaction({
             from: receiverJettonWallet.address,
             op: JettonMinterFeatureRich.opcodes.JettonNotification,
+            body: expectedNotificationBody, // we didn't break basic notify functionality
             initCode: receiversStateInit.code!,
             initData: receiversStateInit.data!,
             success: true,
