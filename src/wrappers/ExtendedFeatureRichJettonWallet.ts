@@ -1,6 +1,10 @@
 import {Address, beginCell, Cell, ContractProvider, Sender} from "@ton/core"
 import {ExtendedJettonWallet} from "./ExtendedJettonWallet"
 import {JettonWalletFeatureRich} from "../output/FeatureRich_JettonWalletFeatureRich"
+import {
+    CustomPayloadWithSendModes,
+    storeCustomPayloadWithSendModes,
+} from "../output/FeatureRich_JettonMinterFeatureRich"
 
 export class ExtendedFeatureRichJettonWallet extends ExtendedJettonWallet {
     constructor(address: Address, init?: {code: Cell; data: Cell}) {
@@ -27,23 +31,16 @@ export class ExtendedFeatureRichJettonWallet extends ExtendedJettonWallet {
         responseAddress: Address,
         forwardTonAmount: bigint,
         forwardPayload: Cell | null,
-        jettonSendMode: bigint,
-        forwardStateInit: Cell | null = null,
+        customPayloadWithSendMode: CustomPayloadWithSendModes,
     ) => {
-        let customPayload = beginCell().storeUint(jettonSendMode, 32)
-
-        if (forwardStateInit !== null) {
-            customPayload = customPayload.storeRef(forwardStateInit)
-        }
-
         return await this.sendTransfer(
             provider,
             via,
             value,
-            0n,
+            amount,
             to,
             responseAddress,
-            customPayload.endCell(), // custom payload as mode
+            beginCell().store(storeCustomPayloadWithSendModes(customPayloadWithSendMode)).endCell(), // custom payload as mode
             forwardTonAmount,
             forwardPayload,
         )

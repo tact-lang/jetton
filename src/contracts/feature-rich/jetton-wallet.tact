@@ -43,8 +43,8 @@ contract JettonWalletFeatureRich(
             return;
         }
 
-        let payload = msg.customPayload!!.beginParse();
-        let extendedActionMode = payload.loadUint(32);
+        let payload = CustomPayloadWithSendModes.fromCell(msg.customPayload!!);
+        let extendedActionMode = payload.mode;
 
         let sendAmount = msg.amount;
 
@@ -58,7 +58,9 @@ contract JettonWalletFeatureRich(
             // internal transfer body creation could fail because of
             // ref overflow (forwardPayload as inline), but that's okay since
             // it will just reject
-            forwardStateInit = StateInit.fromCell(payload.loadRef());
+            require(payload.forwardStateInit != null, "Forward state init is null with deploy send mode");
+
+            forwardStateInit = payload.forwardStateInit!!;
         }
 
         self.balance -= sendAmount;

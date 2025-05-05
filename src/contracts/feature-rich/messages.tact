@@ -22,6 +22,11 @@ message(4) JettonUpdateContent {
     content: Cell;
 }
 
+struct CustomPayloadWithSendModes {
+    mode: Int as uint32;
+    forwardStateInit: StateInit?;
+}
+
 message(0xf8a7ea5) JettonTransfer {
     queryId: Int as uint64;
     amount: Int as coins;

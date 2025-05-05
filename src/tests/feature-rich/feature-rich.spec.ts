@@ -10,7 +10,6 @@ import {
     SendAllJettonsMode,
     SendNotDeployReceiversJettonWallet,
     SendStateInitWithJettonNotification,
-    storeStateInit,
 } from "../../output/FeatureRich_JettonMinterFeatureRich"
 
 // this is test suite for feature rich jetton minter
@@ -93,7 +92,11 @@ describe("Feature Rich Jetton Minter", () => {
             deployer.address,
             0n,
             null,
-            SendAllJettonsMode,
+            {
+                $$type: "CustomPayloadWithSendModes",
+                mode: SendAllJettonsMode,
+                forwardStateInit: null,
+            },
         )
         const receiverJettonWallet = await userWallet(randomNewReceiver)
 
@@ -147,7 +150,11 @@ describe("Feature Rich Jetton Minter", () => {
             deployer.address,
             0n,
             null,
-            SendNotDeployReceiversJettonWallet,
+            {
+                $$type: "CustomPayloadWithSendModes",
+                mode: SendNotDeployReceiversJettonWallet,
+                forwardStateInit: null,
+            },
         )
 
         const receiverJettonWallet = await userWallet(randomNewReceiver)
@@ -209,7 +216,11 @@ describe("Feature Rich Jetton Minter", () => {
             responseAddress,
             forwardTonAmount,
             forwardPayload,
-            SendNotDeployReceiversJettonWallet,
+            {
+                $$type: "CustomPayloadWithSendModes",
+                mode: SendNotDeployReceiversJettonWallet,
+                forwardStateInit: null,
+            },
         )
 
         const regularSendResult = await deployerJettonWallet.sendTransfer(
@@ -286,7 +297,11 @@ describe("Feature Rich Jetton Minter", () => {
             deployer.address,
             0n,
             null,
-            SendNotDeployReceiversJettonWallet,
+            {
+                $$type: "CustomPayloadWithSendModes",
+                mode: SendNotDeployReceiversJettonWallet,
+                forwardStateInit: null,
+            },
         )
 
         const receiverJettonWallet = await userWallet(randomNewReceiver)
@@ -379,15 +394,6 @@ describe("Feature Rich Jetton Minter", () => {
         await blockchain.loadFrom(snapBeforeTreasury)
 
         const receiversStateInit = receiver.init
-        const receiversStateInitCell = beginCell()
-            .store(
-                storeStateInit({
-                    $$type: "StateInit",
-                    code: receiversStateInit.code!,
-                    data: receiversStateInit.data!,
-                }),
-            )
-            .endCell()
 
         const sendADeployNotificationReceiverResult =
             await deployerJettonWallet.sendTransferWithJettonMode(
@@ -398,8 +404,15 @@ describe("Feature Rich Jetton Minter", () => {
                 deployer.address,
                 toNano(1), // forward amount
                 null,
-                SendStateInitWithJettonNotification,
-                receiversStateInitCell,
+                {
+                    $$type: "CustomPayloadWithSendModes",
+                    mode: SendStateInitWithJettonNotification,
+                    forwardStateInit: {
+                        $$type: "StateInit",
+                        code: receiversStateInit.code!,
+                        data: receiversStateInit.data!,
+                    },
+                },
             )
 
         const receiverJettonWallet = await userWallet(receiver.address)
@@ -435,15 +448,6 @@ describe("Feature Rich Jetton Minter", () => {
         await blockchain.loadFrom(snapBeforeTreasury)
 
         const receiversStateInit = receiverBad.init
-        const receiversStateInitCell = beginCell()
-            .store(
-                storeStateInit({
-                    $$type: "StateInit",
-                    code: receiversStateInit.code!,
-                    data: receiversStateInit.data!,
-                }),
-            )
-            .endCell()
 
         const sendADeployNotificationReceiverResult =
             await deployerJettonWallet.sendTransferWithJettonMode(
@@ -454,8 +458,15 @@ describe("Feature Rich Jetton Minter", () => {
                 deployer.address,
                 toNano(1), // forward amount
                 null,
-                SendStateInitWithJettonNotification,
-                receiversStateInitCell,
+                {
+                    $$type: "CustomPayloadWithSendModes",
+                    mode: SendStateInitWithJettonNotification,
+                    forwardStateInit: {
+                        $$type: "StateInit",
+                        code: receiversStateInit.code!,
+                        data: receiversStateInit.data!,
+                    },
+                },
             )
 
         const receiverJettonWallet = await userWallet(receiver.address)
