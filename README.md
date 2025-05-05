@@ -23,6 +23,8 @@ You can use this implementation as an alternative to the reference Jetton contra
 
 You can read [Specification](./dev-docs/SPEC.md), that goes into the design choices and differences between this and other implementations
 
+[broken link](./dev-docs/unkw.txt)
+
 ## Improvements and additional features
 
 This implementation also includes new features, that will allow developers and users on TON to easier integrate and work with Jettons in their applications
