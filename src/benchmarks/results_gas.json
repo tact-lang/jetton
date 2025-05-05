@@ -136,6 +136,19 @@
                 "claimWallet": "3984"
             },
             "summary": "79475"
+        },
+        {
+            "label": "With larger mint opcode",
+            "pr": "https://github.com/tact-lang/jetton/pull/144",
+            "gas": {
+                "transfer": "33917",
+                "mint": "18517",
+                "burn": "12846",
+                "discovery": "6140",
+                "reportBalance": "4308",
+                "claimWallet": "3984"
+            },
+            "summary": "79712"
         }
     ]
 }
