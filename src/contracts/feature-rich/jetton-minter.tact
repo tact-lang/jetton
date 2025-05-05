@@ -114,7 +114,7 @@ contract JettonMinterFeatureRich(
         });
     }
 
-    bounced(msg: bounced<JettonTransferInternal>) {
+    bounced(msg: bounced<JettonTransferInternalWithStateInit>) {
         self.totalSupply -= msg.amount;
     }
 

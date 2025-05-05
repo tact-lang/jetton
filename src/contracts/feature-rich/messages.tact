@@ -22,6 +22,11 @@ message(4) JettonUpdateContent {
     content: Cell;
 }
 
+struct CustomPayloadWithSendModes {
+    mode: Int as uint32;
+    forwardStateInit: StateInit?;
+}
+
 message(0xf8a7ea5) JettonTransfer {
     queryId: Int as uint64;
     amount: Int as coins;
@@ -32,12 +37,13 @@ message(0xf8a7ea5) JettonTransfer {
     forwardPayload: Slice as remaining;
 }
 
-message(0x178d4519) JettonTransferInternal {
+message(0x178d4519) JettonTransferInternalWithStateInit {
     queryId: Int as uint64;
     amount: Int as coins;
     sender: Address;
     responseDestination: Address?;
     forwardTonAmount: Int as coins;
+    forwardStateInit: StateInit?;
     forwardPayload: Slice as remaining;
 }
 
@@ -82,7 +88,7 @@ message(0x642b7d07) Mint {
     queryId: Int as uint64;
     receiver: Address;
     tonAmount: Int as coins;
-    mintMessage: JettonTransferInternal;
+    mintMessage: JettonTransferInternalWithStateInit;
 }
 
 message(22) CloseMinting {}
@@ -120,3 +126,4 @@ message(0x0393b1ce) ClaimTON {
 
 const SendAllJettonsMode: Int = 0x1;
 const SendNotDeployReceiversJettonWallet: Int = 0x2;
+const SendStateInitWithJettonNotification: Int = 0x4;

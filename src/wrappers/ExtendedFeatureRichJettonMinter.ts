@@ -1,5 +1,12 @@
-import {JettonMinterFeatureRich} from "../output/FeatureRich_JettonMinterFeatureRich"
-import {Address, Cell} from "@ton/core"
+import {
+    gasForBurn,
+    gasForTransfer,
+    JettonMinterFeatureRich,
+    Mint,
+    minTonsForStorage,
+    storeMint,
+} from "../output/FeatureRich_JettonMinterFeatureRich"
+import {Address, beginCell, Cell, ContractProvider, Sender, toNano} from "@ton/core"
 import {ExtendedJettonMinter} from "./ExtendedJettonMinter"
 
 export class ExtendedFeatureRichJettonMinter extends ExtendedJettonMinter {
@@ -16,5 +23,82 @@ export class ExtendedFeatureRichJettonMinter extends ExtendedJettonMinter {
             code: base.init.code,
             data: base.init.data,
         })
+    }
+
+    override async sendMint(
+        provider: ContractProvider,
+        via: Sender,
+        to: Address,
+        jettonAmount: bigint,
+        forwardTonAmount: bigint,
+        totalTonAmount: bigint,
+    ): Promise<void> {
+        if (totalTonAmount <= forwardTonAmount) {
+            throw new Error("Total TON amount should be greater than the forward amount")
+        }
+        const msg: Mint = {
+            $$type: "Mint",
+            queryId: 0n,
+            receiver: to,
+            tonAmount: totalTonAmount,
+            mintMessage: {
+                $$type: "JettonTransferInternalWithStateInit",
+                queryId: 0n,
+                amount: jettonAmount,
+                sender: this.address,
+                responseDestination: this.address,
+                forwardTonAmount: forwardTonAmount,
+                forwardStateInit: null,
+                forwardPayload: beginCell().storeUint(0, 1).asSlice(),
+            },
+        }
+
+        return via.send({
+            to: this.address,
+            value: totalTonAmount + toNano("0.015"),
+            body: beginCell().store(storeMint(msg)).endCell(),
+        })
+    }
+
+    override loadMintMessage(
+        mintAmount: bigint,
+        receiver: Address,
+        sender: Address,
+        responseDestination: Address,
+        forwardTonAmount: bigint,
+        forwardPayload: Cell | null,
+    ): Cell {
+        return beginCell()
+            .store(
+                storeMint({
+                    $$type: "Mint",
+                    mintMessage: {
+                        $$type: "JettonTransferInternalWithStateInit",
+                        amount: mintAmount,
+                        sender: sender,
+                        responseDestination: responseDestination,
+                        queryId: 0n,
+                        forwardTonAmount: forwardTonAmount,
+                        forwardStateInit: null,
+                        forwardPayload: beginCell().storeMaybeRef(forwardPayload).asSlice(),
+                    },
+                    queryId: 0n,
+                    receiver: receiver,
+                    tonAmount: forwardTonAmount,
+                }),
+            )
+            .endCell()
+    }
+
+    override loadGasForBurn(): bigint {
+        return gasForBurn
+    }
+
+    override loadGasForTransfer(): bigint {
+        return gasForTransfer
+    }
+
+    override loadMinTonsForStorage(): bigint {
+        return minTonsForStorage
     }
 }

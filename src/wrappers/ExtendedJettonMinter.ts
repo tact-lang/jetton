@@ -1,10 +1,14 @@
 import {
     ChangeOwner,
     ClaimTON,
+    gasForBurn,
+    gasForTransfer,
     JettonMinter,
     JettonUpdateContent,
     Mint,
+    minTonsForStorage,
     ProvideWalletAddress,
+    storeMint,
 } from "../output/Jetton_JettonMinter"
 import {Address, beginCell, Cell, ContractProvider, Sender, toNano} from "@ton/core"
 
@@ -142,5 +146,46 @@ export class ExtendedJettonMinter extends JettonMinter {
             receiver: address,
         }
         return this.send(provider, via, {value: value}, msg)
+    }
+
+    loadMintMessage(
+        mintAmount: bigint,
+        receiver: Address,
+        sender: Address,
+        responseDestination: Address,
+        forwardTonAmount: bigint,
+        forwardPayload: Cell | null,
+    ): Cell {
+        return beginCell()
+            .store(
+                storeMint({
+                    $$type: "Mint",
+                    mintMessage: {
+                        $$type: "JettonTransferInternal",
+                        amount: mintAmount,
+                        sender: sender,
+                        responseDestination: responseDestination,
+                        queryId: 0n,
+                        forwardTonAmount: forwardTonAmount,
+                        forwardPayload: beginCell().storeMaybeRef(forwardPayload).asSlice(),
+                    },
+                    queryId: 0n,
+                    receiver: receiver,
+                    tonAmount: forwardTonAmount,
+                }),
+            )
+            .endCell()
+    }
+
+    loadGasForBurn(): bigint {
+        return gasForBurn
+    }
+
+    loadGasForTransfer(): bigint {
+        return gasForTransfer
+    }
+
+    loadMinTonsForStorage(): bigint {
+        return minTonsForStorage
     }
 }

@@ -6,9 +6,12 @@ import {JettonUpdateContent} from "../../output/Jetton_JettonMinter"
 import {ExtendedFeatureRichJettonMinter} from "../../wrappers/ExtendedFeatureRichJettonMinter"
 import {ExtendedFeatureRichJettonWallet} from "../../wrappers/ExtendedFeatureRichJettonWallet"
 import {
+    JettonMinterFeatureRich,
     SendAllJettonsMode,
     SendNotDeployReceiversJettonWallet,
+    SendStateInitWithJettonNotification,
 } from "../../output/FeatureRich_JettonMinterFeatureRich"
+import {storeJettonNotification} from "../../output/FeatureRich_JettonWalletFeatureRich"
 
 // this is test suite for feature rich jetton minter
 // it makes heavy use of the custom payload and enables new functionality
@@ -90,7 +93,11 @@ describe("Feature Rich Jetton Minter", () => {
             deployer.address,
             0n,
             null,
-            SendAllJettonsMode,
+            {
+                $$type: "CustomPayloadWithSendModes",
+                mode: SendAllJettonsMode,
+                forwardStateInit: null,
+            },
         )
         const receiverJettonWallet = await userWallet(randomNewReceiver)
 
@@ -144,7 +151,11 @@ describe("Feature Rich Jetton Minter", () => {
             deployer.address,
             0n,
             null,
-            SendNotDeployReceiversJettonWallet,
+            {
+                $$type: "CustomPayloadWithSendModes",
+                mode: SendNotDeployReceiversJettonWallet,
+                forwardStateInit: null,
+            },
         )
 
         const receiverJettonWallet = await userWallet(randomNewReceiver)
@@ -206,7 +217,11 @@ describe("Feature Rich Jetton Minter", () => {
             responseAddress,
             forwardTonAmount,
             forwardPayload,
-            SendNotDeployReceiversJettonWallet,
+            {
+                $$type: "CustomPayloadWithSendModes",
+                mode: SendNotDeployReceiversJettonWallet,
+                forwardStateInit: null,
+            },
         )
 
         const regularSendResult = await deployerJettonWallet.sendTransfer(
@@ -283,7 +298,11 @@ describe("Feature Rich Jetton Minter", () => {
             deployer.address,
             0n,
             null,
-            SendNotDeployReceiversJettonWallet,
+            {
+                $$type: "CustomPayloadWithSendModes",
+                mode: SendNotDeployReceiversJettonWallet,
+                forwardStateInit: null,
+            },
         )
 
         const receiverJettonWallet = await userWallet(randomNewReceiver)
@@ -354,5 +373,124 @@ describe("Feature Rich Jetton Minter", () => {
             initialJettonBalanceNotDeployer + sentAmount,
         )
         expect(await jettonMinter.getTotalSupply()).toEqual(initialTotalSupply)
+    })
+
+    it("should deploy jetton notification receiver with send mode send-deploy-notification-receiver", async () => {
+        const jettonMintAmount = toNano(10)
+        await jettonMinter.sendMint(
+            deployer.getSender(),
+            deployer.address,
+            jettonMintAmount,
+            0n,
+            toNano(1),
+        )
+        const deployerJettonWallet = await userWallet(deployer.address)
+        const jettonBalance = await deployerJettonWallet.getJettonBalance()
+
+        expect(jettonBalance).toEqual(jettonMintAmount)
+
+        const snapBeforeTreasury = blockchain.snapshot()
+        const receiver = await blockchain.treasury("receiver")
+        // we want to deploy receiver jetton wallet ourself, so revert this
+        await blockchain.loadFrom(snapBeforeTreasury)
+
+        const receiversStateInit = receiver.init
+
+        const sendADeployNotificationReceiverResult =
+            await deployerJettonWallet.sendTransferWithJettonMode(
+                deployer.getSender(),
+                toNano("1.5"), // tons
+                0n,
+                receiver.address,
+                deployer.address,
+                toNano(1), // forward amount
+                null,
+                {
+                    $$type: "CustomPayloadWithSendModes",
+                    mode: SendStateInitWithJettonNotification,
+                    forwardStateInit: {
+                        $$type: "StateInit",
+                        code: receiversStateInit.code!,
+                        data: receiversStateInit.data!,
+                    },
+                },
+            )
+
+        const expectedNotificationBody = beginCell()
+            .store(
+                storeJettonNotification({
+                    $$type: "JettonNotification",
+                    queryId: 0n,
+                    amount: 0n,
+                    sender: deployer.address,
+                    forwardPayload: beginCell().storeUint(0, 1).endCell().beginParse(),
+                }),
+            )
+            .endCell()
+
+        const receiverJettonWallet = await userWallet(receiver.address)
+
+        expect(sendADeployNotificationReceiverResult.transactions).toHaveTransaction({
+            from: receiverJettonWallet.address,
+            op: JettonMinterFeatureRich.opcodes.JettonNotification,
+            body: expectedNotificationBody, // we didn't break basic notify functionality
+            initCode: receiversStateInit.code!,
+            initData: receiversStateInit.data!,
+            success: true,
+            deploy: true, // we deployed it ourself
+        })
+    })
+
+    it("should revert if state init doesn't belong to the notification receiver", async () => {
+        const jettonMintAmount = toNano(10)
+        await jettonMinter.sendMint(
+            deployer.getSender(),
+            deployer.address,
+            jettonMintAmount,
+            0n,
+            toNano(1),
+        )
+        const deployerJettonWallet = await userWallet(deployer.address)
+        const jettonBalance = await deployerJettonWallet.getJettonBalance()
+
+        expect(jettonBalance).toEqual(jettonMintAmount)
+
+        const snapBeforeTreasury = blockchain.snapshot()
+        const receiver = await blockchain.treasury("receiver")
+        const receiverBad = await blockchain.treasury("receiver-2")
+        // we want to deploy receiver jetton wallet ourself, so revert this
+        await blockchain.loadFrom(snapBeforeTreasury)
+
+        const receiversStateInit = receiverBad.init
+
+        const sendADeployNotificationReceiverResult =
+            await deployerJettonWallet.sendTransferWithJettonMode(
+                deployer.getSender(),
+                toNano("1.5"), // tons
+                0n,
+                receiver.address,
+                deployer.address,
+                toNano(1), // forward amount
+                null,
+                {
+                    $$type: "CustomPayloadWithSendModes",
+                    mode: SendStateInitWithJettonNotification,
+                    forwardStateInit: {
+                        $$type: "StateInit",
+                        code: receiversStateInit.code!,
+                        data: receiversStateInit.data!,
+                    },
+                },
+            )
+
+        const receiverJettonWallet = await userWallet(receiver.address)
+
+        expect(sendADeployNotificationReceiverResult.transactions).toHaveTransaction({
+            from: deployerJettonWallet.address,
+            to: receiverJettonWallet.address,
+            op: JettonMinterFeatureRich.opcodes.JettonTransferInternalWithStateInit,
+            success: false,
+            exitCode: JettonMinterFeatureRich.errors["Deploy address doesn't match owner address"],
+        })
     })
 })
