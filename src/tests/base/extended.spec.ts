@@ -700,7 +700,7 @@ describe.each([
                 toNano(1),
             )
 
-            // actual send with minimal value
+            // actual sending with minimal value
             const sendResult = await deployer.send({
                 to: deployerJettonWallet.address,
                 value: minimalBurnValue,
