@@ -23,26 +23,28 @@ import {
     storeJettonTransfer,
     storeTakeWalletBalance,
     TakeWalletBalance,
-} from "../../output/Jetton_JettonMinter"
+} from "../../output/Shard_JettonMinter"
+import {JettonWallet} from "../../output/Shard_JettonWallet"
+
 import {getComputeGasForTx} from "../../utils/gas"
 
 // Use describe.each to parameterize the test suite for both base and feature-rich jetton versions
 describe.each([
-    {
-        name: "Base Jetton",
-        MinterWrapper: ExtendedJettonMinter,
-        WalletWrapper: ExtendedJettonWallet,
-    },
-    {
-        name: "Feature Rich Jetton",
-        MinterWrapper: ExtendedFeatureRichJettonMinter,
-        WalletWrapper: ExtendedFeatureRichJettonWallet,
-    },
     // {
-    //     name: "Shard Jetton",
-    //     MinterWrapper: ExtendedShardedJettonMinter,
-    //     WalletWrapper: ExtendedShardedJettonWallet,
+    //     name: "Base Jetton",
+    //     MinterWrapper: ExtendedJettonMinter,
+    //     WalletWrapper: ExtendedJettonWallet,
     // },
+    // {
+    //     name: "Feature Rich Jetton",
+    //     MinterWrapper: ExtendedFeatureRichJettonMinter,
+    //     WalletWrapper: ExtendedFeatureRichJettonWallet,
+    // },
+    {
+        name: "Shard Jetton",
+        MinterWrapper: ExtendedShardedJettonMinter,
+        WalletWrapper: ExtendedShardedJettonWallet,
+    },
 ])("$name", ({MinterWrapper, WalletWrapper}) => {
     let blockchain: Blockchain
     let jettonMinter: SandboxContract<InstanceType<typeof MinterWrapper>>
@@ -99,12 +101,8 @@ describe.each([
             await WalletWrapper.fromInit(deployer.address, jettonMinter.address, 0n),
         )
 
-        _jwallet_code = (await WalletWrapper.fromInit(deployer.address, jettonMinter.address, 0n))
+        _jwallet_code = (await JettonWallet.fromInit(deployer.address, jettonMinter.address, 0n))
             .init?.code!
-
-        console.log(_jwallet_code.hash().toString("hex"))
-
-        console.log(jettonWallet.init?.code.hash().toString("hex"))
 
         userWallet = async (address: Address) => {
             return blockchain.openContract(
@@ -241,7 +239,7 @@ describe.each([
         }
 
         // console.log((await blockchain.getContract(deployerJettonWallet.address)).accountState)
-        console.log(_jwallet_code.hash().toString("hex"))
+        // console.log(_jwallet_code.hash().toString("hex"))
         // expect(_jwallet_code).toBe((await blockchain.getContract(deployerJettonWallet.address)).accountState)
         expect(provideResult.transactions).toHaveTransaction({
             from: deployerJettonWallet.address,

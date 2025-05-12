@@ -2,7 +2,7 @@ import {Address, beginCell, Cell, toNano} from "@ton/core"
 import {Blockchain, BlockchainSnapshot, SandboxContract, TreasuryContract} from "@ton/sandbox"
 import "@ton/test-utils"
 
-import {JettonUpdateContent, prefix_length} from "../../output/Jetton_JettonMinter"
+import {JettonUpdateContent, prefix_length} from "../../output/Shard_JettonMinter"
 import {ExtendedShardedJettonMinter} from "../../wrappers/ExtendedShardedJettonMinter"
 import {ExtendedShardedJettonWallet} from "../../wrappers/ExtendedShardedJettonWallet"
 
