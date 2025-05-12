@@ -3,6 +3,7 @@ import "./messages";
 import "./constants";
 import "../utils.tact";
 import "../utils";
+import "../shard-utils";
 
 struct JettonMinterState {
     totalSupply: Int as coins;
@@ -41,6 +42,10 @@ contract JettonMinter(
 
         self.totalSupply += msg.mintMessage.amount;
 
+        let receiverSlice = msg.receiver.asSlice();
+        let _ = receiverSlice.loadUint(11); // skip workchain 
+        let receiverPrefix = receiverSlice.loadUint(prefix_length);
+
         // basechain destination is calculated inside deploy function
         shardDeploy(ShardDeployParameters{
             value: 0, // ignore msg.tonAmount and use SendMode 64 instead
@@ -48,16 +53,20 @@ contract JettonMinter(
             mode: SendRemainingValue | SendBounceIfActionFail,
             body: msg.mintMessage.toCell(),
             init: initOf JettonWallet(msg.receiver, myAddress(), 0),
-            shard: msg.receiver.asSlice().loadUint(prefix_length),
+            shard: receiverPrefix,
         });
     }
 
     receive(msg: ProvideWalletAddress) {
         let ownerWorkchain: Int = parseStdAddress(msg.ownerAddress.asSlice()).workchain;
 
+        let ownerSlice = msg.ownerAddress.asSlice();
+        let _ = ownerSlice.loadUint(11); // skip workchain 
+        let ownerPrefix = ownerSlice.loadUint(prefix_length);
+
         // If owner is basechain address, we can calculate jettonWallet
         let targetJettonWallet: BasechainAddress = (ownerWorkchain == Basechain)
-            ? BasechainAddress { hash: getJettonWalletInit(msg.ownerAddress).hash(), }
+            ? BasechainAddress { hash: changeAddressHashPrefix(getJettonWalletInit(msg.ownerAddress).hash(), ownerPrefix) }
             : emptyBasechainAddress();
 
         message(MessageParameters {
@@ -152,10 +161,14 @@ inline fun getJettonWalletInit(address: Address): Cell {
 inline fun getJettonWalletByOwner(jettonWalletOwner: Address): Address {
     let init = getJettonWalletInit(jettonWalletOwner);
 
+    let ownerSlice = jettonWalletOwner.asSlice();
+    let _ = ownerSlice.loadUint(11); // skip workchain 
+    let ownerPrefix = ownerSlice.loadUint(prefix_length);
+
     let expectedAddr = beginCell()
         .storeUint(4, 3)
         .storeUint(0, 8)
-        .storeUint((init.hash() & ((1 << (256 - prefix_length)) - 1)) | (jettonWalletOwner.asSlice().loadUint(prefix_length) << (256 - prefix_length)), 256)
+        .storeUint(changeAddressHashPrefix(init.hash(), ownerPrefix), 256)
         .asSlice();
 
     return expectedAddr.loadAddress();
@@ -163,6 +176,10 @@ inline fun getJettonWalletByOwner(jettonWalletOwner: Address): Address {
 
 inline fun getJettonBasechainWalletByOwner(jettonWalletOwner: Address): BasechainAddress {
     let init = getJettonWalletInit(jettonWalletOwner);
+    
+    let ownerSlice = jettonWalletOwner.asSlice();
+    let _ = ownerSlice.loadUint(11); // skip workchain 
+    let ownerPrefix = ownerSlice.loadUint(prefix_length);
 
-    return BasechainAddress{ hash: ((init.hash() & ((1 << (256 - prefix_length)) - 1)) | (jettonWalletOwner.asSlice().loadUint(prefix_length) << (256 - prefix_length))) };
+    return BasechainAddress{ hash: changeAddressHashPrefix(init.hash(), ownerPrefix) };
 }

@@ -32,7 +32,7 @@
         "@aws-crypto/sha256-js": "^5.2.0",
         "@nowarp/misti": "^0.8.3",
         "@orbs-network/ton-access": "^2.3.3",
-        "chalk": "5.4.1",
+        "chalk": "4.1.2",
         "cli-table3": "^0.6.5",
         "cross-env": "^7.0.3",
         "dotenv": "^16.5.0",
