@@ -1,5 +1,7 @@
 import "./messages";
 import "./constants";
+import "../shard-utils";
+
 
 contract JettonWallet(
     owner: Address,
@@ -24,7 +26,11 @@ contract JettonWallet(
             "Insufficient amount of TON attached",
         );
 
-        deploy(DeployParameters {
+        let destinationSlice = msg.destination.asSlice();
+        let _ = destinationSlice.loadUint(11); // skip workchain 
+        let destinationPrefix = destinationSlice.loadUint(prefix_length);
+
+        shardDeploy(ShardDeployParameters{
             value: 0,
             mode: SendRemainingValue,
             bounce: true,
@@ -37,6 +43,7 @@ contract JettonWallet(
                 forwardPayload: msg.forwardPayload,
             }.toCell(),
             init: initOf JettonWallet(msg.destination, self.minter, 0),
+            shard: destinationPrefix,
         });
     }
 
@@ -45,10 +52,9 @@ contract JettonWallet(
 
         // This message should come only from master, or from other JettonWallet
         let wallet: StateInit = initOf JettonWallet(msg.sender, self.minter, 0);
-        if (!wallet.hasSameBasechainAddress(sender())) {
+        if (!wallet.hasSameBasechainAddressPrefix(sender())) {
             require(self.minter == sender(), "Incorrect sender");
         }
-
         let ctx: Context = context();
         let msgValue: Int = ctx.value;
         let tonBalanceBeforeMsg = myBalance() - msgValue;
@@ -71,7 +77,7 @@ contract JettonWallet(
         }
         nativeReserve(max(tonBalanceBeforeMsg, minTonsForStorage), ReserveAtMost);
         // 0xd53276db -- Cashback to the original Sender
-        if (msg.responseDestination != null && msgValue > 0) {
+        if (msg.responseDestination != null && msgValue > 0){
             message(MessageParameters {
                 to: msg.responseDestination!!,
                 value: msgValue,
