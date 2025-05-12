@@ -3,7 +3,6 @@ import "./messages";
 import "./constants";
 import "../utils.tact";
 import "../utils";
-import "../shard-utils";
 
 struct JettonMinterState {
     totalSupply: Int as coins;
@@ -42,10 +41,6 @@ contract JettonMinter(
 
         self.totalSupply += msg.mintMessage.amount;
 
-        let receiverSlice = msg.receiver.asSlice();
-        let _ = receiverSlice.loadUint(11); // skip workchain 
-        let receiverPrefix = receiverSlice.loadUint(prefix_length);
-
         // basechain destination is calculated inside deploy function
         deploy(DeployParameters {
             value: 0, // ignore msg.tonAmount and use SendMode 64 instead
@@ -58,10 +53,6 @@ contract JettonMinter(
 
     receive(msg: ProvideWalletAddress) {
         let ownerWorkchain: Int = parseStdAddress(msg.ownerAddress.asSlice()).workchain;
-
-        let ownerSlice = msg.ownerAddress.asSlice();
-        let _ = ownerSlice.loadUint(11); // skip workchain 
-        let ownerPrefix = ownerSlice.loadUint(prefix_length);
 
         // If owner is basechain address, we can calculate jettonWallet
         let targetJettonWallet: BasechainAddress = (ownerWorkchain == Basechain)
