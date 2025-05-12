@@ -1,4 +1,4 @@
-import {ClaimTON, JettonTransfer, JettonWallet} from "../output/Jetton_JettonWallet"
+import {ClaimTON, JettonTransfer, JettonWallet} from "../output/Shard_JettonWallet"
 import {Address, Builder, Cell, ContractProvider, Sender, toNano} from "@ton/core"
 import {JettonBurn, ProvideWalletBalance} from "../output/Shard_JettonMinter"
 
