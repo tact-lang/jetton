@@ -6,6 +6,7 @@ import {ExtendedFeatureRichJettonWallet} from "../../wrappers/ExtendedFeatureRic
 import {ExtendedFeatureRichJettonMinter} from "../../wrappers/ExtendedFeatureRichJettonMinter"
 import {findTransactionRequired, randomAddress} from "@ton/test-utils"
 import {
+    computeFwdFees,
     computeGasFee,
     getGasPrices,
     getMsgPrices,
@@ -22,21 +23,32 @@ import {
     storeTakeWalletBalance,
     TakeWalletBalance,
 } from "../../output/Jetton_JettonMinter"
-import {getComputeGasForTx} from "../../utils/gas"
-
+import {getComputeGasForTx, getSizeOfState} from "../../utils/gas"
+import {
+    walletStateInitBits as baseWalletStateInitBits,
+    walletStateInitCells as baseWalletStateInitCells,
+} from "../../output/Jetton_JettonWallet"
+import {
+    walletStateInitBits as featureRichWalletStateInitBits,
+    walletStateInitCells as featureRichWalletStateInitCells,
+} from "../../output/FeatureRich_JettonWalletFeatureRich"
 // Use describe.each to parameterize the test suite for both base and feature-rich jetton versions
 describe.each([
     {
         name: "Base Jetton",
         MinterWrapper: ExtendedJettonMinter,
         WalletWrapper: ExtendedJettonWallet,
+        walletStateInitCells: baseWalletStateInitCells,
+        walletStateInitBits: baseWalletStateInitBits,
     },
     {
         name: "Feature Rich Jetton",
         MinterWrapper: ExtendedFeatureRichJettonMinter,
         WalletWrapper: ExtendedFeatureRichJettonWallet,
+        walletStateInitCells: featureRichWalletStateInitCells,
+        walletStateInitBits: featureRichWalletStateInitBits,
     },
-])("$name", ({MinterWrapper, WalletWrapper}) => {
+])("$name", ({MinterWrapper, WalletWrapper, walletStateInitBits, walletStateInitCells}) => {
     let blockchain: Blockchain
     let jettonMinter: SandboxContract<InstanceType<typeof MinterWrapper>>
     let jettonWallet: SandboxContract<InstanceType<typeof WalletWrapper>>
@@ -501,6 +513,11 @@ describe.each([
             const prices = getMsgPrices(blockchain.config, 0)
             // https://github.com/ton-blockchain/ton/commit/a11ffb1637032faabea9119020f6c80ed678d0e7#diff-660b8e8615c63abdc65b4dfb7dba42b4c3f71642ca33e5ee6ae4e344a7eb082dR371
             const origFwdFee = getOriginalFwdFee(prices, inFwdFee)
+            const stateInitFwdFee = computeFwdFees(
+                prices,
+                walletStateInitCells,
+                walletStateInitBits,
+            )
             /*
             require(
                 ctx.value >
@@ -511,7 +528,12 @@ describe.each([
             );
             */
             const minimalTransferValue =
-                transferGasPrice * 2n + minTonsForStorage + origFwdFee * 2n + forwardTonAmount + 1n // +1 to be greater than
+                transferGasPrice * 2n +
+                minTonsForStorage +
+                origFwdFee * 2n +
+                stateInitFwdFee +
+                forwardTonAmount +
+                1n // +1 to be greater than
 
             // mint to deploy jetton wallet
             const jettonMintAmount = 1000000n
@@ -578,6 +600,11 @@ describe.each([
             const prices = getMsgPrices(blockchain.config, 0)
             // https://github.com/ton-blockchain/ton/commit/a11ffb1637032faabea9119020f6c80ed678d0e7#diff-660b8e8615c63abdc65b4dfb7dba42b4c3f71642ca33e5ee6ae4e344a7eb082dR371
             const origFwdFee = getOriginalFwdFee(prices, inFwdFee)
+            const stateInitFwdFee = computeFwdFees(
+                prices,
+                walletStateInitCells,
+                walletStateInitBits,
+            )
 
             /*
             require(
@@ -589,7 +616,12 @@ describe.each([
             );
             */
             const minimalMintValue =
-                transferGasPrice * 2n + minTonsForStorage + origFwdFee * 2n + forwardTonAmount + 1n // +1 to be greater than
+                transferGasPrice * 2n +
+                minTonsForStorage +
+                origFwdFee * 2n +
+                stateInitFwdFee +
+                forwardTonAmount +
+                1n // +1 to be greater than
 
             // actual send with minimal value
             const mintSendResult = await deployer.send({
@@ -681,5 +713,14 @@ describe.each([
                 success: false,
             })
         })
+    })
+    it("Real size of StateInit should not exceed hardcoded values", async () => {
+        // We can use random addresses here, as all of them occupy 267 bits.
+        // 0n is the balance with each JettonWallet is deployed
+        const realSize = getSizeOfState(
+            await WalletWrapper.init(randomAddress(), randomAddress(), 0n),
+        )
+        expect(realSize.cells).toBeLessThanOrEqual(walletStateInitCells)
+        expect(realSize.bits).toBeLessThanOrEqual(walletStateInitBits)
     })
 })
