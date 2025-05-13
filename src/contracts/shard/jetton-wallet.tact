@@ -25,9 +25,7 @@ contract JettonWallet(
             "Insufficient amount of TON attached",
         );
 
-        let destinationSlice = msg.destination.asSlice();
-        let _ = destinationSlice.loadUint(11); // skip workchain 
-        let destinationPrefix = destinationSlice.loadUint(prefix_length);
+        let destinationPrefix = getShardFromAddress(msg.destination.asSlice());
 
         shardDeploy(ShardDeployParameters {
             value: 0,
@@ -51,7 +49,7 @@ contract JettonWallet(
 
         // This message should come only from master, or from other JettonWallet
         let wallet: StateInit = initOf JettonWallet(msg.sender, self.minter, 0);
-        if (!wallet.hasSameBasechainAddressPrefix(sender())) {
+        if (!wallet.hasSameBasechainAddressPrefix(sender())) { // TODO should we check exactly same address?
             require(self.minter == sender(), "Incorrect sender");
         }
         let ctx: Context = context();

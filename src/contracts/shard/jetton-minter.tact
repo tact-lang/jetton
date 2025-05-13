@@ -42,9 +42,7 @@ contract JettonMinter(
 
         self.totalSupply += msg.mintMessage.amount;
 
-        let receiverSlice = msg.receiver.asSlice();
-        let _ = receiverSlice.loadUint(11); // skip workchain 
-        let receiverPrefix = receiverSlice.loadUint(prefix_length);
+        let receiverPrefix = getShardFromAddress(msg.receiver.asSlice());
 
         // basechain destination is calculated inside deploy function
         shardDeploy(ShardDeployParameters {
@@ -60,9 +58,7 @@ contract JettonMinter(
     receive(msg: ProvideWalletAddress) {
         let ownerWorkchain: Int = parseStdAddress(msg.ownerAddress.asSlice()).workchain;
 
-        let ownerSlice = msg.ownerAddress.asSlice();
-        let _ = ownerSlice.loadUint(11); // skip workchain 
-        let ownerPrefix = ownerSlice.loadUint(prefix_length);
+        let ownerPrefix = getShardFromAddress(msg.ownerAddress.asSlice());
 
         // If owner is basechain address, we can calculate jettonWallet
         let targetJettonWallet: BasechainAddress = (ownerWorkchain == Basechain)
@@ -161,9 +157,7 @@ inline fun getJettonWalletInit(address: Address): Cell {
 inline fun getJettonWalletByOwner(jettonWalletOwner: Address): Address {
     let init = getJettonWalletInit(jettonWalletOwner);
 
-    let ownerSlice = jettonWalletOwner.asSlice();
-    let _ = ownerSlice.loadUint(11); // skip workchain 
-    let ownerPrefix = ownerSlice.loadUint(prefix_length);
+    let ownerPrefix = getShardFromAddress(jettonWalletOwner.asSlice());
 
     let expectedAddr = beginCell()
         .storeUint(4, 3)
@@ -177,9 +171,7 @@ inline fun getJettonWalletByOwner(jettonWalletOwner: Address): Address {
 inline fun getJettonBasechainWalletByOwner(jettonWalletOwner: Address): BasechainAddress {
     let init = getJettonWalletInit(jettonWalletOwner);
 
-    let ownerSlice = jettonWalletOwner.asSlice();
-    let _ = ownerSlice.loadUint(11); // skip workchain 
-    let ownerPrefix = ownerSlice.loadUint(prefix_length);
+    let ownerPrefix = getShardFromAddress(jettonWalletOwner.asSlice());
 
     return BasechainAddress { hash: changeAddressHashPrefix(init.hash(), ownerPrefix) };
 }

@@ -21,14 +21,20 @@ struct ShardDeployParameters {
     /// See: https://docs.tact-lang.org/book/expressions#initof
     init: StateInit;
 
-    shard: Int as uint30;
+    /// The shard number to deploy the contract to.
+    shard: Int as uint8;
 }
 
-fun changeAddressHashPrefix(addr_hash: Int, prefix: Int): Int {
+inline fun changeAddressHashPrefix(addr_hash: Int, prefix: Int): Int {
     return (addr_hash & ((1 << (256 - prefix_length)) - 1)) | (prefix << (256 - prefix_length));
 }
 
-fun shardDeploy(params: ShardDeployParameters) {
+inline fun getShardFromAddress(addr: Slice): Int {
+    addr.skipBits(11);
+    return addr.loadUint(prefix_length);
+}
+
+inline fun shardDeploy(params: ShardDeployParameters) {
     let newStateInit = beginCell()
         .storeUint(1, 1)
         .storeUint(prefix_length, 5)
@@ -63,7 +69,7 @@ fun shardDeploy(params: ShardDeployParameters) {
     sendRawMessage(msg, params.mode);
 }
 
-fun initToPrefixInit(init: StateInit): Cell {
+inline fun initToPrefixInit(init: StateInit): Cell {
     let newStateInit = beginCell()
         .storeUint(1, 1)
         .storeUint(prefix_length, 5)
