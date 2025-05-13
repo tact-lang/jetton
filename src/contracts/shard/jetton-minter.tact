@@ -143,7 +143,7 @@ contract JettonMinter(
 
 inline fun getJettonWalletInit(address: Address): Cell {
     let init = initOf JettonWallet(address, myAddress(), 0);
-    
+
     return initToShardInit(init);
 }
 

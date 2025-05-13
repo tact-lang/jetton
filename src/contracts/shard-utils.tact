@@ -40,9 +40,8 @@ inline fun shardDeploy(params: ShardDeployParameters) {
     let expectedAddr = beginCell()
         .storeUint(4, 3)
         .storeUint(0, 8)
-        .storeUint(changeAddressHashShard(newStateInit.hash(), params.shard), 256) 
+        .storeUint(changeAddressHashShard(newStateInit.hash(), params.shard), 256)
         .asSlice();
-
 
     let msg = beginCell()
         .storeUint(1, 2) // 0 1 
