@@ -24,31 +24,20 @@ import {
     TakeWalletBalance,
 } from "../../output/Jetton_JettonMinter"
 import {getComputeGasForTx, getSizeOfState} from "../../utils/gas"
-import {
-    walletStateInitBits as baseWalletStateInitBits,
-    walletStateInitCells as baseWalletStateInitCells,
-} from "../../output/Jetton_JettonWallet"
-import {
-    walletStateInitBits as featureRichWalletStateInitBits,
-    walletStateInitCells as featureRichWalletStateInitCells,
-} from "../../output/FeatureRich_JettonWalletFeatureRich"
+
 // Use describe.each to parameterize the test suite for both base and feature-rich jetton versions
 describe.each([
     {
         name: "Base Jetton",
         MinterWrapper: ExtendedJettonMinter,
         WalletWrapper: ExtendedJettonWallet,
-        walletStateInitCells: baseWalletStateInitCells,
-        walletStateInitBits: baseWalletStateInitBits,
     },
     {
         name: "Feature Rich Jetton",
         MinterWrapper: ExtendedFeatureRichJettonMinter,
         WalletWrapper: ExtendedFeatureRichJettonWallet,
-        walletStateInitCells: featureRichWalletStateInitCells,
-        walletStateInitBits: featureRichWalletStateInitBits,
     },
-])("$name", ({MinterWrapper, WalletWrapper, walletStateInitBits, walletStateInitCells}) => {
+])("$name", ({MinterWrapper, WalletWrapper}) => {
     let blockchain: Blockchain
     let jettonMinter: SandboxContract<InstanceType<typeof MinterWrapper>>
     let jettonWallet: SandboxContract<InstanceType<typeof WalletWrapper>>
@@ -515,8 +504,8 @@ describe.each([
             const origFwdFee = getOriginalFwdFee(prices, inFwdFee)
             const stateInitFwdFee = computeFwdFees(
                 prices,
-                walletStateInitCells,
-                walletStateInitBits,
+                jettonWallet.loadWalletStateInitCells(),
+                jettonWallet.loadWalletStateInitBits(),
             )
             /*
             require(
@@ -602,8 +591,8 @@ describe.each([
             const origFwdFee = getOriginalFwdFee(prices, inFwdFee)
             const stateInitFwdFee = computeFwdFees(
                 prices,
-                walletStateInitCells,
-                walletStateInitBits,
+                jettonWallet.loadWalletStateInitCells(),
+                jettonWallet.loadWalletStateInitBits(),
             )
 
             /*
@@ -720,7 +709,7 @@ describe.each([
         const realSize = getSizeOfState(
             await WalletWrapper.init(randomAddress(), randomAddress(), 0n),
         )
-        expect(realSize.cells).toBeLessThanOrEqual(walletStateInitCells)
-        expect(realSize.bits).toBeLessThanOrEqual(walletStateInitBits)
+        expect(realSize.cells).toBeLessThanOrEqual(jettonWallet.loadWalletStateInitCells())
+        expect(realSize.bits).toBeLessThanOrEqual(jettonWallet.loadWalletStateInitBits())
     })
 })
