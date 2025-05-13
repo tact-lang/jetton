@@ -4,7 +4,15 @@ import chalk from "chalk"
 import {BlockchainTransaction} from "@ton/sandbox"
 import {flattenTransaction, FlatTransaction} from "@ton/test-utils"
 
-type FlatTransactionValue = number | bigint | boolean | Address | Cell | AccountStatus | undefined
+type FlatTransactionValue =
+    | number
+    | bigint
+    | boolean
+    | Address
+    | Cell
+    | AccountStatus
+    | [number, bigint][]
+    | undefined
 
 type FlatPrintLevels = "info" | "extended" | "raw"
 

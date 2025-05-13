@@ -42,7 +42,7 @@ contract JettonMinter(
 
         self.totalSupply += msg.mintMessage.amount;
 
-        let receiverPrefix = getShardFromAddress(msg.receiver.asSlice());
+        let receiverShard = getShardFromAddress(msg.receiver.asSlice());
 
         // basechain destination is calculated inside deploy function
         shardDeploy(ShardDeployParameters {
@@ -51,18 +51,18 @@ contract JettonMinter(
             mode: SendRemainingValue | SendBounceIfActionFail,
             body: msg.mintMessage.toCell(),
             init: initOf JettonWallet(msg.receiver, myAddress(), 0),
-            shard: receiverPrefix,
+            shard: receiverShard,
         });
     }
 
     receive(msg: ProvideWalletAddress) {
         let ownerWorkchain: Int = parseStdAddress(msg.ownerAddress.asSlice()).workchain;
 
-        let ownerPrefix = getShardFromAddress(msg.ownerAddress.asSlice());
+        let ownerShard = getShardFromAddress(msg.ownerAddress.asSlice());
 
         // If owner is basechain address, we can calculate jettonWallet
         let targetJettonWallet: BasechainAddress = (ownerWorkchain == Basechain)
-            ? BasechainAddress { hash: changeAddressHashPrefix(getJettonWalletInit(msg.ownerAddress).hash(), ownerPrefix) }
+            ? BasechainAddress { hash: changeAddressHashShard(getJettonWalletInit(msg.ownerAddress).hash(), ownerShard) }
             : emptyBasechainAddress();
 
         message(MessageParameters {
@@ -143,26 +143,19 @@ contract JettonMinter(
 
 inline fun getJettonWalletInit(address: Address): Cell {
     let init = initOf JettonWallet(address, myAddress(), 0);
-
-    return beginCell()
-        .storeUint(1, 1)
-        .storeUint(prefix_length, 5)
-        .storeUint(0, 1)
-        .storeMaybeRef(init.code)
-        .storeMaybeRef(init.data)
-        .storeUint(0, 1)
-        .endCell();
+    
+    return initToShardInit(init);
 }
 
 inline fun getJettonWalletByOwner(jettonWalletOwner: Address): Address {
     let init = getJettonWalletInit(jettonWalletOwner);
 
-    let ownerPrefix = getShardFromAddress(jettonWalletOwner.asSlice());
+    let ownerShard = getShardFromAddress(jettonWalletOwner.asSlice());
 
     let expectedAddr = beginCell()
         .storeUint(4, 3)
         .storeUint(0, 8)
-        .storeUint(changeAddressHashPrefix(init.hash(), ownerPrefix), 256)
+        .storeUint(changeAddressHashShard(init.hash(), ownerShard), 256)
         .asSlice();
 
     return expectedAddr.loadAddress();
@@ -171,7 +164,7 @@ inline fun getJettonWalletByOwner(jettonWalletOwner: Address): Address {
 inline fun getJettonBasechainWalletByOwner(jettonWalletOwner: Address): BasechainAddress {
     let init = getJettonWalletInit(jettonWalletOwner);
 
-    let ownerPrefix = getShardFromAddress(jettonWalletOwner.asSlice());
+    let ownerShard = getShardFromAddress(jettonWalletOwner.asSlice());
 
-    return BasechainAddress { hash: changeAddressHashPrefix(init.hash(), ownerPrefix) };
+    return BasechainAddress { hash: changeAddressHashShard(init.hash(), ownerShard) };
 }

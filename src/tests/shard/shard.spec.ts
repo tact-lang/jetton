@@ -2,7 +2,7 @@ import {Address, beginCell, Cell, toNano} from "@ton/core"
 import {Blockchain, BlockchainSnapshot, SandboxContract, TreasuryContract} from "@ton/sandbox"
 import "@ton/test-utils"
 
-import {JettonUpdateContent, prefix_length} from "../../output/Shard_JettonMinter"
+import {JettonUpdateContent, prefixLength} from "../../output/Shard_JettonMinter"
 import {ExtendedShardedJettonMinter} from "../../wrappers/ExtendedShardedJettonMinter"
 import {ExtendedShardedJettonWallet} from "../../wrappers/ExtendedShardedJettonWallet"
 
@@ -60,8 +60,8 @@ describe("Shard Jetton Minter", () => {
         const wallet = await userWallet(deployer.address)
         const walletHash = BigInt("0x" + wallet.address.hash.toString("hex"))
         const deployerHash = BigInt("0x" + deployer.address.hash.toString("hex"))
-        expect(walletHash >> BigInt(256n - prefix_length)).toBe(
-            deployerHash >> BigInt(256n - prefix_length),
-        ) // compare only first prefix_length bits
+        expect(walletHash >> BigInt(256n - prefixLength)).toBe(
+            deployerHash >> BigInt(256n - prefixLength),
+        ) // compare only first prefixLength bits
     })
 })
