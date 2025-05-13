@@ -78,3 +78,7 @@ inline extends fun hasSameBasechainAddressShard(self: StateInit, sender: Address
     let baseAddress = contractBasechainAddressShard(self);
     return (baseAddress.hash!! & ((1 << (256 - prefixLength)) - 1)) == (senderAddress & ((1 << (256 - prefixLength)) - 1));
 }
+
+inline extends fun hasSameShard(self: Address, b: Address): Bool {
+    return getShardFromAddress(self.asSlice()) == getShardFromAddress(b.asSlice());
+}

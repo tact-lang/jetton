@@ -49,7 +49,7 @@ contract JettonWallet(
 
         // This message should come only from master, or from other JettonWallet
         let wallet: StateInit = initOf JettonWallet(msg.sender, self.minter, 0);
-        if (!wallet.hasSameBasechainAddressShard(sender())) { // TODO should we check exactly same address?
+        if (!(wallet.hasSameBasechainAddressShard(sender()) && sender().hasSameShard(msg.sender))) {
             require(self.minter == sender(), "Incorrect sender");
         }
         let ctx: Context = context();
