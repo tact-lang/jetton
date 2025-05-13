@@ -2,7 +2,6 @@ import "./messages";
 import "./constants";
 import "../shard-utils";
 
-
 contract JettonWallet(
     owner: Address,
     minter: Address,
@@ -30,7 +29,7 @@ contract JettonWallet(
         let _ = destinationSlice.loadUint(11); // skip workchain 
         let destinationPrefix = destinationSlice.loadUint(prefix_length);
 
-        shardDeploy(ShardDeployParameters{
+        shardDeploy(ShardDeployParameters {
             value: 0,
             mode: SendRemainingValue,
             bounce: true,
@@ -77,7 +76,7 @@ contract JettonWallet(
         }
         nativeReserve(max(tonBalanceBeforeMsg, minTonsForStorage), ReserveAtMost);
         // 0xd53276db -- Cashback to the original Sender
-        if (msg.responseDestination != null && msgValue > 0){
+        if (msg.responseDestination != null && msgValue > 0) {
             message(MessageParameters {
                 to: msg.responseDestination!!,
                 value: msgValue,

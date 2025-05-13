@@ -47,7 +47,7 @@ contract JettonMinter(
         let receiverPrefix = receiverSlice.loadUint(prefix_length);
 
         // basechain destination is calculated inside deploy function
-        shardDeploy(ShardDeployParameters{
+        shardDeploy(ShardDeployParameters {
             value: 0, // ignore msg.tonAmount and use SendMode 64 instead
             bounce: true,
             mode: SendRemainingValue | SendBounceIfActionFail,
@@ -176,10 +176,10 @@ inline fun getJettonWalletByOwner(jettonWalletOwner: Address): Address {
 
 inline fun getJettonBasechainWalletByOwner(jettonWalletOwner: Address): BasechainAddress {
     let init = getJettonWalletInit(jettonWalletOwner);
-    
+
     let ownerSlice = jettonWalletOwner.asSlice();
     let _ = ownerSlice.loadUint(11); // skip workchain 
     let ownerPrefix = ownerSlice.loadUint(prefix_length);
 
-    return BasechainAddress{ hash: changeAddressHashPrefix(init.hash(), ownerPrefix) };
+    return BasechainAddress { hash: changeAddressHashPrefix(init.hash(), ownerPrefix) };
 }

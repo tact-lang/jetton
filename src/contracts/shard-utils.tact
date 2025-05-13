@@ -63,9 +63,7 @@ fun shardDeploy(params: ShardDeployParameters) {
     sendRawMessage(msg, params.mode);
 }
 
-
-
-fun initToPrefixInit(init: StateInit): Cell {        
+fun initToPrefixInit(init: StateInit): Cell {
     let newStateInit = beginCell()
         .storeUint(1, 1)
         .storeUint(prefix_length, 5)
@@ -81,7 +79,6 @@ inline fun contractBasechainAddressPrefix(s: StateInit): BasechainAddress {
     let hash = initToPrefixInit(s).hash();
     return newBasechainAddress(hash);
 }
-
 
 inline extends fun hasSameBasechainAddressPrefix(self: StateInit, sender: Address): Bool {
     let senderAddress = parseStdAddress(sender.asSlice()).address;
