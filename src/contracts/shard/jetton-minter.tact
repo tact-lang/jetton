@@ -4,6 +4,7 @@ import "./constants";
 import "../utils.tact";
 import "../utils";
 import "../shard-utils";
+import "../send";
 
 struct JettonMinterState {
     totalSupply: Int as coins;
@@ -45,14 +46,13 @@ contract JettonMinter(
         let receiverShard = getShardFromAddress(msg.receiver.asSlice());
 
         // basechain destination is calculated inside deploy function
-        shardDeploy(ShardDeployParameters {
+        DeployParameters{
             value: 0, // ignore msg.tonAmount and use SendMode 64 instead
             bounce: true,
             mode: SendRemainingValue | SendBounceIfActionFail,
             body: msg.mintMessage.toCell(),
-            init: initOf JettonWallet(msg.receiver, myAddress(), 0),
-            shard: receiverShard,
-        });
+            init: initOf JettonWallet(msg.receiver, myAddress(), 0)
+        }.toShard(receiverShard).send();
     }
 
     receive(msg: ProvideWalletAddress) {
@@ -143,8 +143,8 @@ contract JettonMinter(
 
 inline fun getJettonWalletInit(address: Address): Cell {
     let init = initOf JettonWallet(address, myAddress(), 0);
-
-    return initToShardInit(init);
+    
+    return init.toShardCell();
 }
 
 inline fun getJettonWalletByOwner(jettonWalletOwner: Address): Address {
