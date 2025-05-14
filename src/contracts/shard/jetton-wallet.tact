@@ -28,7 +28,7 @@ contract JettonWallet(
 
         let destinationShard = getShardFromAddress(msg.destination.asSlice());
 
-        DeployParameters{
+        DeployParameters {
             value: 0,
             mode: SendRemainingValue,
             bounce: true,
@@ -40,7 +40,7 @@ contract JettonWallet(
                 forwardTonAmount: msg.forwardTonAmount,
                 forwardPayload: msg.forwardPayload,
             }.toCell(),
-            init: initOf JettonWallet(msg.destination, self.minter, 0)
+            init: initOf JettonWallet(msg.destination, self.minter, 0),
         }.toShard(destinationShard).send();
     }
 
@@ -52,7 +52,7 @@ contract JettonWallet(
         if (!(wallet.hasSameBasechainAddressShard(sender()))) {
             require(self.minter == sender(), "Incorrect sender");
         }
-        
+
         let ctx: Context = context();
         let msgValue: Int = ctx.value;
         let tonBalanceBeforeMsg = myBalance() - msgValue;

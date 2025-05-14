@@ -15,24 +15,24 @@ struct ShardMessageParameters {
 }
 
 extends inline fun toShard(self: DeployParameters, shard: Int): ShardDeployParameters {
-    return ShardDeployParameters{
-        shard, 
+    return ShardDeployParameters {
+        shard,
         deployParameters: self,
-    }
+    };
 }
 
-extends inline fun toShard(self: MessageParameters, shard: Int): ShardMessageParameters { 
+extends inline fun toShard(self: MessageParameters, shard: Int): ShardMessageParameters {
     return ShardMessageParameters {
         shard,
         messageParameters: self,
-    }
+    };
 }
 
 inline fun changeAddressHashShard(addr_hash: Int, shard: Int): Int {
     return (addr_hash & ((1 << (256 - prefixLength)) - 1)) | (shard << (256 - prefixLength));
 }
 
-inline fun changeAddressShard(addr: Address, shard: Int): Address { 
+inline fun changeAddressShard(addr: Address, shard: Int): Address {
     let sl: Slice = addr.asSlice();
 
     return beginCell().storeUint(sl.loadUint(11), 11).storeUint(changeAddressHashShard(sl.loadUint(256), shard), 256).asSlice().loadAddress();
@@ -43,8 +43,7 @@ inline fun getShardFromAddress(addr: Slice): Int {
     return addr.loadUint(prefixLength);
 }
 
-
-extends inline fun toShardCell(self: StateInit): Cell { 
+extends inline fun toShardCell(self: StateInit): Cell {
     let newStateInit = beginCell()
         .storeUint(32 + prefixLength, 6)
         .storeUint(6, 4)
@@ -54,7 +53,6 @@ extends inline fun toShardCell(self: StateInit): Cell {
 
     return newStateInit;
 }
-
 
 inline fun contractBasechainAddressShard(s: StateInit): BasechainAddress {
     let hash = s.toShardCell().hash();

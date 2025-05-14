@@ -46,12 +46,12 @@ contract JettonMinter(
         let receiverShard = getShardFromAddress(msg.receiver.asSlice());
 
         // basechain destination is calculated inside deploy function
-        DeployParameters{
+        DeployParameters {
             value: 0, // ignore msg.tonAmount and use SendMode 64 instead
             bounce: true,
             mode: SendRemainingValue | SendBounceIfActionFail,
             body: msg.mintMessage.toCell(),
-            init: initOf JettonWallet(msg.receiver, myAddress(), 0)
+            init: initOf JettonWallet(msg.receiver, myAddress(), 0),
         }.toShard(receiverShard).send();
     }
 
@@ -143,7 +143,7 @@ contract JettonMinter(
 
 inline fun getJettonWalletInit(address: Address): Cell {
     let init = initOf JettonWallet(address, myAddress(), 0);
-    
+
     return init.toShardCell();
 }
 

@@ -1,12 +1,5 @@
 import "./shard-utils";
 
-
-// NEW USAGE 
-// DeployParameters.send()
-// SendParameters.send()
-// MessageParameters.send()
-
-
 asm extends inline fun send(self: DeployParameters) {
     // Instructions are grouped, and the stack states they produce as a group are shown right after.
     //
@@ -93,13 +86,13 @@ asm extends inline fun send(self: DeployParameters) {
     SENDRAWMSG
 }
 
-extends inline fun send(self: ShardDeployParameters) { 
+extends inline fun send(self: ShardDeployParameters) {
     let newStateInit = self.deployParameters.init.toShardCell();
 
     let msg = beginCell()
         .storeUint(1, 2) // 0 1 
         .storeBool(self.deployParameters.bounce)
-        .storeUint(1 << 10, 14)  // 0 0 0 1 0 0 0 0 0 0 0 0 0 0
+        .storeUint(1 << 10, 14) // 0 0 0 1 0 0 0 0 0 0 0 0 0 0
         .storeUint(changeAddressHashShard(newStateInit.hash(), self.shard), 256)
         .storeCoins(self.deployParameters.value)
         .storeUint(2 + 1, 1 + 4 + 4 + 64 + 32 + 1 + 1)
@@ -112,7 +105,7 @@ extends inline fun send(self: ShardDeployParameters) {
 
 extends inline fun send(self: ShardMessageParameters) {
     self.messageParameters.to = changeAddressShard(self.messageParameters.to, self.shard);
-    self.messageParameters.send()
+    self.messageParameters.send();
 }
 
 asm extends inline fun send(self: MessageParameters) {
@@ -134,7 +127,6 @@ asm extends inline fun send(self: MessageParameters) {
     SWAP
     SENDRAWMSG
 }
-
 
 asm extends inline fun send(self: SendParameters) {
     // Instructions are grouped, and the stack states they produce as a group are shown right after.
@@ -229,4 +221,3 @@ asm extends inline fun send(self: SendParameters) {
     SWAP
     SENDRAWMSG // https://github.com/tact-lang/tact/issues/1558
 }
-
