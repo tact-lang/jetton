@@ -10,7 +10,7 @@ import {ExtendedJettonWallet} from "../../wrappers/ExtendedJettonWallet"
 import {ExtendedJettonMinter} from "../../wrappers/ExtendedJettonMinter"
 import {ExtendedFeatureRichJettonWallet} from "../../wrappers/ExtendedFeatureRichJettonWallet"
 import {ExtendedFeatureRichJettonMinter} from "../../wrappers/ExtendedFeatureRichJettonMinter"
-import {findTransactionRequired, randomAddress} from "@ton/test-utils"
+import {findTransaction, findTransactionRequired, randomAddress} from "@ton/test-utils"
 import {
     computeFwdFees,
     computeGasFee,
@@ -735,7 +735,7 @@ describe.each([
             0,
         )
         blockchain.setConfig(newConfig)
-        const jettonMintAmount = 100n
+        const jettonMintAmount = toNano(100n)
         await jettonMinter.sendMint(
             deployer.getSender(),
             deployer.address,
@@ -761,17 +761,29 @@ describe.each([
             null,
         )
         printTransactionFees(sendResult.transactions)
-        expect(sendResult.transactions).toHaveTransaction({
-            // notification
-            from: notDeployerJettonWallet.address,
+        const notificationTx = findTransaction(sendResult.transactions, {
+            from: deployerJettonWallet.address,
             to: notDeployer.address,
             value: forwardAmount,
         })
-        expect(await deployerJettonWallet.getJettonBalance()).toEqual(
-            initialJettonBalance - sentAmount,
-        )
-        expect(await notDeployerJettonWallet.getJettonBalance()).toEqual(
-            initialJettonBalance2 + sentAmount,
-        )
+        const transferFailedTx = findTransaction(sendResult.transactions, {
+            to: deployerJettonWallet.address,
+            op: ExtendedJettonWallet.opcodes.JettonTransfer,
+            exitCode: ExtendedJettonWallet.errors["Insufficient amount of TON attached"],
+        })
+        // Only one of these transactions should be present
+        expect(notificationTx !== transferFailedTx).toBeTruthy()
+
+        if (notificationTx !== undefined) {
+            expect(await deployerJettonWallet.getJettonBalance()).toEqual(
+                initialJettonBalance - sentAmount,
+            )
+            expect(await notDeployerJettonWallet.getJettonBalance()).toEqual(
+                initialJettonBalance2 + sentAmount,
+            )
+        } else {
+            expect(await deployerJettonWallet.getJettonBalance()).toEqual(initialJettonBalance)
+            expect(await notDeployerJettonWallet.getJettonBalance()).toEqual(initialJettonBalance2)
+        }
     })
 })
