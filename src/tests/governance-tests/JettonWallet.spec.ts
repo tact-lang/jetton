@@ -66,6 +66,10 @@ import {ExtendedGovernanceJettonWallet} from "../../wrappers/ExtendedGovernanceJ
 import {gasForBurn, gasForTransfer} from "../../output/Governance_GovernanceJettonMinter"
 
 import {storeBigPayload} from "../../utils/utils"
+import {
+    walletStateInitBits,
+    walletStateInitCells,
+} from "../../output/Governance_JettonWalletGovernance"
 
 type JettonMinterContent = {
     uri: string
@@ -190,7 +194,7 @@ describe("JettonWallet", () => {
             await ExtendedGovernanceJettonMinter.fromInit(0n, deployer.address, null, new Cell())
         ).init!.code
         notDeployer = await blockchain.treasury("notDeployer")
-        walletStats = new StorageStats(11000, 24)
+        walletStats = new StorageStats(walletStateInitBits, walletStateInitCells)
         msgPrices = getMsgPrices(blockchain.config, 0)
         gasPrices = getGasPrices(blockchain.config, 0)
         storagePrices = getStoragePrices(blockchain.config)

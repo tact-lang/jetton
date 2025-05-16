@@ -149,6 +149,19 @@
                 "claimWallet": "3984"
             },
             "summary": "79712"
+        },
+        {
+            "label": "Added StateInit fwd fee check",
+            "pr": "https://github.com/tact-lang/jetton/pull/155",
+            "gas": {
+                "transfer": "34161",
+                "mint": "18639",
+                "burn": "12846",
+                "discovery": "6140",
+                "reportBalance": "4308",
+                "claimWallet": "3984"
+            },
+            "summary": "80078"
         }
     ]
 }

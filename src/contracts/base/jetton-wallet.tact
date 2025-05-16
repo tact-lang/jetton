@@ -1,5 +1,6 @@
 import "./messages";
 import "./constants";
+import "../utils";
 
 contract JettonWallet(
     owner: Address,
@@ -20,6 +21,7 @@ contract JettonWallet(
             ctx.value >
             msg.forwardTonAmount +
             fwdCount * ctx.readForwardFee() +
+            getForwardFee(walletStateInitCells, walletStateInitBits, false) +
             (2 * getComputeFee(gasForTransfer, false) + minTonsForStorage),
             "Insufficient amount of TON attached",
         );

@@ -104,7 +104,7 @@ const calculateCellsAndBits = (root: Cell, visited: Set<string> = new Set<string
         cells += childRes.cells
         bits += childRes.bits
     }
-    return {cells, bits}
+    return {cells, bits, visited}
 }
 
 export async function getStateSizeForAccount(
@@ -120,9 +120,20 @@ export async function getStateSizeForAccount(
     }
     const accountCode = accountState.state.code
     const accountData = accountState.state.data
-
+    // There probably won't be the same cells in both code and data, but still it's fairer to take that into account
     const codeSize = calculateCellsAndBits(accountCode)
-    const dataSize = calculateCellsAndBits(accountData)
+    const dataSize = calculateCellsAndBits(accountData, codeSize.visited)
+
+    return {
+        cells: codeSize.cells + dataSize.cells,
+        bits: codeSize.bits + dataSize.bits,
+    }
+}
+
+export function getSizeOfState(arg: {code: Cell; data: Cell}) {
+    // There probably won't be the same cells in both code and data, but still it's fairer to take that into account
+    const codeSize = calculateCellsAndBits(arg.code)
+    const dataSize = calculateCellsAndBits(arg.data, codeSize.visited)
 
     return {
         cells: codeSize.cells + dataSize.cells,

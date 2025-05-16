@@ -36,6 +36,7 @@ contract GovernanceJettonMinter(
             ctx.value >
             msg.masterMsg.forwardTonAmount +
             fwdCount * ctx.readForwardFee() +
+            getForwardFee(walletStateInitCells, walletStateInitBits, false) +
             (2 * getComputeFee(gasForTransfer, false) + minTonsForStorage),
             "Insufficient amount of TON attached",
         );
