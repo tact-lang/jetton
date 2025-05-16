@@ -1,5 +1,11 @@
 import {Address, beginCell, Cell, SendMode, toNano} from "@ton/core"
-import {Blockchain, BlockchainSnapshot, SandboxContract, TreasuryContract} from "@ton/sandbox"
+import {
+    Blockchain,
+    BlockchainSnapshot,
+    printTransactionFees,
+    SandboxContract,
+    TreasuryContract,
+} from "@ton/sandbox"
 import {ExtendedJettonWallet} from "../../wrappers/ExtendedJettonWallet"
 import {ExtendedJettonMinter} from "../../wrappers/ExtendedJettonMinter"
 import {ExtendedFeatureRichJettonWallet} from "../../wrappers/ExtendedFeatureRichJettonWallet"
@@ -11,6 +17,7 @@ import {
     getGasPrices,
     getMsgPrices,
     getOriginalFwdFee,
+    setMsgPrices,
 } from "../governance-tests/gasUtils"
 import {
     CloseMinting,
@@ -711,5 +718,60 @@ describe.each([
         )
         expect(realSize.cells).toBeLessThanOrEqual(jettonWallet.loadWalletStateInitCells())
         expect(realSize.bits).toBeLessThanOrEqual(jettonWallet.loadWalletStateInitBits())
+    })
+    it("Works even with very high fwd fee price", async () => {
+        const configRaw = blockchain.config
+        const oldPrices = getMsgPrices(configRaw, 0)
+        const newConfig = setMsgPrices(
+            configRaw,
+            {
+                lumpPrice: oldPrices.lumpPrice,
+                cellPrice: oldPrices.cellPrice * 1000n,
+                bitPrice: oldPrices.bitPrice * 1000n,
+                ihrPriceFactor: oldPrices.ihrPriceFactor,
+                firstFrac: oldPrices.firstFrac,
+                nextFrac: oldPrices.nextFrac,
+            },
+            0,
+        )
+        blockchain.setConfig(newConfig)
+        const jettonMintAmount = 100n
+        await jettonMinter.sendMint(
+            deployer.getSender(),
+            deployer.address,
+            jettonMintAmount,
+            0n,
+            toNano(10),
+        )
+
+        const deployerJettonWallet = await userWallet(deployer.address)
+        const initialJettonBalance = await deployerJettonWallet.getJettonBalance()
+        const notDeployerJettonWallet = await userWallet(notDeployer.address)
+        const initialJettonBalance2 = await notDeployerJettonWallet.getJettonBalance()
+        const sentAmount = 100n
+        const forwardAmount = toNano("0.05")
+        const sendResult = await deployerJettonWallet.sendTransfer(
+            deployer.getSender(),
+            toNano(7.5), // tons
+            sentAmount,
+            notDeployer.address,
+            deployer.address,
+            null,
+            forwardAmount,
+            null,
+        )
+        printTransactionFees(sendResult.transactions)
+        expect(sendResult.transactions).toHaveTransaction({
+            // notification
+            from: notDeployerJettonWallet.address,
+            to: notDeployer.address,
+            value: forwardAmount,
+        })
+        expect(await deployerJettonWallet.getJettonBalance()).toEqual(
+            initialJettonBalance - sentAmount,
+        )
+        expect(await notDeployerJettonWallet.getJettonBalance()).toEqual(
+            initialJettonBalance2 + sentAmount,
+        )
     })
 })
