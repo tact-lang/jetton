@@ -26,7 +26,7 @@ contract JettonWallet(
             "Insufficient amount of TON attached",
         );
 
-        let destinationShard = getShardFromAddress(msg.destination.asSlice());
+        let destinationShard = msg.destination.getShard();
 
         DeployParameters {
             value: 0,
@@ -49,7 +49,7 @@ contract JettonWallet(
 
         // This message should come only from master, or from other JettonWallet
         let wallet: StateInit = initOf JettonWallet(msg.sender, self.minter, 0);
-        if (!(wallet.hasSameBasechainAddressShard(sender()))) {
+        if (!(wallet.hasSameBasechainAddressWithoutShard(sender()))) {
             require(self.minter == sender(), "Incorrect sender");
         }
 
@@ -60,7 +60,7 @@ contract JettonWallet(
         if (msg.forwardTonAmount > 0) {
             let fwdFee: Int = ctx.readForwardFee();
             msgValue -= msg.forwardTonAmount + fwdFee;
-            message(MessageParameters {
+            MessageParameters {
                 to: self.owner,
                 value: msg.forwardTonAmount,
                 mode: SendPayGasSeparately,
@@ -71,18 +71,18 @@ contract JettonWallet(
                     sender: msg.sender,
                     forwardPayload: msg.forwardPayload,
                 }.toCell(),
-            });
+            }.send();
         }
         nativeReserve(max(tonBalanceBeforeMsg, minTonsForStorage), ReserveAtMost);
         // 0xd53276db -- Cashback to the original Sender
         if (msg.responseDestination != null && msgValue > 0) {
-            message(MessageParameters {
+            MessageParameters {
                 to: msg.responseDestination!!,
                 value: msgValue,
                 mode: SendRemainingBalance + SendIgnoreErrors,
                 bounce: false,
                 body: JettonExcesses { queryId: msg.queryId }.toCell(),
-            });
+            }.send();
         }
     }
 
@@ -96,7 +96,7 @@ contract JettonWallet(
             };
         }
 
-        message(MessageParameters {
+        MessageParameters {
             body: TakeWalletBalance {
                 balance: self.balance,
                 verifyInfo: info,
@@ -104,7 +104,7 @@ contract JettonWallet(
             to: msg.receiver,
             value: 0,
             mode: SendRemainingValue,
-        });
+        }.send();
     }
 
     receive(msg: JettonBurn) {
@@ -119,7 +119,7 @@ contract JettonWallet(
         let fwdFee: Int = ctx.readForwardFee();
         require(ctx.value > (fwdFee + 2 * getComputeFee(gasForBurn, false)), "Insufficient amount of TON attached");
 
-        message(MessageParameters {
+        MessageParameters {
             to: self.minter,
             value: 0,
             mode: SendRemainingValue,
@@ -130,7 +130,7 @@ contract JettonWallet(
                 sender: self.owner,
                 responseDestination: msg.responseDestination,
             }.toCell(),
-        });
+        }.send();
     }
 
     receive(msg: ClaimTON) {
@@ -138,11 +138,11 @@ contract JettonWallet(
         nativeReserve(minTonsForStorage, ReserveExact | ReserveBounceIfActionFail);
 
         // we allow bounce here and don't handle it, if claim fails we just accept the TONs back
-        message(MessageParameters {
+        MessageParameters {
             to: msg.receiver,
             value: 0,
             mode: SendRemainingBalance,
-        });
+        }.send();
     }
 
     bounced(msg: bounced<JettonTransferInternal>) {

@@ -28,43 +28,52 @@ extends inline fun toShard(self: MessageParameters, shard: Int): ShardMessagePar
     };
 }
 
-inline fun changeAddressHashShard(addr_hash: Int, shard: Int): Int {
-    return (addr_hash & ((1 << (256 - prefixLength)) - 1)) | (shard << (256 - prefixLength));
+asm fun extractLowBits(value: Int, count: Int): Int { 
+    MODPOW2
 }
 
-inline fun changeAddressShard(addr: Address, shard: Int): Address {
-    let sl: Slice = addr.asSlice();
-
-    return beginCell().storeUint(sl.loadUint(11), 11).storeUint(changeAddressHashShard(sl.loadUint(256), shard), 256).asSlice().loadAddress();
+inline fun changeShard(hash: Int, shard: Int): Int {
+    return extractLowBits(hash, 256 - prefixLength) | (shard << (256 - prefixLength));
 }
 
-inline fun getShardFromAddress(addr: Slice): Int {
-    addr.skipBits(11);
-    return addr.loadUint(prefixLength);
+extends inline fun changeShard(self: Address, shard: Int): Address {
+    let sl: Slice = self.asSlice();
+
+    return beginCell().storeUint(sl.loadUint(11), 11).storeUint(changeShard(sl.loadUint(256), shard), 256).asSlice().loadAddress();
 }
 
-extends inline fun toShardCell(self: StateInit): Cell {
-    let newStateInit = beginCell()
-        .storeUint(32 + prefixLength, 6)
-        .storeUint(6, 4)
-        .storeRef(self.code)
-        .storeRef(self.data)
-        .endCell();
-
-    return newStateInit;
+extends inline fun getShard(self: Address): Int {
+    let sl = self.asSlice();
+    sl.skipBits(11); // addr_std$10, anycast: false, workchain: int8 
+    return sl.loadUint(prefixLength);
 }
 
-inline fun contractBasechainAddressShard(s: StateInit): BasechainAddress {
-    let hash = s.toShardCell().hash();
+extends inline fun storeShardedStateInit(self: Builder, init: StateInit): Builder {
+    return self
+        .storeUint(32 + prefixLength, 6) // fixed_prefix_length: true, prefixLength: uint5
+        .storeUint(6, 4) // special: false, code: true, data: true, library: false 
+        .storeRef(init.code)
+        .storeRef(init.data)
+}
+
+extends inline fun storeStateInit(self: Builder, init: StateInit): Builder {
+    return self
+        .storeUint(6, 5) // fixed_prefix_length: false, special: false, code: true, data: true, library: false 
+        .storeRef(init.code)
+        .storeRef(init.data)
+}
+
+inline fun contractShardBasechainAddress(s: StateInit): BasechainAddress {
+    let hash = beginCell().storeShardedStateInit(s).endCell().hash();
     return newBasechainAddress(hash);
 }
 
-inline extends fun hasSameBasechainAddressShard(self: StateInit, sender: Address): Bool {
-    let senderAddress = parseStdAddress(sender.asSlice()).address;
-    let baseAddress = contractBasechainAddressShard(self);
-    return (baseAddress.hash!! & ((1 << (256 - prefixLength)) - 1)) == (senderAddress & ((1 << (256 - prefixLength)) - 1));
+extends inline fun hasSameBasechainAddressWithoutShard(self: StateInit, address: Address): Bool {
+    let addressHash = parseStdAddress(address.asSlice()).address;
+    let baseAddress = contractShardBasechainAddress(self);
+    return extractLowBits(baseAddress.hash!!, 256 - prefixLength) == extractLowBits(addressHash, 256 - prefixLength);
 }
 
 inline extends fun hasSameShard(self: Address, b: Address): Bool {
-    return getShardFromAddress(self.asSlice()) == getShardFromAddress(b.asSlice());
+    return self.getShard() == b.getShard();
 }

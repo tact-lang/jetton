@@ -43,7 +43,7 @@ contract JettonMinter(
 
         self.totalSupply += msg.mintMessage.amount;
 
-        let receiverShard = getShardFromAddress(msg.receiver.asSlice());
+        let receiverShard = msg.receiver.getShard();
 
         // basechain destination is calculated inside deploy function
         DeployParameters {
@@ -58,19 +58,19 @@ contract JettonMinter(
     receive(msg: ProvideWalletAddress) {
         let ownerWorkchain: Int = parseStdAddress(msg.ownerAddress.asSlice()).workchain;
 
-        let ownerShard = getShardFromAddress(msg.ownerAddress.asSlice());
+        let ownerShard = msg.ownerAddress.getShard();
 
         // If owner is basechain address, we can calculate jettonWallet
         let targetJettonWallet: BasechainAddress = (ownerWorkchain == Basechain)
-            ? BasechainAddress { hash: changeAddressHashShard(getJettonWalletInit(msg.ownerAddress).hash(), ownerShard) }
+            ? BasechainAddress { hash: changeShard(getJettonWalletInit(msg.ownerAddress).hash(), ownerShard) }
             : emptyBasechainAddress();
 
-        message(MessageParameters {
+        MessageParameters {
             body: makeTakeWalletAddressMsg(targetJettonWallet, msg),
             to: sender(),
             value: 0,
             mode: SendRemainingValue,
-        });
+        }.send();
     }
 
     receive(msg: JettonBurnNotification) {
@@ -83,13 +83,13 @@ contract JettonMinter(
         self.totalSupply -= msg.amount;
 
         if (msg.responseDestination != null) {
-            message(MessageParameters {
+            MessageParameters {
                 to: msg.responseDestination!!,
                 body: JettonExcesses { queryId: msg.queryId }.toCell(),
                 value: 0,
                 bounce: false,
                 mode: SendRemainingValue | SendIgnoreErrors, // ignore errors, because supply has already been updated
-            });
+            }.send();
         }
     }
 
@@ -114,12 +114,12 @@ contract JettonMinter(
         nativeReserve(minTonsForStorage, ReserveExact | ReserveBounceIfActionFail);
 
         // we allow bounce here and don't handle it, if claim fails we just accept the TONs back
-        message(MessageParameters {
+        MessageParameters {
             bounce: true,
             to: msg.receiver,
             value: 0,
             mode: SendRemainingBalance,
-        });
+        }.send();
     }
 
     bounced(msg: bounced<JettonTransferInternal>) {
@@ -144,18 +144,18 @@ contract JettonMinter(
 inline fun getJettonWalletInit(address: Address): Cell {
     let init = initOf JettonWallet(address, myAddress(), 0);
 
-    return init.toShardCell();
+    return beginCell().storeShardedStateInit(init).endCell();
 }
 
 inline fun getJettonWalletByOwner(jettonWalletOwner: Address): Address {
     let init = getJettonWalletInit(jettonWalletOwner);
 
-    let ownerShard = getShardFromAddress(jettonWalletOwner.asSlice());
+    let ownerShard = jettonWalletOwner.getShard();
 
     let expectedAddr = beginCell()
         .storeUint(4, 3)
         .storeUint(0, 8)
-        .storeUint(changeAddressHashShard(init.hash(), ownerShard), 256)
+        .storeUint(changeShard(init.hash(), ownerShard), 256)
         .asSlice();
 
     return expectedAddr.loadAddress();
@@ -164,7 +164,7 @@ inline fun getJettonWalletByOwner(jettonWalletOwner: Address): Address {
 inline fun getJettonBasechainWalletByOwner(jettonWalletOwner: Address): BasechainAddress {
     let init = getJettonWalletInit(jettonWalletOwner);
 
-    let ownerShard = getShardFromAddress(jettonWalletOwner.asSlice());
+    let ownerShard = jettonWalletOwner.getShard();
 
-    return BasechainAddress { hash: changeAddressHashShard(init.hash(), ownerShard) };
+    return BasechainAddress { hash: changeShard(init.hash(), ownerShard) };
 }
