@@ -48,6 +48,10 @@ extends inline fun getShard(self: Address): Int {
     return sl.loadUint(prefixLength);
 }
 
+inline extends fun hasSameShard(self: Address, b: Address): Bool {
+    return self.getShard() == b.getShard();
+}
+
 extends inline fun storeShardedStateInit(self: Builder, init: StateInit): Builder {
     return self
         .storeUint(32 + prefixLength, 6) // fixed_prefix_length: true, prefixLength: uint5
@@ -72,8 +76,4 @@ extends inline fun hasSameBasechainAddressWithoutShard(self: StateInit, address:
     let addressHash = parseStdAddress(address.asSlice()).address;
     let baseAddress = contractShardBasechainAddress(self);
     return extractLowBits(baseAddress.hash!!, 256 - prefixLength) == extractLowBits(addressHash, 256 - prefixLength);
-}
-
-inline extends fun hasSameShard(self: Address, b: Address): Bool {
-    return self.getShard() == b.getShard();
 }
