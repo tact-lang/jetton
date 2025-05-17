@@ -37,6 +37,7 @@ contract JettonMinter(
             minTonsForStorage +
             msg.mintMessage.forwardTonAmount +
             ctx.readForwardFee() +
+            getForwardFee(walletStateInitCells, walletStateInitBits, false) +
             2 * getComputeFee(gasForTransfer, false),
             "Insufficient gas for mint",
         );

@@ -1,4 +1,10 @@
-import {ClaimTON, JettonTransfer, JettonWallet} from "../output/Shard_JettonWallet"
+import {
+    ClaimTON,
+    JettonTransfer,
+    JettonWallet,
+    walletStateInitBits,
+    walletStateInitCells,
+} from "../output/Shard_JettonWallet"
 import {Address, Builder, Cell, ContractProvider, Sender, toNano} from "@ton/core"
 import {JettonBurn, ProvideWalletBalance} from "../output/Shard_JettonMinter"
 
@@ -144,5 +150,13 @@ export class ExtendedShardedJettonWallet extends JettonWallet {
         _amount: bigint,
     ): Promise<void> => {
         throw new Error("Not implemented")
+    }
+
+    loadWalletStateInitCells(): bigint {
+        return walletStateInitCells
+    }
+
+    loadWalletStateInitBits(): bigint {
+        return walletStateInitBits
     }
 }
