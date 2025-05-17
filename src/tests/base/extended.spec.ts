@@ -10,7 +10,11 @@ import {ExtendedJettonWallet} from "../../wrappers/ExtendedJettonWallet"
 import {ExtendedJettonMinter} from "../../wrappers/ExtendedJettonMinter"
 import {ExtendedFeatureRichJettonWallet} from "../../wrappers/ExtendedFeatureRichJettonWallet"
 import {ExtendedFeatureRichJettonMinter} from "../../wrappers/ExtendedFeatureRichJettonMinter"
+
+import {ExtendedShardedJettonWallet} from "../../wrappers/ExtendedShardedJettonWallet"
+import {ExtendedShardedJettonMinter} from "../../wrappers/ExtendedShardedJettonMinter"
 import {findTransaction, findTransactionRequired, randomAddress} from "@ton/test-utils"
+
 import {
     computeFwdFees,
     computeGasFee,
@@ -43,6 +47,11 @@ describe.each([
         name: "Feature Rich Jetton",
         MinterWrapper: ExtendedFeatureRichJettonMinter,
         WalletWrapper: ExtendedFeatureRichJettonWallet,
+    },
+    {
+        name: "Shard Jetton",
+        MinterWrapper: ExtendedShardedJettonMinter,
+        WalletWrapper: ExtendedShardedJettonWallet,
     },
 ])("$name", ({MinterWrapper, WalletWrapper}) => {
     let blockchain: Blockchain
