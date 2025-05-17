@@ -1,7 +1,7 @@
 import "./shard-utils";
 
 extends inline fun send(self: DeployParameters) {
-    deploy(self);    
+    deploy(self);
 }
 
 extends inline fun send(self: MessageParameters) {
@@ -29,7 +29,6 @@ extends inline fun send(self: ShardDeployParameters) {
 }
 
 extends inline fun send(self: ShardMessageParameters) {
-    self.messageParameters.to =self.messageParameters.to.changeShard(self.shard);
+    self.messageParameters.to = self.messageParameters.to.changeShard(self.shard);
     self.messageParameters.send();
 }
-
