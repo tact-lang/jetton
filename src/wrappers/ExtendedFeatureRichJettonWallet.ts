@@ -4,6 +4,8 @@ import {JettonWalletFeatureRich} from "../output/FeatureRich_JettonWalletFeature
 import {
     CustomPayloadWithSendModes,
     storeCustomPayloadWithSendModes,
+    walletStateInitBits,
+    walletStateInitCells,
 } from "../output/FeatureRich_JettonMinterFeatureRich"
 
 export class ExtendedFeatureRichJettonWallet extends ExtendedJettonWallet {
@@ -44,5 +46,13 @@ export class ExtendedFeatureRichJettonWallet extends ExtendedJettonWallet {
             forwardTonAmount,
             forwardPayload,
         )
+    }
+
+    loadWalletStateInitCells(): bigint {
+        return walletStateInitCells
+    }
+
+    loadWalletStateInitBits(): bigint {
+        return walletStateInitBits
     }
 }

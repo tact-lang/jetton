@@ -1,5 +1,6 @@
 import "./messages";
 import "./constants";
+import "../utils";
 
 contract JettonWalletGovernance(
     status: Int as uint4,
@@ -28,6 +29,7 @@ contract JettonWalletGovernance(
             ctx.value >
             msg.forwardTonAmount +
             fwdCount * ctx.readForwardFee() +
+            getForwardFee(walletStateInitCells, walletStateInitBits, false) +
             (2 * getComputeFee(gasForTransfer, false) + minTonsForStorage),
             "Insufficient amount of TON attached",
         );

@@ -1,18 +1,27 @@
 import {Address, beginCell, Cell, SendMode, toNano} from "@ton/core"
-import {Blockchain, BlockchainSnapshot, SandboxContract, TreasuryContract} from "@ton/sandbox"
+import {
+    Blockchain,
+    BlockchainSnapshot,
+    printTransactionFees,
+    SandboxContract,
+    TreasuryContract,
+} from "@ton/sandbox"
 import {ExtendedJettonWallet} from "../../wrappers/ExtendedJettonWallet"
 import {ExtendedJettonMinter} from "../../wrappers/ExtendedJettonMinter"
 import {ExtendedFeatureRichJettonWallet} from "../../wrappers/ExtendedFeatureRichJettonWallet"
 import {ExtendedFeatureRichJettonMinter} from "../../wrappers/ExtendedFeatureRichJettonMinter"
+
 import {ExtendedShardedJettonWallet} from "../../wrappers/ExtendedShardedJettonWallet"
 import {ExtendedShardedJettonMinter} from "../../wrappers/ExtendedShardedJettonMinter"
+import {findTransaction, findTransactionRequired, randomAddress} from "@ton/test-utils"
 
-import {findTransactionRequired, randomAddress} from "@ton/test-utils"
 import {
+    computeFwdFees,
     computeGasFee,
     getGasPrices,
     getMsgPrices,
     getOriginalFwdFee,
+    setMsgPrices,
 } from "../governance-tests/gasUtils"
 import {
     CloseMinting,
@@ -25,7 +34,7 @@ import {
     storeTakeWalletBalance,
     TakeWalletBalance,
 } from "../../output/Jetton_JettonMinter"
-import {getComputeGasForTx} from "../../utils/gas"
+import {getComputeGasForTx, getSizeOfState} from "../../utils/gas"
 
 // Use describe.each to parameterize the test suite for both base and feature-rich jetton versions
 describe.each([
@@ -509,6 +518,11 @@ describe.each([
             const prices = getMsgPrices(blockchain.config, 0)
             // https://github.com/ton-blockchain/ton/commit/a11ffb1637032faabea9119020f6c80ed678d0e7#diff-660b8e8615c63abdc65b4dfb7dba42b4c3f71642ca33e5ee6ae4e344a7eb082dR371
             const origFwdFee = getOriginalFwdFee(prices, inFwdFee)
+            const stateInitFwdFee = computeFwdFees(
+                prices,
+                jettonWallet.loadWalletStateInitCells(),
+                jettonWallet.loadWalletStateInitBits(),
+            )
             /*
             require(
                 ctx.value >
@@ -519,7 +533,12 @@ describe.each([
             );
             */
             const minimalTransferValue =
-                transferGasPrice * 2n + minTonsForStorage + origFwdFee * 2n + forwardTonAmount + 1n // +1 to be greater than
+                transferGasPrice * 2n +
+                minTonsForStorage +
+                origFwdFee * 2n +
+                stateInitFwdFee +
+                forwardTonAmount +
+                1n // +1 to be greater than
 
             // mint to deploy jetton wallet
             const jettonMintAmount = 1000000n
@@ -586,6 +605,11 @@ describe.each([
             const prices = getMsgPrices(blockchain.config, 0)
             // https://github.com/ton-blockchain/ton/commit/a11ffb1637032faabea9119020f6c80ed678d0e7#diff-660b8e8615c63abdc65b4dfb7dba42b4c3f71642ca33e5ee6ae4e344a7eb082dR371
             const origFwdFee = getOriginalFwdFee(prices, inFwdFee)
+            const stateInitFwdFee = computeFwdFees(
+                prices,
+                jettonWallet.loadWalletStateInitCells(),
+                jettonWallet.loadWalletStateInitBits(),
+            )
 
             /*
             require(
@@ -597,7 +621,12 @@ describe.each([
             );
             */
             const minimalMintValue =
-                transferGasPrice * 2n + minTonsForStorage + origFwdFee * 2n + forwardTonAmount + 1n // +1 to be greater than
+                transferGasPrice * 2n +
+                minTonsForStorage +
+                origFwdFee * 2n +
+                stateInitFwdFee +
+                forwardTonAmount +
+                1n // +1 to be greater than
 
             // actual send with minimal value
             const mintSendResult = await deployer.send({
@@ -676,7 +705,7 @@ describe.each([
                 toNano(1),
             )
 
-            // actual send with minimal value
+            // actual sending with minimal value
             const sendResult = await deployer.send({
                 to: deployerJettonWallet.address,
                 value: minimalBurnValue,
@@ -689,5 +718,81 @@ describe.each([
                 success: false,
             })
         })
+    })
+    it("Real size of StateInit should not exceed hardcoded values", async () => {
+        // We can use random addresses here, as all of them occupy 267 bits.
+        // 0n is the balance with each JettonWallet is deployed
+        const realSize = getSizeOfState(
+            await WalletWrapper.init(randomAddress(), randomAddress(), 0n),
+        )
+        expect(realSize.cells).toBeLessThanOrEqual(jettonWallet.loadWalletStateInitCells())
+        expect(realSize.bits).toBeLessThanOrEqual(jettonWallet.loadWalletStateInitBits())
+    })
+    it("Works even with very high fwd fee price", async () => {
+        const configRaw = blockchain.config
+        const oldPrices = getMsgPrices(configRaw, 0)
+        const newConfig = setMsgPrices(
+            configRaw,
+            {
+                lumpPrice: oldPrices.lumpPrice,
+                cellPrice: oldPrices.cellPrice * 1000n,
+                bitPrice: oldPrices.bitPrice * 1000n,
+                ihrPriceFactor: oldPrices.ihrPriceFactor,
+                firstFrac: oldPrices.firstFrac,
+                nextFrac: oldPrices.nextFrac,
+            },
+            0,
+        )
+        blockchain.setConfig(newConfig)
+        const jettonMintAmount = toNano(100n)
+        await jettonMinter.sendMint(
+            deployer.getSender(),
+            deployer.address,
+            jettonMintAmount,
+            0n,
+            toNano(10),
+        )
+
+        const deployerJettonWallet = await userWallet(deployer.address)
+        const initialJettonBalance = await deployerJettonWallet.getJettonBalance()
+        const notDeployerJettonWallet = await userWallet(notDeployer.address)
+        const initialJettonBalance2 = await notDeployerJettonWallet.getJettonBalance()
+        const sentAmount = 100n
+        const forwardAmount = toNano("0.05")
+        const sendResult = await deployerJettonWallet.sendTransfer(
+            deployer.getSender(),
+            toNano(7.5), // tons
+            sentAmount,
+            notDeployer.address,
+            deployer.address,
+            null,
+            forwardAmount,
+            null,
+        )
+        printTransactionFees(sendResult.transactions)
+        const notificationTx = findTransaction(sendResult.transactions, {
+            from: deployerJettonWallet.address,
+            to: notDeployer.address,
+            value: forwardAmount,
+        })
+        const transferFailedTx = findTransaction(sendResult.transactions, {
+            to: deployerJettonWallet.address,
+            op: ExtendedJettonWallet.opcodes.JettonTransfer,
+            exitCode: ExtendedJettonWallet.errors["Insufficient amount of TON attached"],
+        })
+        // Only one of these transactions should be present
+        expect(notificationTx !== transferFailedTx).toBeTruthy()
+
+        if (notificationTx !== undefined) {
+            expect(await deployerJettonWallet.getJettonBalance()).toEqual(
+                initialJettonBalance - sentAmount,
+            )
+            expect(await notDeployerJettonWallet.getJettonBalance()).toEqual(
+                initialJettonBalance2 + sentAmount,
+            )
+        } else {
+            expect(await deployerJettonWallet.getJettonBalance()).toEqual(initialJettonBalance)
+            expect(await notDeployerJettonWallet.getJettonBalance()).toEqual(initialJettonBalance2)
+        }
     })
 })
