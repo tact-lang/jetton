@@ -62,9 +62,9 @@ extends inline fun storeShardedStateInit(self: Builder, init: StateInit): Builde
 
 extends inline fun storeStateInit(self: Builder, init: StateInit): Builder {
     return self
-        .storeUint(6, 5) // fixed_prefix_length: false, special: false, code: true, data: true, library: false 
+        .storeUint(3, 5) // fixed_prefix_length: false, special: false, code: true, data: true, library: false
         .storeRef(init.code)
-        .storeRef(init.data);
+        .storeRef(init.data)
 }
 
 inline fun contractShardBasechainAddress(s: StateInit): BasechainAddress {
