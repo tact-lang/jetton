@@ -1,7 +1,6 @@
 import "./jetton-wallet";
 import "./messages";
 import "./constants";
-import "../utils.tact";
 import "../utils";
 
 struct JettonMinterState {
