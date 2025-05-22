@@ -18,6 +18,7 @@ tonapi
 toncenter
 TONCENTER
 Toncoin
+Toncoins
 tonhub
 tonscan
 tonviewer
