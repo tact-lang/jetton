@@ -3,8 +3,8 @@ import "./messages";
 import "./constants";
 import "../utils.tact";
 import "../utils";
-import "../shard-utils";
-import "../send";
+import "./shard-utils";
+import "./send";
 
 struct JettonMinterState {
     totalSupply: Int as coins;

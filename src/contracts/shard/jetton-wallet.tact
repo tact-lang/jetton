@@ -1,7 +1,7 @@
 import "./messages";
 import "./constants";
-import "../shard-utils";
-import "../send";
+import "./shard-utils";
+import "./send";
 import "../utils";
 
 contract JettonWallet(
