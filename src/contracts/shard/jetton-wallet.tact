@@ -4,7 +4,7 @@ import "./shard-utils";
 import "./send";
 import "../utils";
 
-contract JettonWallet(
+contract JettonWalletSharded(
     owner: Address,
     minter: Address,
     balance: Int as coins,
@@ -42,7 +42,7 @@ contract JettonWallet(
                 forwardTonAmount: msg.forwardTonAmount,
                 forwardPayload: msg.forwardPayload,
             }.toCell(),
-            init: initOf JettonWallet(msg.destination, self.minter, 0),
+            init: initOf JettonWalletSharded(msg.destination, self.minter, 0),
         }.toShard(destinationShard).send();
     }
 
@@ -50,7 +50,7 @@ contract JettonWallet(
         self.balance += msg.amount;
 
         // This message should come only from master, or from other JettonWallet
-        let wallet: StateInit = initOf JettonWallet(msg.sender, self.minter, 0);
+        let wallet: StateInit = initOf JettonWalletSharded(msg.sender, self.minter, 0);
         if (!(wallet.hasSameBasechainAddressWithoutShard(sender()))) {
             require(self.minter == sender(), "Incorrect sender");
         }
@@ -81,7 +81,7 @@ contract JettonWallet(
             MessageParameters {
                 to: msg.responseDestination!!,
                 value: msgValue,
-                mode: SendRemainingBalance + SendIgnoreErrors,
+                mode: SendRemainingBalance | SendIgnoreErrors,
                 bounce: false,
                 body: JettonExcesses { queryId: msg.queryId }.toCell(),
             }.send();

@@ -1,22 +1,23 @@
 import {
     ClaimTON,
     JettonTransfer,
-    JettonWallet,
+    JettonWalletSharded,
     walletStateInitBits,
     walletStateInitCells,
-} from "../output/Shard_JettonWallet"
-import {Address, Builder, Cell, ContractProvider, Sender, toNano} from "@ton/core"
-import {JettonBurn, ProvideWalletBalance} from "../output/Shard_JettonMinter"
+} from "../output/Shard_JettonWalletSharded"
 
-export class ExtendedShardedJettonWallet extends JettonWallet {
+import {Address, Builder, Cell, ContractProvider, Sender, toNano} from "@ton/core"
+import {JettonBurn, ProvideWalletBalance} from "../output/Shard_JettonMinterSharded"
+
+export class ExtendedShardedJettonWallet extends JettonWalletSharded {
     constructor(address: Address, init?: {code: Cell; data: Cell}) {
         super(address, init)
     }
 
     static async fromInit(owner: Address, minter: Address, balance: bigint) {
-        const base = await JettonWallet.fromInit(owner, minter, balance)
+        const base = await JettonWalletSharded.fromInit(owner, minter, balance)
         if (base.init === undefined) {
-            throw new Error("JettonWallet init is not defined")
+            throw new Error("JettonWalletSharded init is not defined")
         }
         return new ExtendedShardedJettonWallet(base.address, {
             code: base.init.code,
@@ -48,7 +49,7 @@ export class ExtendedShardedJettonWallet extends JettonWallet {
      * @returns A promise that resolves when the transfer message has been sent, returns SendResult.
      *
      * @example
-     * await jettonWallet.sendTransfer(
+     * await jettonWalletSharded.sendTransfer(
      *     provider,
      *     sender,
      *     toNano("0.05"),

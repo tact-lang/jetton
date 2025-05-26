@@ -3,24 +3,24 @@ import {
     ClaimTON,
     gasForBurn,
     gasForTransfer,
-    JettonMinter,
+    JettonMinterSharded,
     JettonUpdateContent,
     Mint,
     minTonsForStorage,
     ProvideWalletAddress,
     storeMint,
-} from "../output/Shard_JettonMinter"
+} from "../output/Shard_JettonMinterSharded"
 import {Address, beginCell, Cell, ContractProvider, Sender, toNano} from "@ton/core"
 
-export class ExtendedShardedJettonMinter extends JettonMinter {
+export class ExtendedShardedJettonMinter extends JettonMinterSharded {
     constructor(address: Address, init?: {code: Cell; data: Cell}) {
         super(address, init)
     }
 
     static async fromInit(totalSupply: bigint, owner: Address, jettonContent: Cell) {
-        const base = await JettonMinter.fromInit(totalSupply, owner, jettonContent, true)
+        const base = await JettonMinterSharded.fromInit(totalSupply, owner, jettonContent, true)
         if (base.init === undefined) {
-            throw new Error("JettonMinter init is not defined")
+            throw new Error("JettonMinterSharded init is not defined")
         }
         return new ExtendedShardedJettonMinter(base.address, {
             code: base.init.code,
@@ -62,7 +62,7 @@ export class ExtendedShardedJettonMinter extends JettonMinter {
      * @returns A promise that resolves when the mint message has been sent.
      *
      * @example
-     * await jettonMinter.sendMint(
+     * await jettonMinterSharded.sendMint(
      *     provider,
      *     sender,
      *     recipientAddress,

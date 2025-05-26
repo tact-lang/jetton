@@ -14,7 +14,7 @@ struct JettonMinterState {
     jettonWalletCode: Cell;
 }
 
-contract JettonMinter(
+contract JettonMinterSharded(
     totalSupply: Int as coins,
     owner: Address,
     jettonContent: Cell,
@@ -52,7 +52,7 @@ contract JettonMinter(
             bounce: true,
             mode: SendRemainingValue | SendBounceIfActionFail,
             body: msg.mintMessage.toCell(),
-            init: initOf JettonWallet(msg.receiver, myAddress(), 0),
+            init: initOf JettonWalletSharded(msg.receiver, myAddress(), 0),
         }.toShard(receiverShard).send();
     }
 
@@ -61,9 +61,11 @@ contract JettonMinter(
 
         let ownerShard = msg.ownerAddress.getShard();
 
+        let hash = getJettonWalletInit(msg.ownerAddress).hash();
+
         // If owner is basechain address, we can calculate jettonWallet
         let targetJettonWallet: BasechainAddress = (ownerWorkchain == Basechain)
-            ? BasechainAddress { hash: changeShard(getJettonWalletInit(msg.ownerAddress).hash(), ownerShard) }
+            ? BasechainAddress { hash: changeShard(hash, ownerShard) }
             : emptyBasechainAddress();
 
         MessageParameters {
@@ -133,7 +135,7 @@ contract JettonMinter(
             mintable: self.mintable,
             adminAddress: self.owner,
             jettonContent: self.jettonContent,
-            jettonWalletCode: codeOf JettonWallet,
+            jettonWalletCode: codeOf JettonWalletSharded,
         };
     }
 
@@ -143,7 +145,7 @@ contract JettonMinter(
 }
 
 inline fun getJettonWalletInit(address: Address): Cell {
-    let init = initOf JettonWallet(address, myAddress(), 0);
+    let init = initOf JettonWalletSharded(address, myAddress(), 0);
 
     return beginCell().storeShardedStateInit(init).endCell();
 }
@@ -154,12 +156,13 @@ inline fun getJettonWalletByOwner(jettonWalletOwner: Address): Address {
     let ownerShard = jettonWalletOwner.getShard();
 
     let expectedAddr = beginCell()
-        .storeUint(4, 3)
-        .storeUint(0, 8)
+        .storeUint(4, 3) // addr_std$10, anycast: false
+        .storeUint(0, 8) // workchain_id: 0
         .storeUint(changeShard(init.hash(), ownerShard), 256)
         .asSlice();
 
     return expectedAddr.loadAddress();
+
 }
 
 inline fun getJettonBasechainWalletByOwner(jettonWalletOwner: Address): BasechainAddress {
