@@ -162,7 +162,6 @@ inline fun getJettonWalletByOwner(jettonWalletOwner: Address): Address {
         .asSlice();
 
     return expectedAddr.loadAddress();
-
 }
 
 inline fun getJettonBasechainWalletByOwner(jettonWalletOwner: Address): BasechainAddress {
