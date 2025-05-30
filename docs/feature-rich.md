@@ -5,7 +5,7 @@ Since the initial TEP-74 publication in 12.03.2022, there were only a few attemp
 - Mintless jetton, used for mass token distribution
 - Governance jetton, used for USDT (this implementation actually breaks TEP-74 by removing burn)
 
-To this day, Mintless jetton is the only widely known implementation that utilises `custom_payload` field in the original `transfer#0f8a7ea5` TL-B. So-called [`feature-rich`](../src/contracts/feature-rich/) version in this repo is TEP-74 compatible jetton implementation in Tact that uses `custom_payload` to bring new features to the standard
+To this day, Mintless jetton is the only widely known implementation that uses `custom_payload` field in the original `transfer#0f8a7ea5` TL-B. So-called [`feature-rich`](../src/contracts/feature-rich/) version in this repo is TEP-74 compatible jetton implementation in Tact that uses `custom_payload` to bring new features to the standard
 
 ### Jetton send modes
 
@@ -34,7 +34,7 @@ This mode straight-forward copies the semantics of 128 basic messages send mode.
 
 In all previous implementations jetton wallet always attached `state_init` in the `internal_jetton_transfer` message to deploy the receiving jetton wallet, in case it's the first time the receiver gets this jetton sent to him. However, `state_init` will be simply ignored if the contract is already deployed, but the sender account will still pay the forward fee for it.
 
-This send mode allows not to attach `state_init` in the `internal_jetton_transfer` message. From security perspective, if the receiving jetton wallet in reality was not deploye than the message without `state_init` will simply bounce back, no jetton will be lost in this situation. The most useful application of this send mode could be made in DEXes: they know for sure that jetton wallets for their vaults are deployed (since the pool exists in the first place), so there is no need to attach `state_init` and overpay the network fees.
+This send mode allows not to attach `state_init` in the `internal_jetton_transfer` message. From security perspective, if the receiving jetton wallet in reality was not deploy than the message without `state_init` will simply bounce back, no jetton will be lost in this situation. The most useful application of this send mode could be made in DEXes: they know for sure that jetton wallets for their vaults are deployed (since the pool exists in the first place), so there is no need to attach `state_init` and overpay the network fees.
 
 With current network config and prices (30.05.2025) forward fee for Tact jetton wallet `state_init` is 9_600_000 nanoton, or **0.0096 ton**. If we assume\* that on average Jetton-to-Jetton DEX pool has about 3000 daily swaps, that means that we can save up to **28.8 ton** on jetton transfers with guaranteed deployed jetton wallet on this single pool.
 
@@ -52,4 +52,4 @@ If we attach `state_init` to the notification message, the destination address o
 
 ### TON claiming
 
-Another long-living issue with Jettons is stuck nanotons. Current /// add stuff about ton naitive vault reserving too much, not-implemented in wrappers since 2022, modern jetton
+Another long-living issue with Jettons is stuck nanotons. Current /// add stuff about ton native vault reserving too much, not-implemented in wrappers since 2022, modern jetton
