@@ -1,4 +1,4 @@
-# Feature-Rich Jetton implementation in Tact
+# Jetton Send Modes implementation in Tact
 
 Since the initial TEP-74 publication in 12.03.2022, there were only a few attempts to improve the standard and introduce new features:
 
@@ -41,3 +41,15 @@ With current network config and prices (30.05.2025) forward fee for Tact jetton 
 #### SendStateInitWithJettonNotification
 
 This mode requires additional field `forwardStateInit` to be included in the custom payload.
+
+When `transfer_notification#7362d09c` is sent from the receivers jetton wallet, it simply carries the forward payload and forward ton amount as value, acting like asynchronous callback on the transfer event. Huge limitation to the practical usage of this callback is the fact that notification receiving contract should already be deployed. So if you want to execute some kind of logic after the success jetton transfer on-chain, you should send two messages, one for callback contract deploy and the second one for the transfer itself.
+
+The ability to deploy the notification receiver together with the notification would solve this issue. This send mode takes the `forwardStateInit` field from the custom payload on jetton transfer, attaches it to the internal transfer and then uses it as `state_init` on the transfer notification message.
+
+**Note!**
+
+If we attach `state_init` to the notification message, the destination address of this message is derived from the hash of this state. However, following the TEP, we should send the notification to the `owner` address. If this two addresses don't match, transaction will fail and bounce internal transfer back, cancelling the operation.
+
+### TON claiming
+
+Another long-living issue with Jettons is stuck nanotons. Current /// add stuff about ton naitive vault reserving too much, not-implemented in wrappers since 2022, modern jetton
