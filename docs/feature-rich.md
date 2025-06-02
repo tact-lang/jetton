@@ -2,15 +2,15 @@
 
 Since the [initial TEP-74](https://github.com/ton-blockchain/TEPs/blob/master/text/0074-jettons-standard.md) publication in 12.03.2022, there were only a few attempts to improve the standard and introduce new features:
 
-- Mintless jetton, used for mass token distribution
-- Governance jetton, used for USDT (this implementation actually breaks TEP-74 by removing burn)
+- [Mintless jetton](https://github.com/ton-community/mintless-jetton), used for mass token distribution
+- [Governance jetton](https://github.com/ton-blockchain/stablecoin-contract), used for USDT (this implementation actually breaks TEP-74 by removing burn)
 - [Modern jetton](https://github.com/EmelyanenkoK/modern_jetton), allowing ton/jetton claiming
 
 To this day, Mintless jetton is the only widely known implementation that uses `custom_payload` field in the original `transfer#0f8a7ea5` TL-B. So-called [`feature-rich`](../src/contracts/feature-rich/) version in this repo is TEP-74 compatible jetton implementation in Tact that uses `custom_payload` to bring new features to the standard
 
 ### Jetton send modes
 
-Feature rich version introduces _Jetton send modes_. They are similar to basic messages send modes in a sense that they are serialized as number of binary flags that can be combined together to affect the semantics of jetton transfers.
+Feature rich version introduces _Jetton send modes_. They are similar to [basic messages send modes](https://docs.ton.org/v3/documentation/smart-contracts/message-management/message-modes-cookbook) in a sense that they are serialized as number of binary flags that can be combined together to affect the semantics of jetton transfers.
 
 Currently there are 3 jetton send modes:
 
@@ -61,7 +61,7 @@ sequenceDiagram
     C ->>+ E: Internal transfer message <BR> without state init
 ```
 
-With current network config and prices (30.05.2025) forward fee for Tact jetton wallet `state_init` is 9_600_000 nanoton, or **0.0096 ton**. If we assume\* that on average Jetton-to-Jetton DEX pool has about 3000 daily swaps, that means that we can save up to **28.8 ton** of network transfer fees on jetton transfers with guaranteed deployed jetton wallet on this single pool.
+With current [network config](https://tonviewer.com/config) and prices (30.05.2025) forward fee for Tact jetton wallet `state_init` is 9_600_000 nanoton, or **0.0096 ton**. If we [assume](https://tonviewer.com/EQBSUY4UWGJFAps0KwHY4tpOGqzU41DZhyrT8OuyAWWtnezy) that on average Jetton-to-Jetton DEX pool has about 3000 daily swaps, that means that we can save up to **28.8 ton** of network transfer fees on jetton transfers with guaranteed deployed jetton wallet on this single pool.
 
 ```mermaid
 pie title Jetton Transfer Fees
@@ -89,7 +89,7 @@ sequenceDiagram
 
     D ->>+ C: JettonTransfer with 0x4 mode<BR />(0xf8a7ea5)
     C ->>+ E: Internal transfer message <BR> with notification state init
-    Note left of F: Receiver account <br> will be deployed with this
+    Note left of F: Receiver account <br> will be deployed with this msg
     E ->>+ F: JettonNotification <BR> with state init
 ```
 
