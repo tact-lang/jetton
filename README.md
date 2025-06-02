@@ -20,7 +20,7 @@ Jettons standards are versatile, they allow to utilize reserved fields and use b
 - [Feature rich Jetton](./src/contracts/feature-rich/), version with jetton send modes, [read more in the docs](./docs/feature-rich.md)
 - [Sharded Jetton](./src/contracts/shard/), implementation that makes use of the latest TVM update, optimizing shard deployment of the jetton wallet
 
-Moreover, all this versions include features from the [improvements](#improvements-and-additional-features) section and are ran on the common test suite that ensures TEP compatability.
+Moreover, all this versions include features from the [improvements](#improvements-and-additional-features) section and are ran on the common test suite that ensures TEP compatibility.
 
 ## Goals
 
