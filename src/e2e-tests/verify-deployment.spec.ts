@@ -11,10 +11,11 @@ import {expect} from "@jest/globals"
 import {uploadDeployResultToGist} from "../utils/gist"
 import {getNetworkFromEnv} from "../utils/utils"
 import {GovernanceJettonMinter} from "../output/Governance_GovernanceJettonMinter"
+import {JettonMinterFeatureRich} from "../output/FeatureRich_JettonMinterFeatureRich"
 
 describe("Contract Deployment Verification", () => {
     let client: TonClient
-    let jettonMinter: JettonMinter | GovernanceJettonMinter
+    let jettonMinter: JettonMinter | GovernanceJettonMinter | JettonMinterFeatureRich
     let deployerWalletAddress: Address
     let jettonParams: JettonParams
 
