@@ -101,3 +101,17 @@ If we attach `state_init` to the notification message, the destination address o
 let deployAddress = contractAddress(msg.forwardStateInit!!);
 require(deployAddress == self.owner, "Deploy address doesn't match owner address");
 ```
+
+### Usage
+
+Feature rich jetton implementation is designed and implemented to be fully compatible with TEP Jetton-related standards. That means that it can be used with already existing applications (explorers, wallets, etc.) without any modifications.
+
+![jetton](./assets/jetton.png)
+
+To deploy Feature rich jetton use `yarn deploy:feature-rich` or check the [deployment script](../src/scripts/feature-rich.deploy.ts).
+
+It is possible to make use of jetton send modes using `sendTransferWithJettonMode` method from wrapper class [ExtendedFeatureRichJettonWallet](../src/wrappers/ExtendedFeatureRichJettonWallet.ts). More examples of modes usage can be found in the [feature-rich tests](../src/tests/feature-rich/feature-rich.spec.ts).
+
+### References
+
+- [Initial community discussion post](https://t.me/TheOpenDevBlog/68)
