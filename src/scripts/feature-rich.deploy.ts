@@ -9,23 +9,19 @@ import {getJettonHttpLink, getNetworkFromEnv} from "../utils/utils"
 import {storeMint} from "../output/FeatureRich_JettonMinterFeatureRich"
 
 /*
-    This is deployment script for feature rich jetton, compatible with TEP-74 and TEP-89
+    This is a deployment script for the Feature-rich Jetton, compatible with TEP-74 and TEP-89.
+    Read more about this implementation in docs/feature-rich.md.
 
-    Read more about this implementation in docs/feature-rich.md
+    Here are the instructions to deploy the contract with the script:
 
-    (Remember to install dependencies by running "yarn install" in the terminal)
-    Here are the instructions to deploy the contract:
-    1. Create new walletV4r2 or use existing one.
-    2. Enter your mnemonics in .env file. (.env.example is provided)
-    3. In .env file specify the network you want to deploy the contract.
-    (testnet is chosen by default, if you are not familiar with it, read https://tonkeeper.helpscoutdocs.com/article/100-how-switch-to-the-testnet)
-
-    4. In .env file specify the parameters of the Jetton. (Ticker, description, image, etc.)
-    5. In .env file specify the total supply of the Jetton. It will be automatically converted to nano - jettons.
-    Note: All supply will be automatically minted to your wallet.
-
-    6. Build the contracts
-    7. Run this script
+    0. Before running this script, remember to install dependencies by running "yarn install" in the terminal.
+    1. Create a new WalletV4r2 or use an existing one — the choice of wallet is hardcoded in the script. Once you're familiar with the deployment, you can try using other wallets as well.
+    2. Copy the `.env.example` file as `.env` and enter your mnemonics in the latter. Remember to enter sensitive data ONLY to the `.env` to make sure Git will ignore it.
+    3. In the `.env` file, specify the network you want to deploy the contract. By default, testnet is chosen — if you are not familiar with it, read https://tonkeeper.helpscoutdocs.com/article/100-how-switch-to-the-testnet
+    4. In the `.env` file, specify the parameters of the Jetton: ticker, description, image, etc.
+    5. In the `.env` file, specify the total supply of the Jetton. It will be automatically converted to nano-Jettons and minted to your wallet.
+    6. Build the contract by running `yarn build:feature-rich`
+    7. Run this script with `yarn deploy:feature-rich`
  */
 const main = async () => {
     const mnemonics = process.env.MNEMONICS
