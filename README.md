@@ -11,6 +11,17 @@ This project includes a complete setup for working with Tact-based Jetton smart 
 - TypeScript + Jest testing environment with `@ton/sandbox`.
 - Gas usage benchmarks throughout different versions
 
+## Implementation versions
+
+Jetton standards are versatile, allowing the utilization of reserved fields and the use of blockchain semantics to implement slightly different versions of the same standard. Because of this, this repository contains several distinct implementations:
+
+- [Base Jetton](./src/contracts/base/), the most fundamental version
+- [Governance Jetton](./src/contracts/governance/), with lock and force transfer functionality, used by USDT
+- [Feature-rich Jetton](./src/contracts/feature-rich/), version with Jetton send modes, [read more in the docs](./docs/feature-rich.md)
+- [Sharded Jetton](./src/contracts/shard/), an implementation that makes use of the latest TVM update, optimizing shard deployment of the Jetton wallet
+
+Moreover, all these versions include features from the [improvements section](#improvements-and-additional-features) and are run on the common test suite that ensures TEP compatibility.
+
 ## Goals
 
 This implementation is fully compatible with the following TON standards:

@@ -4,6 +4,7 @@ import {JettonMinter} from "../output/Jetton_JettonMinter"
 import {TonClient} from "@ton/ton"
 import chalk from "chalk"
 import {GovernanceJettonMinter} from "../output/Governance_GovernanceJettonMinter"
+import {JettonMinterFeatureRich} from "../output/FeatureRich_JettonMinterFeatureRich"
 
 const ONCHAIN_CONTENT_PREFIX = 0x00
 const SNAKE_PREFIX = 0x00
@@ -124,7 +125,7 @@ export async function validateJettonParams(
 
 export async function buildJettonMinterFromEnv(
     deployerAddress: Address,
-    type: "base" | "governance",
+    type: "base" | "governance" | "feature-rich",
 ) {
     const jettonParams = {
         name: process.env.JETTON_NAME ?? "TactJetton",
@@ -138,7 +139,12 @@ export async function buildJettonMinterFromEnv(
     // Create content Cell
     const content = buildOnchainMetadata(jettonParams)
 
-    return type === "base"
-        ? await JettonMinter.fromInit(0n, deployerAddress, content, true)
-        : await GovernanceJettonMinter.fromInit(0n, deployerAddress, null, content)
+    switch (type) {
+        case "base":
+            return await JettonMinter.fromInit(0n, deployerAddress, content, true)
+        case "governance":
+            return await GovernanceJettonMinter.fromInit(0n, deployerAddress, null, content)
+        case "feature-rich":
+            return await JettonMinterFeatureRich.fromInit(0n, deployerAddress, content, true)
+    }
 }
