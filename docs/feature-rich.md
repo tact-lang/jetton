@@ -1,35 +1,35 @@
-# Jetton Send Modes implementation in Tact
+# Feature-rich Jetton implementation in Tact
 
 Since the [initial TEP-74](https://github.com/ton-blockchain/TEPs/blob/master/text/0074-jettons-standard.md) publication in 12.03.2022, there were only a few attempts to improve the standard and introduce new features:
 
-- [Mintless jetton](https://github.com/ton-community/mintless-jetton), used for mass token distribution
-- [Governance jetton](https://github.com/ton-blockchain/stablecoin-contract), used for USDT (this implementation actually breaks TEP-74 by removing burn)
-- [Modern jetton](https://github.com/EmelyanenkoK/modern_jetton), allowing ton/jetton claiming
+- [Mintless Jetton](https://github.com/ton-community/mintless-jetton), used for mass token distribution
+- [Governance Jetton](https://github.com/ton-blockchain/stablecoin-contract), used for USDT (this implementation actually breaks TEP-74 by removing burn)
+- [Modern Jetton](https://github.com/EmelyanenkoK/modern_jetton), allowing TON/Jetton claiming
 
-To this day, Mintless jetton is the only widely known implementation that uses `custom_payload` field in the original `transfer#0f8a7ea5` TL-B. So-called [`feature-rich`](../src/contracts/feature-rich/) version in this repo is TEP-74 compatible jetton implementation in Tact that uses `custom_payload` to bring new features to the standard
+To this day, Mintless Jetton is the only widely known implementation that uses the `custom_payload` field in the original `transfer#0f8a7ea5` TL-B. The so-called [feature-rich](../src/contracts/feature-rich/) version in this repository is a TEP-74 compatible Jetton implementation in Tact that utilizes `custom_payload` to introduce new features to the standard.
 
-### Jetton send modes
+## Jetton send modes
 
-Feature rich version introduces _Jetton send modes_. They are similar to [basic messages send modes](https://docs.ton.org/v3/documentation/smart-contracts/message-management/message-modes-cookbook) in a sense that they are serialized as number of binary flags that can be combined together to affect the semantics of jetton transfers.
+The feature-rich version introduces Jetton send modes. They are similar to [basic message send modes](https://docs.ton.org/v3/documentation/smart-contracts/message-management/message-modes-cookbook) in the sense that they are serialized as several binary flags that can be combined to affect the semantics of Jetton transfers.
 
-Currently there are 3 jetton send modes:
+Currently, there are 3 Jetton send modes:
 
 - `SendAllJettonsMode`, 0x1
 - `SendNotDeployReceiversJettonWallet`, 0x2
 - `SendStateInitWithJettonNotification`, 0x4
 
-TL-B for new custom payload looks like this:
+TL-B for the new custom payload looks like this:
 
 ```tlb
 _ mode:uint32
   forwardStateInit:(Maybe StateInit) = CustomPayloadWithSendModes;
 ```
 
-Mode is `uint32` number that should include different send modes added together arithmetically, just like basic messages send modes. `forwardStateInit` field is optional and only needed in the `SendStateInitWithJettonNotification` mode, it will be discussed later.
+Mode is a `uint32` number that should include different send modes added together arithmetically, just like basic messages send modes. The `forwardStateInit` field is optional and is only needed in the `SendStateInitWithJettonNotification` mode, which will be discussed later.
 
 #### SendAllJettonsMode
 
-This mode straight-forward copies the semantics of 128 basic messages send mode. It drops whatever jetton `amount` was specified in the transfer message before and instead sends all remaining jetton balance from this jetton wallet. This can be useful for various DeFi services that want to simply move all funds from one account to another.
+This mode straight-forward copies the semantics of 128 basic messages send mode. It drops the specified `amount` of Jettons from the transfer message and instead sends all remaining jettons from this Jetton wallet. This can be useful for various DeFi services that want to move all funds from one account to another.
 
 ```mermaid
 sequenceDiagram
@@ -40,14 +40,14 @@ sequenceDiagram
 
     D ->>+ C: JettonTransfer with 0x1 mode<BR />(0xf8a7ea5)
     Note left of C: sendAmount = self.balance<br>self.balance = 0
-    C ->>+ E: JettonTransferInternal <BR> with all remaining jetton balance
+    C ->>+ E: JettonTransferInternal <BR> with all remaining Jetton balance
 ```
 
-#### SendNotDeployReceiversJettonWallet
+### SendNotDeployReceiversJettonWallet
 
-In all previous implementations jetton wallet always attached `state_init` in the `internal_jetton_transfer` message to deploy the receiving jetton wallet, in case it's the first time the receiver gets this jetton sent to him. However, `state_init` will be simply ignored if the contract is already deployed, but the sender account will still pay the forward fee for it.
+In all previous implementations, the Jetton wallet always attached `state_init` to the `internal_jetton_transfer` message to deploy the receiving Jetton wallet, in case it was the first time the receiver received this Jetton. However, `state_init` will be ignored if the contract is already deployed, but the sender account will still pay the forward fee for it.
 
-This send mode allows not to attach `state_init` in the `internal_jetton_transfer` message. From security perspective, if the receiving jetton wallet in reality was not deploy than the message without `state_init` will simply bounce back, no jetton will be lost in this situation. The most useful application of this send mode could be made in DEXes: they know for sure that jetton wallets for their vaults are deployed (since the pool exists in the first place), so there is no need to attach `state_init` and overpay the network fees.
+This send mode allows for not attaching `state_init` in the `internal_jetton_transfer` message. From a security perspective, if the receiving Jetton wallet was not actually deployed, then the message without `state_init` will bounce back, and no Jetton will be lost in this situation. The most useful application of this send mode can be seen in DEXes, where they are certain that Jetton wallets for their vaults are deployed (since the pool already exists), so there is no need to attach `state_init` and incur unnecessary network fees.
 
 ```mermaid
 sequenceDiagram
@@ -61,7 +61,7 @@ sequenceDiagram
     C ->>+ E: Internal transfer message <BR> without state init
 ```
 
-With current [network config](https://tonviewer.com/config) and prices (30.05.2025) forward fee for Tact jetton wallet `state_init` is 9_600_000 nanoton, or **0.0096 ton**. If we [assume](https://tonviewer.com/EQBSUY4UWGJFAps0KwHY4tpOGqzU41DZhyrT8OuyAWWtnezy) that on average Jetton-to-Jetton DEX pool has about 3000 daily swaps, that means that we can save up to **28.8 ton** of network transfer fees on jetton transfers with guaranteed deployed jetton wallet on this single pool.
+With the current [network config](https://tonviewer.com/config) and prices as of May 30th, 2025, the forward fee for a Tact Jetton wallet `state_init` is `9_600_000` nanoToncoin, or `0.0096` Toncoin. If we [assume](https://tonviewer.com/EQBSUY4UWGJFAps0KwHY4tpOGqzU41DZhyrT8OuyAWWtnezy) that the Jetton-to-Jetton DEX pool has about 3000 daily swaps, that means we can save up to `28.8` Toncoin of network transfer fees on Jetton transfers with a guaranteed deployed Jetton wallet on this single pool.
 
 ```mermaid
 pie title Jetton Transfer Fees
@@ -71,13 +71,13 @@ pie title Jetton Transfer Fees
 
 ```
 
-#### SendStateInitWithJettonNotification
+### SendStateInitWithJettonNotification
 
-This mode requires additional field `forwardStateInit` to be included in the custom payload.
+This mode requires an additional field, `forwardStateInit,` to be included in the custom payload.
 
-When `transfer_notification#7362d09c` is sent from the receivers jetton wallet, it simply carries the forward payload and forward ton amount as value, acting like asynchronous callback on the transfer event. Huge limitation to the practical usage of this callback is the fact that notification receiving contract should already be deployed. So if you want to execute some kind of logic after the successful jetton transfer on-chain, you should send two messages, one for callback contract deploy and the second one for the transfer itself.
+When `transfer_notification#7362d09c` is sent from the receiver's Jetton wallet, it simply carries the forward payload and forward Toncoin amount as value, acting like an asynchronous callback on the transfer event. A huge limitation to the practical use of this callback is that the notification-receiving contract should already be deployed. To execute logic after a successful Jetton transfer on-chain, send two messages: one for the callback contract deployment and a second for the transfer itself.
 
-The ability to deploy the notification receiver together with the notification would solve this issue. This send mode takes the `forwardStateInit` field from the custom payload on jetton transfer, attaches it to the internal transfer and then uses it as `state_init` on the transfer notification message.
+The ability to deploy the notification receiver together with the notification would solve this issue. This send mode retrieves the `forwardStateInit` field from the custom payload on the Jetton transfer, attaches it to the internal transfer, and then uses it as `state_init` in the transfer notification message.
 
 ```mermaid
 sequenceDiagram
@@ -95,23 +95,24 @@ sequenceDiagram
 
 **Note!**
 
-If we attach `state_init` to the notification message, the destination address of this message is derived from the hash of this state. However, following the TEP, we should send the notification to the `owner` address. If this two addresses don't match, transaction will fail and bounce internal transfer back, cancelling the operation.
+If we attach `state_init` to the notification message, the destination address of this message is derived from the hash of this state. However, following the TEP, we should send the notification to the `owner` address. If these two addresses don't match, the transaction will fail and bounce the internal transfer back, canceling the operation.
 
 ```tact
 let deployAddress = contractAddress(msg.forwardStateInit!!);
 require(deployAddress == self.owner, "Deploy address doesn't match owner address");
 ```
 
-### Usage
+## Usage
 
-Feature rich jetton implementation is designed and implemented to be fully compatible with TEP Jetton-related standards. That means that it can be used with already existing applications (explorers, wallets, etc.) without any modifications.
+Feature-rich Jetton implementation is designed and implemented to be fully compatible with TEP Jetton-related standards. That means it can be used with existing applications, such as explorers and wallets, without any modifications.
 
-![jetton](./assets/jetton.png)
+![Jetton](./assets/jetton.png)
 
-To deploy Feature rich jetton use `yarn deploy:feature-rich` or check the [deployment script](../src/scripts/feature-rich.deploy.ts).
+To deploy a feature-rich Jetton, run `yarn deploy:feature-rich`, which uses [this deployment script](../src/scripts/feature-rich.deploy.ts).
 
-It is possible to make use of jetton send modes using `sendTransferWithJettonMode` method from wrapper class [ExtendedFeatureRichJettonWallet](../src/wrappers/ExtendedFeatureRichJettonWallet.ts). More examples of modes usage can be found in the [feature-rich tests](../src/tests/feature-rich/feature-rich.spec.ts).
+It is possible to make use of Jetton send modes using the `sendTransferWithJettonMode` method from wrapper class [ExtendedFeatureRichJettonWallet](../src/wrappers/ExtendedFeatureRichJettonWallet.ts). More examples of modes usage can be found in the [feature-rich tests](../src/tests/feature-rich/feature-rich.spec.ts).
 
-### References
+## References
 
-- [Initial community discussion post](https://t.me/TheOpenDevBlog/68)
+- [TEP-74 standard](https://github.com/ton-blockchain/TEPs/blob/master/text/0074-jettons-standard.md)
+- [Initial community discussion post (in Russian)](https://t.me/TheOpenDevBlog/68)
