@@ -40,7 +40,6 @@ export class ExtendedFeatureRichJettonMinter extends ExtendedJettonMinter {
             $$type: "Mint",
             queryId: 0n,
             receiver: to,
-            tonAmount: totalTonAmount,
             mintMessage: {
                 $$type: "JettonTransferInternalWithStateInit",
                 queryId: 0n,
@@ -84,7 +83,6 @@ export class ExtendedFeatureRichJettonMinter extends ExtendedJettonMinter {
                     },
                     queryId: 0n,
                     receiver: receiver,
-                    tonAmount: forwardTonAmount,
                 }),
             )
             .endCell()

@@ -215,13 +215,11 @@ export class ExtendedGovernanceJettonMinter extends GovernanceJettonMinter {
         if (op !== Op.mint) throw new Error("Invalid op")
         const queryId = slice.loadUint(64)
         const toAddress = slice.loadAddress()
-        const tonAmount = slice.loadCoins()
         const mintMsg = slice.loadRef()
         endParse(slice)
         return {
             queryId,
             toAddress,
-            tonAmount,
             internalMessage: this.parseMintInternalMessage(mintMsg.beginParse()),
         }
     }

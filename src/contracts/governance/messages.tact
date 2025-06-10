@@ -95,7 +95,6 @@ message(0xeed236d3) SetStatus {
 message(0x642b7d07) Mint {
     queryId: Int as uint64;
     toAddress: Address;
-    tonAmount: Int as coins;
     masterMsg: JettonTransferInternal;
 }
 

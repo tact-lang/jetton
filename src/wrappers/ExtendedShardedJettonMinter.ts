@@ -86,7 +86,6 @@ export class ExtendedShardedJettonMinter extends JettonMinterSharded {
             $$type: "Mint",
             queryId: 0n,
             receiver: to,
-            tonAmount: totalTonAmount,
             mintMessage: {
                 $$type: "JettonTransferInternal",
                 queryId: 0n,
@@ -174,7 +173,6 @@ export class ExtendedShardedJettonMinter extends JettonMinterSharded {
                     },
                     queryId: 0n,
                     receiver: receiver,
-                    tonAmount: forwardTonAmount,
                 }),
             )
             .endCell()
