@@ -71,9 +71,6 @@ const main = async () => {
                     forwardPayload: beginCell().storeUint(0, 1).asSlice(),
                 },
                 receiver: deployerWalletContract.address,
-                // This value does not affect anything, it is present to ensure compatibility with reference implementation
-                // Consult dev-docs/SPEC.md for more information
-                tonAmount: toNano(1),
             }),
         )
         .endCell()

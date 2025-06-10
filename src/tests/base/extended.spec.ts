@@ -161,7 +161,6 @@ describe.each([
             $$type: "Mint",
             queryId: 0n,
             receiver: deployer.address,
-            tonAmount: toNano("0.1"),
             mintMessage: {
                 $$type: "JettonTransferInternal",
                 queryId: 0n,

@@ -141,4 +141,4 @@ message(MessageParameters {
 });
 ```
 
-Our implementation does exactly this: ignores the `ton_amount` field and uses the send mode 64 (`SendRemainingValue `). Given `excesses`, this approach seems preferable and easier to follow both for users and developers.
+In our Jetton implementations we decided to remove `ton_amount` field from mint message and use the send mode 64 (`SendRemainingValue `) instead. Given `excesses`, this approach seems preferable and easier to follow both for users and developers.
