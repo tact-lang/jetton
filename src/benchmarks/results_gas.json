@@ -162,6 +162,19 @@
                 "claimWallet": "3984"
             },
             "summary": "80078"
+        },
+        {
+            "label": "Without ton amount",
+            "pr": "https://github.com/tact-lang/jetton/pull/170",
+            "gas": {
+                "transfer": "34161",
+                "mint": "18655",
+                "burn": "12846",
+                "discovery": "6140",
+                "reportBalance": "4308",
+                "claimWallet": "3984"
+            },
+            "summary": "80094"
         }
     ]
 }
