@@ -1,3 +1,6 @@
+//  SPDX-License-Identifier: MIT
+//  Copyright © 2025 TON Studio
+
 const prefixLength: Int = 8;
 
 struct ShardDeployParameters {
