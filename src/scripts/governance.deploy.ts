@@ -1,3 +1,6 @@
+//  SPDX-License-Identifier: MIT
+//  Copyright © 2025 TON Studio
+
 import {beginCell, toNano, TonClient, WalletContractV4, internal, fromNano} from "@ton/ton"
 import {getHttpEndpoint} from "@orbs-network/ton-access"
 import {mnemonicToPrivateKey} from "@ton/crypto"

@@ -1,3 +1,6 @@
+//  SPDX-License-Identifier: MIT
+//  Copyright © 2025 TON Studio
+
 import {Address, Cell} from "@ton/core"
 import type {Blockchain, BlockchainTransaction, SendMessageResult} from "@ton/sandbox"
 import chalk from "chalk"

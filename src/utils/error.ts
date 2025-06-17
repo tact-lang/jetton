@@ -1,3 +1,6 @@
+//  SPDX-License-Identifier: MIT
+//  Copyright © 2025 TON Studio
+
 import {ABIError} from "@ton/core"
 import {Maybe} from "@ton/core/dist/utils/maybe"
 

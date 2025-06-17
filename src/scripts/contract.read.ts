@@ -1,3 +1,6 @@
+//  SPDX-License-Identifier: MIT
+//  Copyright © 2025 TON Studio
+
 import "dotenv/config"
 import {getHttpEndpoint} from "@orbs-network/ton-access"
 import {Address} from "@ton/core"

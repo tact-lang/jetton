@@ -1,3 +1,6 @@
+//  SPDX-License-Identifier: MIT
+//  Copyright © 2025 TON Studio
+
 import {strict as assert} from "assert"
 import {Address, Cell, AccountStatus, ContractABI, fromNano} from "@ton/core"
 import chalk from "chalk"
