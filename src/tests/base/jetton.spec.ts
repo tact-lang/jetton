@@ -1,3 +1,5 @@
+// https://github.com/ton-blockchain/token-contract/blob/main/sandbox_tests/JettonWallet.spec.ts
+
 import {Address, beginCell, Cell, toNano} from "@ton/core"
 import {Blockchain, internal, SandboxContract, TreasuryContract} from "@ton/sandbox"
 import {ExtendedJettonWallet} from "../../wrappers/ExtendedJettonWallet"

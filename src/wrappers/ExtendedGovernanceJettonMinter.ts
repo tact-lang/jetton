@@ -1,3 +1,5 @@
+// https://github.com/ton-blockchain/stablecoin-contract/blob/main/wrappers/JettonMinter.ts
+
 import {
     Address,
     beginCell,

@@ -1,3 +1,5 @@
+// https://github.com/ton-blockchain/stablecoin-contract/blob/main/sandbox_tests/JettonWallet.spec.ts
+
 import {
     Blockchain,
     SandboxContract,

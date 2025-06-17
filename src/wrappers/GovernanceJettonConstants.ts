@@ -1,3 +1,5 @@
+// https://github.com/ton-blockchain/stablecoin-contract/blob/main/wrappers/JettonConstants.ts
+
 export abstract class Op {
     static transfer = 0xf8a7ea5
     static transfer_notification = 0x7362d09c

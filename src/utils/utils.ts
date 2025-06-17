@@ -1,3 +1,5 @@
+// https://github.com/ton-blockchain/token-contract/blob/main/sandbox_tests/utils.ts
+
 import {Address, toNano, Cell, Builder, beginCell} from "@ton/core"
 import {randomBytes} from "crypto"
 

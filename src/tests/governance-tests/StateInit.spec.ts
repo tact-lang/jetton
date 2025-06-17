@@ -1,3 +1,5 @@
+// https://github.com/ton-blockchain/stablecoin-contract/blob/main/sandbox_tests/StateInit.spec.ts
+
 import {Blockchain, SandboxContract, TreasuryContract} from "@ton/sandbox"
 import {Address, beginCell, Cell, Dictionary, storeStateInit, toNano} from "@ton/core"
 import {

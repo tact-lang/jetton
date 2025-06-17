@@ -1,3 +1,5 @@
+// https://github.com/ton-blockchain/stablecoin-contract/blob/main/gasUtils.ts
+
 import {Cell, Slice, beginCell, Dictionary, Message, DictionaryValue, Transaction} from "@ton/core"
 
 export type GasPrices = {
