@@ -1,5 +1,5 @@
 //  SPDX-License-Identifier: MIT
-//  Copyright © 2025 TON Core
+//  Copyright © 2023 TON Foundation
 // https://github.com/ton-blockchain/token-contract/blob/568f9c5c291b3cba39bfa75c1770c569c613796e/sandbox_tests/utils.ts
 
 import {Address, toNano, Cell, Builder, beginCell} from "@ton/core"

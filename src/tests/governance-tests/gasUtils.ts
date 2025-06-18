@@ -1,6 +1,7 @@
 //  SPDX-License-Identifier: MIT
 //  Copyright © 2025 TON Core
-// https://github.com/ton-blockchain/stablecoin-contract/blob/fcfe70f24bae671c24937243226508ec4bbd2bee/gasUtils.ts
+//  Based on https://github.com/ton-blockchain/stablecoin-contract/blob/fcfe70f24bae671c24937243226508ec4bbd2bee/gasUtils.ts
+//  Modified by TON Studio
 
 import {Cell, Slice, beginCell, Dictionary, Message, DictionaryValue, Transaction} from "@ton/core"
 
