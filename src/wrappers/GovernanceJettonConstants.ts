@@ -1,4 +1,6 @@
-// https://github.com/ton-blockchain/stablecoin-contract/blob/main/wrappers/JettonConstants.ts
+//  SPDX-License-Identifier: MIT
+//  Copyright © 2025 TON Core
+// https://github.com/ton-blockchain/stablecoin-contract/blob/fcfe70f24bae671c24937243226508ec4bbd2bee/wrappers/JettonConstants.ts
 
 export abstract class Op {
     static transfer = 0xf8a7ea5

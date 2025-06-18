@@ -1,4 +1,5 @@
-// https://github.com/ton-blockchain/token-contract/blob/main/wrappers/JettonWallet.ts
+//  SPDX-License-Identifier: MIT
+//  Copyright © 2025 TON Studio
 
 import {
     ClaimTON,

@@ -1,4 +1,6 @@
-// https://github.com/ton-blockchain/stablecoin-contract/blob/main/sandbox_tests/StateInit.spec.ts
+//  SPDX-License-Identifier: MIT
+//  Copyright © 2025 TON Core
+// https://github.com/ton-blockchain/stablecoin-contract/blob/fcfe70f24bae671c24937243226508ec4bbd2bee/sandbox_tests/StateInit.spec.ts
 
 import {Blockchain, SandboxContract, TreasuryContract} from "@ton/sandbox"
 import {Address, beginCell, Cell, Dictionary, storeStateInit, toNano} from "@ton/core"

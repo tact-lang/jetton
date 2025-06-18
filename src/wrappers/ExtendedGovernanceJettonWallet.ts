@@ -1,4 +1,6 @@
-// https://github.com/ton-blockchain/stablecoin-contract/blob/main/wrappers/JettonWallet.ts
+//  SPDX-License-Identifier: MIT
+//  Copyright © 2025 TON Core
+// https://github.com/ton-blockchain/stablecoin-contract/blob/fcfe70f24bae671c24937243226508ec4bbd2bee/wrappers/JettonWallet.ts
 
 import {Address, beginCell, Cell, ContractProvider, Sender, SendMode, toNano} from "@ton/core"
 
