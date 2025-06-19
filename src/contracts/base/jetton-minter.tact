@@ -20,6 +20,22 @@ contract JettonMinter(
     jettonContent: Cell,
     mintable: Bool, // Should be deployed with this flag set to true
 ) {
+    receive(msg: ProvideWalletAddress) {
+        let ownerWorkchain: Int = parseStdAddress(msg.ownerAddress.asSlice()).workchain;
+
+        // If owner is basechain address, we can calculate jettonWallet
+        let targetJettonWallet: BasechainAddress = (ownerWorkchain == Basechain)
+            ? contractBasechainAddress(getJettonWalletInit(msg.ownerAddress))
+            : emptyBasechainAddress();
+
+        message(MessageParameters {
+            body: makeTakeWalletAddressMsg(targetJettonWallet, msg),
+            to: sender(),
+            value: 0,
+            mode: SendRemainingValue,
+        });
+    }
+
     // Owner of this contract may be masterchain address,
     // however minting is possible only to basechain addresses
     // it is asserted inside the deploy function
@@ -51,22 +67,6 @@ contract JettonMinter(
             mode: SendRemainingValue | SendBounceIfActionFail,
             body: msg.mintMessage.toCell(),
             init: getJettonWalletInit(msg.receiver),
-        });
-    }
-
-    receive(msg: ProvideWalletAddress) {
-        let ownerWorkchain: Int = parseStdAddress(msg.ownerAddress.asSlice()).workchain;
-
-        // If owner is basechain address, we can calculate jettonWallet
-        let targetJettonWallet: BasechainAddress = (ownerWorkchain == Basechain)
-            ? contractBasechainAddress(getJettonWalletInit(msg.ownerAddress))
-            : emptyBasechainAddress();
-
-        message(MessageParameters {
-            body: makeTakeWalletAddressMsg(targetJettonWallet, msg),
-            to: sender(),
-            value: 0,
-            mode: SendRemainingValue,
         });
     }
 

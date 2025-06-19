@@ -175,6 +175,19 @@
                 "claimWallet": "3984"
             },
             "summary": "80094"
+        },
+        {
+            "label": "With reordered receivers",
+            "pr": "https://github.com/tact-lang/jetton/pull/172",
+            "gas": {
+                "transfer": "34161",
+                "mint": "18850",
+                "burn": "12846",
+                "discovery": "5945",
+                "reportBalance": "4308",
+                "claimWallet": "3984"
+            },
+            "summary": "80094"
         }
     ]
 }

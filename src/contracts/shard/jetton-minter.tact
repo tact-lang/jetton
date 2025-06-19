@@ -23,42 +23,6 @@ contract JettonMinterSharded(
     jettonContent: Cell,
     mintable: Bool, // Should be deployed with this flag set to true
 ) {
-    // Owner of this contract may be masterchain address,
-    // however minting is possible only to basechain addresses
-    // it is asserted inside the deploy function
-    receive(msg: Mint) {
-        require(sender() == self.owner, "Incorrect sender");
-        require(self.mintable, "Mint is closed");
-
-        checkEitherForwardPayload(msg.mintMessage.forwardPayload);
-
-        let ctx = context();
-        // we don't add compute fees for mint itself and reserve here
-        // it's okay since it’s sent only by the admin and excesses will return back
-        require(
-            ctx.value >
-            minTonsForStorage +
-            msg.mintMessage.forwardTonAmount +
-            ctx.readForwardFee() +
-            getForwardFee(walletStateInitCells, walletStateInitBits, false) +
-            2 * getComputeFee(gasForTransfer, false),
-            "Insufficient gas for mint",
-        );
-
-        self.totalSupply += msg.mintMessage.amount;
-
-        let receiverShard = msg.receiver.getShard();
-
-        // basechain destination is calculated inside deploy function
-        DeployParameters {
-            value: 0, // ignore msg.tonAmount and use SendMode 64 instead
-            bounce: true,
-            mode: SendRemainingValue | SendBounceIfActionFail,
-            body: msg.mintMessage.toCell(),
-            init: initOf JettonWalletSharded(msg.receiver, myAddress(), 0),
-        }.toShard(receiverShard).send();
-    }
-
     receive(msg: ProvideWalletAddress) {
         let ownerWorkchain: Int = parseStdAddress(msg.ownerAddress.asSlice()).workchain;
 
@@ -97,6 +61,42 @@ contract JettonMinterSharded(
                 mode: SendRemainingValue | SendIgnoreErrors, // ignore errors, because supply has already been updated
             }.send();
         }
+    }
+
+    // Owner of this contract may be masterchain address,
+    // however minting is possible only to basechain addresses
+    // it is asserted inside the deploy function
+    receive(msg: Mint) {
+        require(sender() == self.owner, "Incorrect sender");
+        require(self.mintable, "Mint is closed");
+
+        checkEitherForwardPayload(msg.mintMessage.forwardPayload);
+
+        let ctx = context();
+        // we don't add compute fees for mint itself and reserve here
+        // it's okay since it’s sent only by the admin and excesses will return back
+        require(
+            ctx.value >
+            minTonsForStorage +
+            msg.mintMessage.forwardTonAmount +
+            ctx.readForwardFee() +
+            getForwardFee(walletStateInitCells, walletStateInitBits, false) +
+            2 * getComputeFee(gasForTransfer, false),
+            "Insufficient gas for mint",
+        );
+
+        self.totalSupply += msg.mintMessage.amount;
+
+        let receiverShard = msg.receiver.getShard();
+
+        // basechain destination is calculated inside deploy function
+        DeployParameters {
+            value: 0, // ignore msg.tonAmount and use SendMode 64 instead
+            bounce: true,
+            mode: SendRemainingValue | SendBounceIfActionFail,
+            body: msg.mintMessage.toCell(),
+            init: initOf JettonWalletSharded(msg.receiver, myAddress(), 0),
+        }.toShard(receiverShard).send();
     }
 
     receive(msg: JettonUpdateContent) {

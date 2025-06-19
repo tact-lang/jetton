@@ -24,6 +24,41 @@ contract GovernanceJettonMinter(
     nextAdminAddress: Address?,
     jettonContent: Cell,
 ) {
+    receive(msg: ProvideWalletAddress) {
+        let ownerWorkchain: Int = parseStdAddress(msg.ownerAddress.asSlice()).workchain;
+
+        let targetJettonWallet: BasechainAddress = (ownerWorkchain == Workchain)
+            ? contractBasechainAddress(initOf JettonWalletGovernance(0, 0, msg.ownerAddress, myAddress()))
+            : emptyBasechainAddress();
+
+        message(MessageParameters {
+            bounce: false,
+            body: makeTakeWalletAddressMsg(targetJettonWallet, msg),
+            to: sender(),
+            value: 0,
+            mode: SendRemainingValue | SendBounceIfActionFail,
+        });
+    }
+
+    receive(msg: JettonBurnNotification) {
+        let sender = parseStdAddress(sender().asSlice());
+        let wallet = getJettonBasechainWalletByOwner(msg.sender);
+
+        require(sender.workchain == Workchain && sender.address == wallet.hash!!, "Unauthorized burn");
+
+        self.totalSupply -= msg.amount;
+
+        if (msg.responseDestination != null) {
+            message(MessageParameters {
+                to: msg.responseDestination!!,
+                body: JettonExcesses { queryId: msg.queryId }.toCell(),
+                value: 0,
+                bounce: false,
+                mode: SendRemainingValue | SendIgnoreErrors, // ignore errors, because supply has already been updated
+            });
+        }
+    }
+
     receive(msg: Mint) {
         require(sender() == self.adminAddress, "Incorrect sender");
         require(parseStdAddress(msg.toAddress.asSlice()).workchain == Workchain, "Wrong workchain");
@@ -52,41 +87,6 @@ contract GovernanceJettonMinter(
             mode: SendRemainingValue | SendBounceIfActionFail,
             body: msg.masterMsg.toCell(),
             init: getJettonWalletInit(msg.toAddress),
-        });
-    }
-
-    receive(msg: JettonBurnNotification) {
-        let sender = parseStdAddress(sender().asSlice());
-        let wallet = getJettonBasechainWalletByOwner(msg.sender);
-
-        require(sender.workchain == Workchain && sender.address == wallet.hash!!, "Unauthorized burn");
-
-        self.totalSupply -= msg.amount;
-
-        if (msg.responseDestination != null) {
-            message(MessageParameters {
-                to: msg.responseDestination!!,
-                body: JettonExcesses { queryId: msg.queryId }.toCell(),
-                value: 0,
-                bounce: false,
-                mode: SendRemainingValue | SendIgnoreErrors, // ignore errors, because supply has already been updated
-            });
-        }
-    }
-
-    receive(msg: ProvideWalletAddress) {
-        let ownerWorkchain: Int = parseStdAddress(msg.ownerAddress.asSlice()).workchain;
-
-        let targetJettonWallet: BasechainAddress = (ownerWorkchain == Workchain)
-            ? contractBasechainAddress(initOf JettonWalletGovernance(0, 0, msg.ownerAddress, myAddress()))
-            : emptyBasechainAddress();
-
-        message(MessageParameters {
-            bounce: false,
-            body: makeTakeWalletAddressMsg(targetJettonWallet, msg),
-            to: sender(),
-            value: 0,
-            mode: SendRemainingValue | SendBounceIfActionFail,
         });
     }
 
