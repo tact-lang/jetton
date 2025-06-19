@@ -1,3 +1,6 @@
+//  SPDX-License-Identifier: MIT
+//  Copyright © 2025 TON Studio
+
 import "./shard-utils";
 
 extends inline fun send(self: DeployParameters) {

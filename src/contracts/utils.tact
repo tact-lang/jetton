@@ -1,3 +1,6 @@
+//  SPDX-License-Identifier: MIT
+//  Copyright © 2025 TON Studio
+
 asm fun checkEitherForwardPayload(forwardPayload: Slice) {
     LDDICT // Throws 9 if Either bit = 1 and ref is not present
     SWAP

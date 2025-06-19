@@ -1,3 +1,8 @@
+//  SPDX-License-Identifier: MIT
+//  Copyright © 2023 @howardpen9 @0kenx
+//  Based on https://github.com/howardpen9/jetton-implementation-in-tact/blob/d996d51c59e672aa9eabb028869e0e4d6135a8cb/sources/utils/print.ts
+//  Modified by TON Studio
+
 import {Address, beginCell, Cell, contractAddress, storeStateInit} from "@ton/ton"
 import qs from "qs"
 import base64url from "base64url"

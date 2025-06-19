@@ -1,3 +1,6 @@
+//  SPDX-License-Identifier: MIT
+//  Copyright © 2025 TON Studio
+
 import {z} from "zod"
 import {Address} from "@ton/core"
 import {getJettonHttpLink, getNetworkFromEnv} from "./utils"

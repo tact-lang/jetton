@@ -1,3 +1,6 @@
+//  SPDX-License-Identifier: MIT
+//  Copyright © 2025 TON Studio
+
 import {TonClient, WalletContractV4, Address, toNano} from "@ton/ton"
 import {getHttpEndpoint} from "@orbs-network/ton-access"
 import {JettonWallet} from "../output/Jetton_JettonWallet"

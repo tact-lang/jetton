@@ -1,3 +1,7 @@
+//  SPDX-License-Identifier: MIT
+//  Copyright © 2025 TON Core
+// https://github.com/ton-blockchain/stablecoin-contract/blob/fcfe70f24bae671c24937243226508ec4bbd2bee/sandbox_tests/JettonWallet.spec.ts
+
 import {
     Blockchain,
     SandboxContract,

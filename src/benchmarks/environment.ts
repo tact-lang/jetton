@@ -1,3 +1,6 @@
+//  SPDX-License-Identifier: MIT
+//  Copyright © 2025 TON Studio
+
 import {Blockchain} from "@ton/sandbox"
 import {JettonUpdateContent} from "../output/Jetton_JettonMinter"
 import {Address, beginCell, Cell, toNano} from "@ton/core"
