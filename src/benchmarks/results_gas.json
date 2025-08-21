@@ -188,6 +188,19 @@
                 "claimWallet": "3984"
             },
             "summary": "80094"
+        },
+        {
+            "label": "Fixed amount in cashback message",
+            "pr": "https://github.com/tact-lang/jetton/pull/180",
+            "gas": {
+                "transfer": "34145",
+                "mint": "18842",
+                "burn": "12846",
+                "discovery": "5945",
+                "reportBalance": "4308",
+                "claimWallet": "3984"
+            },
+            "summary": "80070"
         }
     ]
 }
