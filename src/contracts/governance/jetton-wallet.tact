@@ -85,7 +85,7 @@ contract JettonWalletGovernance(
             nativeReserve(max(toLeaveOnBalance, minTonsForStorage), ReserveAtMost);
             message(MessageParameters {
                 to: msg.responseDestination!!,
-                value: msgValue,
+                value: 0,
                 mode: SendRemainingBalance + SendIgnoreErrors,
                 bounce: false,
                 body: JettonExcesses { queryId: msg.queryId }.toCell(),

@@ -164,7 +164,7 @@ contract JettonWalletFeatureRich(
         if (msg.responseDestination != null && msgValue > 0) {
             message(MessageParameters {
                 to: msg.responseDestination!!,
-                value: msgValue,
+                value: 0,
                 mode: SendRemainingBalance | SendIgnoreErrors,
                 bounce: false,
                 body: JettonExcesses { queryId: msg.queryId }.toCell(),
