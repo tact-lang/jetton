@@ -188,6 +188,19 @@
                 "claimWallet": "3984"
             },
             "summary": "80094"
+        },
+        {
+            "label": "Rewritten checkEitherForwardPayload in Tact",
+            "pr": "https://github.com/tact-lang/jetton/pull/181",
+            "gas": {
+                "transfer": "34098",
+                "mint": "18866",
+                "burn": "12846",
+                "discovery": "5945",
+                "reportBalance": "4308",
+                "claimWallet": "3984"
+            },
+            "summary": "80047"
         }
     ]
 }
